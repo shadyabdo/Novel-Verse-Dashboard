@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: novels
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required, 1-200 chars)
+    //   - description: string (required, 0-5000 chars)
+    //   - author: string (required, 1-100 chars)
+    //   - coverImages: list of strings (optional, max 10 items, each < 1000 chars)
+    //   - status: string (optional, enum: ['مستمرة', 'مكتملة', 'متوقفة'])
+    //   - rating: number (optional, 0-5)
+    //   - categories: list of strings (optional, max 20 items, each < 50 chars)
+    //   - createdAt: timestamp (required on create)
+    //   - updatedAt: timestamp (required on update)
+    //
+    // Collection: categories
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required, 1-50 chars)
+    //   - slug: string (required, 1-50 chars)
+    //
+    // Collection: novels/{novelId}/chapters
+    // Document ID: auto-generated
+    // Fields:
+    //   - novelId: string (required, matches parent)
+    //   - title: string (required, 1-200 chars)
+    //   - content: string (required, 0-200000 chars)
+    //   - order: number (required)
+    //   - date: string (optional, ISO or localized date)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+             (request.auth.token.email == "shadyabdowd2020@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidNovel(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.description is string && data.description.size() <= 5000 &&
+             data.author is string && data.author.size() > 0 && data.author.size() <= 100 &&
+             (!('coverImages' in data) || (data.coverImages is list && data.coverImages.size() <= 10)) &&
+             (!('status' in data) || (data.status in ['مستمرة', 'مكتملة', 'متوقفة', 'N/A'])) &&
+             (!('rating' in data) || (data.rating is number && data.rating >= 0 && data.rating <= 5)) &&
+             (!('categories' in data) || (data.categories is list && data.categories.size() <= 20));
+    }
+
+    function isValidChapter(data, novelId) {
+      return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.content is string && data.content.size() <= 200000 &&
+             data.order is number &&
+             data.novelId == novelId;
+    }
+
+    function isValidCategory(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 50 &&
+             data.slug is string && data.slug.size() > 0 && data.slug.size() <= 50;
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidCategory(request.resource.data);
+    }
+
+    match /novels/{novelId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidNovel(request.resource.data) && 
+                      request.resource.data.createdAt == request.time;
+      allow update: if isAdmin() && isValidNovel(request.resource.data) && 
+                      request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+
+      match /chapters/{chapterId} {
+        allow read: if true;
+        allow create: if isAdmin() && isValidChapter(request.resource.data, novelId);
+        allow update: if isAdmin() && isValidChapter(request.resource.data, novelId);
+        allow delete: if isAdmin();
+      }
+    }
+  }
+}

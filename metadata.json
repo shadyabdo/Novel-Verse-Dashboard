@@ -1,0 +1,5 @@
+{
+  "name": "NovelVerse Dashboard",
+  "description": "لوحة تحكم احترافية لإدارة الروايات والفصول مع دعم Firebase و Markdown.",
+  "requestFramePermissions": []
+}

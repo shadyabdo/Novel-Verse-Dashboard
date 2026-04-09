@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Novel": {
+      "title": "Novel",
+      "description": "A novel entity containing metadata about a book.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "The title of the novel." },
+        "description": { "type": "string", "description": "A short summary of the novel." },
+        "coverImages": { "type": "array", "items": { "type": "string" }, "description": "URLs to the cover images." },
+        "author": { "type": "string", "description": "The author's name." },
+        "status": { "type": "string", "enum": ["مستمرة", "مكتملة", "متوقفة"], "description": "Current status of the novel." },
+        "rating": { "type": "number", "description": "Average rating." },
+        "categories": { "type": "array", "items": { "type": "string" }, "description": "List of category tags." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp." }
+      },
+      "required": ["name", "description", "author"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "A category or genre for novels.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "The name of the category." },
+        "slug": { "type": "string", "description": "URL-friendly name." }
+      },
+      "required": ["name", "slug"]
+    },
+    "Chapter": {
+      "title": "Chapter",
+      "description": "A chapter of a novel.",
+      "type": "object",
+      "properties": {
+        "novelId": { "type": "string", "description": "The ID of the parent novel." },
+        "title": { "type": "string", "description": "The title of the chapter." },
+        "content": { "type": "string", "description": "The full text content of the chapter." },
+        "order": { "type": "number", "description": "The sequence order of the chapter." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp." }
+      },
+      "required": ["novelId", "title", "content", "order"]
+    }
+  },
+  "firestore": {
+    "/novels/{novelId}": {
+      "schema": "Novel",
+      "description": "Collection of all novels."
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Collection of available novel categories."
+    },
+    "/novels/{novelId}/chapters/{chapterId}": {
+      "schema": "Chapter",
+      "description": "Sub-collection of chapters for a specific novel."
+    }
+  }
+}
