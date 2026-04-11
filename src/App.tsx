@@ -28,6 +28,9 @@ import { db, auth } from './firebase';
 import { 
   Plus, 
   Book, 
+  BookOpen,
+  Home,
+  Library,
   FileText, 
   Trash2, 
   Edit, 
@@ -41,11 +44,11 @@ import {
   Loader2,
   Image as ImageIcon,
   Search,
+  Clock,
   SlidersHorizontal,
   LayoutDashboard,
   Settings,
   Star,
-  Clock,
   ExternalLink,
   MoreVertical,
   Layers,
@@ -58,9 +61,12 @@ import {
   CheckSquare,
   Square,
   XCircle,
-  Check
+  Check,
+  Maximize2,
+  Minimize2,
+  Copy
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import Swal from 'sweetalert2';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -538,6 +544,538 @@ const ChapterPreviewModal = ({ chapter, onClose }: { chapter: Chapter, onClose: 
   );
 };
 
+// --- Mobile Reader Components ---
+
+const MobileReader = ({ 
+  novels, 
+  categories, 
+  onNovelSelect,
+  user,
+  onLogin,
+  isAdmin,
+  onSwitchToDashboard
+}: { 
+  novels: Novel[], 
+  categories: Category[],
+  onNovelSelect: (novel: Novel) => void,
+  user: User | null,
+  onLogin: () => void,
+  isAdmin: boolean,
+  onSwitchToDashboard: () => void
+}) => {
+  const [readerView, setReaderView] = useState<'home' | 'novel-details' | 'reading'>('home');
+  const [selectedNovel, setSelectedNovel] = useState<Novel | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [loadingChapters, setLoadingChapters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('الكل');
+  const [fontSize, setFontSize] = useState(18);
+  const [theme, setTheme] = useState<'light' | 'dark' | 'sepia'>('dark');
+  const [isFocusMode, setIsFocusMode] = useState(false);
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      Swal.fire({
+        title: 'تم النسخ!',
+        text: 'تم نسخ محتوى الفصل إلى الحافظة بنجاح.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        background: theme === 'dark' ? '#1e1e1e' : '#fff',
+        color: theme === 'dark' ? '#fff' : '#000',
+      });
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      Swal.fire({
+        title: 'خطأ!',
+        text: 'فشل نسخ المحتوى. يرجى المحاولة مرة أخرى.',
+        icon: 'error',
+        background: theme === 'dark' ? '#1e1e1e' : '#fff',
+        color: theme === 'dark' ? '#fff' : '#000',
+      });
+    }
+  };
+
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
+  // Fetch chapters when novel is selected
+  useEffect(() => {
+    if (selectedNovel) {
+      setLoadingChapters(true);
+      const q = query(collection(db, 'chapters'), orderBy('order', 'asc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const allChapters = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Chapter));
+        const novelChapters = allChapters.filter(c => c.novelId === selectedNovel.id);
+        setChapters(novelChapters);
+        setLoadingChapters(false);
+      });
+      return () => unsubscribe();
+    }
+  }, [selectedNovel]);
+
+  const filteredNovels = novels.filter(novel => {
+    const matchesSearch = novel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         novel.author.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'الكل' || novel.categories?.includes(selectedCategory);
+    return matchesSearch && matchesCategory;
+  });
+
+  const getWordCount = (content: string) => {
+    if (!content) return 0;
+    return content.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
+
+  const handleNovelClick = (novel: Novel) => {
+    setSelectedNovel(novel);
+    setReaderView('novel-details');
+    window.scrollTo(0, 0);
+  };
+
+  const handleChapterClick = (chapter: Chapter) => {
+    setSelectedChapter(chapter);
+    setReaderView('reading');
+    window.scrollTo(0, 0);
+  };
+
+  const goBack = () => {
+    if (readerView === 'reading') setReaderView('novel-details');
+    else if (readerView === 'novel-details') setReaderView('home');
+    window.scrollTo(0, 0);
+  };
+
+  const nextChapter = () => {
+    if (!selectedChapter) return;
+    const currentIndex = chapters.findIndex(c => c.id === selectedChapter.id);
+    if (currentIndex < chapters.length - 1) {
+      setSelectedChapter(chapters[currentIndex + 1]);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const prevChapter = () => {
+    if (!selectedChapter) return;
+    const currentIndex = chapters.findIndex(c => c.id === selectedChapter.id);
+    if (currentIndex > 0) {
+      setSelectedChapter(chapters[currentIndex - 1]);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  return (
+    <div className={`min-h-screen font-sans transition-colors duration-500 ${
+      theme === 'dark' ? 'bg-[#0a0a0a] text-white' : 
+      theme === 'sepia' ? 'bg-[#f4ecd8] text-[#5b4636]' : 
+      'bg-white text-gray-900'
+    }`}>
+      {/* Vignette Effect for Reading Mode */}
+      {readerView === 'reading' && (
+        <div className={`fixed inset-0 pointer-events-none z-[45] transition-opacity duration-1000 ${
+          isFocusMode ? 'opacity-100' : 'opacity-60'
+        } ${
+          theme === 'dark' 
+            ? 'bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]' 
+            : 'bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.15)_100%)]'
+        }`} />
+      )}
+
+      {/* Mobile Top Bar */}
+      <AnimatePresence>
+        {!isFocusMode && (
+          <motion.header 
+            initial={{ y: -100 }}
+            animate={{ y: 0 }}
+            exit={{ y: -100 }}
+            className={`fixed top-0 left-0 right-0 z-50 px-6 py-4 backdrop-blur-xl border-b flex items-center justify-between ${
+              theme === 'dark' ? 'bg-[#0a0a0a]/80 border-white/5' : 
+              theme === 'sepia' ? 'bg-[#f4ecd8]/80 border-[#5b4636]/10' : 
+              'bg-white/80 border-gray-100'
+            }`}
+          >
+            {readerView === 'reading' && (
+              <motion.div 
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#F87171] origin-left"
+                style={{ scaleX }}
+              />
+            )}
+            <div className="flex items-center gap-3">
+              {readerView !== 'home' && (
+                <button onClick={goBack} className="p-2 -mr-2">
+                  <ArrowLeft className="w-6 h-6" />
+                </button>
+              )}
+              <span className="font-black text-xl tracking-tight" style={{ fontFamily: "'New Rocker', system-ui" }}>
+                {readerView === 'reading' ? selectedChapter?.title : 'NovelVerse'}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              {readerView === 'reading' && (
+                <>
+                  <button 
+                    onClick={() => selectedChapter && copyToClipboard(selectedChapter.content)}
+                    className="p-2 bg-white/5 rounded-xl hover:bg-white/10 transition-all"
+                    title="نسخ المحتوى"
+                  >
+                    <Copy className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setIsFocusMode(true)}
+                    className="p-2 bg-white/5 rounded-xl hover:bg-white/10 transition-all"
+                    title="وضع التركيز"
+                  >
+                    <Maximize2 className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+              {isAdmin && (
+                <button 
+                  onClick={onSwitchToDashboard}
+                  className="p-2 bg-[#F87171]/10 text-[#F87171] rounded-xl border border-[#F87171]/20"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                </button>
+              )}
+              {!user ? (
+                <button onClick={onLogin} className="p-2">
+                  <LogIn className="w-6 h-6" />
+                </button>
+              ) : (
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10">
+                  <img src={user.photoURL || ''} alt={user.displayName || ''} />
+                </div>
+              )}
+            </div>
+          </motion.header>
+        )}
+      </AnimatePresence>
+
+      {/* Exit Focus Mode & Copy Button */}
+      <AnimatePresence>
+        {isFocusMode && (
+          <div className="fixed top-6 right-6 z-[60] flex flex-col gap-4">
+            <motion.button
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              onClick={() => setIsFocusMode(false)}
+              className="w-12 h-12 bg-[#F87171] text-[#0a0a0a] rounded-full flex items-center justify-center shadow-2xl shadow-[#F87171]/40"
+              title="خروج من وضع التركيز"
+            >
+              <Minimize2 className="w-6 h-6" />
+            </motion.button>
+            <motion.button
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              onClick={() => selectedChapter && copyToClipboard(selectedChapter.content)}
+              className="w-12 h-12 bg-white/10 backdrop-blur-md text-white rounded-full flex items-center justify-center border border-white/20 shadow-2xl"
+              title="نسخ المحتوى"
+            >
+              <Copy className="w-5 h-5" />
+            </motion.button>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <main className={`transition-all duration-500 ${isFocusMode ? 'pt-10' : 'pt-24'} pb-32 px-6 max-w-2xl mx-auto`}>
+        <AnimatePresence mode="wait">
+          {readerView === 'home' && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-8"
+            >
+              {/* Search & Categories */}
+              <div className="space-y-6">
+                <div className="relative group">
+                  <Search className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-[#F87171] transition-colors" />
+                  <input 
+                    type="text"
+                    placeholder="ابحث عن روايتك المفضلة..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full pr-14 pl-6 py-5 bg-white/5 border border-white/5 rounded-3xl focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all text-sm font-bold"
+                  />
+                </div>
+                
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {['الكل', ...categories.map(c => c.name)].map((cat, idx) => (
+                    <button
+                      key={`${cat}-${idx}`}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`px-6 py-3 rounded-2xl text-xs font-black whitespace-nowrap transition-all border ${
+                        selectedCategory === cat 
+                          ? 'bg-[#F87171] border-[#F87171] text-[#0a0a0a]' 
+                          : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Novel Grid */}
+              <div className="grid grid-cols-2 gap-6">
+                {filteredNovels.map(novel => (
+                  <motion.div
+                    key={novel.id}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleNovelClick(novel)}
+                    className="space-y-3 group"
+                  >
+                    <div className="aspect-[2/3] rounded-3xl overflow-hidden border border-white/5 relative shadow-2xl">
+                      <img 
+                        src={novel.coverImages?.[0] || ''} 
+                        alt={novel.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                      <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur-md rounded-lg border border-white/10">
+                        <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                        <span className="text-[10px] font-black">{novel.rating || '0.0'}</span>
+                      </div>
+                    </div>
+                    <h3 className="font-bold text-sm line-clamp-1 px-1">{novel.name}</h3>
+                    <p className="text-[10px] text-white/40 px-1">{novel.author}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {readerView === 'novel-details' && selectedNovel && (
+            <motion.div
+              key="details"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-10"
+            >
+              {/* Hero Section */}
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="w-48 aspect-[2/3] rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10">
+                  <img 
+                    src={selectedNovel.coverImages?.[0] || ''} 
+                    alt={selectedNovel.name}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-black">{selectedNovel.name}</h2>
+                  <p className="text-sm text-[#F87171] font-bold">{selectedNovel.author}</p>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-black">{selectedNovel.rating || '0.0'}</span>
+                    <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">التقييم</span>
+                  </div>
+                  <div className="w-px h-8 bg-white/5" />
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-black">{chapters.length}</span>
+                    <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">فصل</span>
+                  </div>
+                  <div className="w-px h-8 bg-white/5" />
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-black">{selectedNovel.status}</span>
+                    <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">الحالة</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-black uppercase tracking-widest text-white/30">القصة</h3>
+                <p className="text-sm leading-relaxed text-white/60 text-justify">
+                  {selectedNovel.description}
+                </p>
+              </div>
+
+              {/* Chapters List */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-white/30">الفصول</h3>
+                  <span className="text-[10px] font-bold text-[#F87171]">{chapters.length} فصل متوفر</span>
+                </div>
+                
+                <div className="space-y-3">
+                  {loadingChapters ? (
+                    <div className="flex justify-center py-10">
+                      <Loader2 className="w-8 h-8 animate-spin text-[#F87171]" />
+                    </div>
+                  ) : (
+                    chapters.map(chapter => (
+                      <button
+                        key={chapter.id}
+                        onClick={() => handleChapterClick(chapter)}
+                        className="w-full flex items-center justify-between p-5 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs font-black text-white/20 group-hover:text-[#F87171] transition-colors">
+                            {String(chapter.order).padStart(2, '0')}
+                          </span>
+                          <span className="text-sm font-bold">{chapter.title}</span>
+                        </div>
+                        <ChevronLeft className="w-4 h-4 text-white/20 group-hover:text-white transition-colors" />
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {readerView === 'reading' && selectedChapter && (
+            <motion.div
+              key="reading"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              onPanEnd={(_, info) => {
+                const threshold = 100;
+                if (info.offset.x > threshold) {
+                  prevChapter();
+                } else if (info.offset.x < -threshold) {
+                  nextChapter();
+                }
+              }}
+              className="space-y-10"
+            >
+              {/* Chapter Stats */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">
+                  <Clock className="w-3 h-3" />
+                  <span>{Math.ceil(getWordCount(selectedChapter.content) / 200)} دقيقة قراءة</span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-black text-[#F87171] uppercase tracking-[0.2em]">
+                  <FileText className="w-3 h-3" />
+                  <span>{getWordCount(selectedChapter.content)} كلمة</span>
+                </div>
+              </div>
+
+              {/* Reader Content */}
+              <div 
+                className="novel-reader-content"
+                style={{ fontSize: `${fontSize}px` }}
+              >
+                <Markdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    img: ({ src, alt }) => (
+                      <div className="my-10 flex flex-col items-center">
+                        <img 
+                          src={src} 
+                          alt={alt || 'Chapter Image'} 
+                          className="rounded-3xl shadow-2xl max-w-full border border-white/5" 
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    ),
+                    p: ({ children }) => <div className="mb-8 leading-relaxed text-justify">{children}</div>,
+                    h1: ({ children }) => <h1 className="text-2xl font-black mb-6 mt-12">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-xl font-black mb-4 mt-10">{children}</h2>,
+                  }}
+                >
+                  {processChapterContent(selectedChapter.content)}
+                </Markdown>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between pt-10 border-t border-white/5">
+                <button 
+                  onClick={prevChapter}
+                  disabled={chapters.findIndex(c => c.id === selectedChapter.id) === 0}
+                  className="flex items-center gap-2 px-6 py-4 bg-white/5 rounded-2xl font-bold text-sm disabled:opacity-20"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                  السابق
+                </button>
+                <button 
+                  onClick={nextChapter}
+                  disabled={chapters.findIndex(c => c.id === selectedChapter.id) === chapters.length - 1}
+                  className="flex items-center gap-2 px-6 py-4 bg-[#F87171] text-[#0a0a0a] rounded-2xl font-bold text-sm disabled:opacity-20"
+                >
+                  التالي
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      {/* Reader Controls (Only in reading view) */}
+      <AnimatePresence>
+        {readerView === 'reading' && !isFocusMode && (
+          <motion.div 
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            className={`fixed bottom-0 left-0 right-0 z-50 p-6 border-t backdrop-blur-xl flex items-center justify-around ${
+              theme === 'dark' ? 'bg-[#0a0a0a]/80 border-white/5' : 
+              theme === 'sepia' ? 'bg-[#f4ecd8]/80 border-[#5b4636]/10' : 
+              'bg-white/80 border-gray-100'
+            }`}
+          >
+            <button onClick={() => setFontSize(f => Math.max(12, f - 2))} className="p-3 bg-white/5 rounded-xl">
+              <span className="text-xs font-bold">A-</span>
+            </button>
+            <button onClick={() => setFontSize(f => Math.min(32, f + 2))} className="p-3 bg-white/5 rounded-xl">
+              <span className="text-lg font-bold">A+</span>
+            </button>
+            <div className="flex gap-2">
+              <button onClick={() => setTheme('dark')} className="w-8 h-8 rounded-full bg-[#0a0a0a] border border-white/20" />
+              <button onClick={() => setTheme('sepia')} className="w-8 h-8 rounded-full bg-[#f4ecd8] border border-black/10" />
+              <button onClick={() => setTheme('light')} className="w-8 h-8 rounded-full bg-white border border-black/10" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom Navigation (Only in home and details) */}
+      <AnimatePresence>
+        {readerView !== 'reading' && !isFocusMode && (
+          <motion.nav 
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            className={`fixed bottom-0 left-0 right-0 z-50 px-8 py-6 border-t backdrop-blur-xl flex items-center justify-around ${
+              theme === 'dark' ? 'bg-[#0a0a0a]/80 border-white/5' : 
+              theme === 'sepia' ? 'bg-[#f4ecd8]/80 border-[#5b4636]/10' : 
+              'bg-white/80 border-gray-100'
+            }`}
+          >
+            <button onClick={() => setReaderView('home')} className={`flex flex-col items-center gap-1 ${readerView === 'home' ? 'text-[#F87171]' : 'text-white/30'}`}>
+              <Home className="w-6 h-6" />
+              <span className="text-[10px] font-bold">الرئيسية</span>
+            </button>
+            <button className="flex flex-col items-center gap-1 text-white/30">
+              <Library className="w-6 h-6" />
+              <span className="text-[10px] font-bold">المكتبة</span>
+            </button>
+            <button className="flex flex-col items-center gap-1 text-white/30">
+              <BookOpen className="w-6 h-6" />
+              <span className="text-[10px] font-bold">اكتشف</span>
+            </button>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -547,6 +1085,7 @@ export default function App() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   
   // UI State
+  const [mode, setMode] = useState<'dashboard' | 'reader'>('reader');
   const [view, setView] = useState<'novels' | 'chapters' | 'edit-novel' | 'edit-chapter'>('novels');
   const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
   const [editingNovel, setEditingNovel] = useState<Partial<Novel> | null>(null);
@@ -567,6 +1106,14 @@ export default function App() {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const isAdmin = user?.email === "shadyabdowd2020@gmail.com";
+
+  useEffect(() => {
+    if (isAdmin) {
+      setMode('dashboard');
+    } else {
+      setMode('reader');
+    }
+  }, [isAdmin]);
 
   const insertImage = (url: string) => {
     if (!editingChapter || !textareaRef.current) return;
@@ -1104,6 +1651,99 @@ export default function App() {
     }
   };
 
+  const editVolume = async (volumeId: string, currentName: string) => {
+    if (!selectedNovel) return;
+
+    const { value: newName } = await Swal.fire({
+      title: 'تعديل اسم المجلد',
+      input: 'text',
+      inputValue: currentName,
+      inputPlaceholder: 'أدخل الاسم الجديد...',
+      showCancelButton: true,
+      confirmButtonColor: '#F87171',
+      cancelButtonColor: '#1e1e1e',
+      confirmButtonText: 'حفظ',
+      cancelButtonText: 'إلغاء',
+      background: '#1e1e1e',
+      color: '#fff',
+      inputValidator: (value) => {
+        if (!value) {
+          return 'يجب إدخال اسم للمجلد!';
+        }
+        return null;
+      }
+    });
+
+    if (newName) {
+      try {
+        const updatedVolumes = selectedNovel.volumes?.map(v => 
+          v.id === volumeId ? { ...v, name: newName } : v
+        );
+        await updateDoc(doc(db, 'novels', selectedNovel.id), {
+          volumes: updatedVolumes,
+          updatedAt: serverTimestamp()
+        });
+        Swal.fire({
+          title: 'تم التعديل!',
+          text: 'تم تحديث اسم المجلد بنجاح',
+          icon: 'success',
+          background: '#1e1e1e',
+          color: '#fff',
+          confirmButtonColor: '#F87171'
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, `novels/${selectedNovel.id}`);
+      }
+    }
+  };
+
+  const deleteVolume = async (volumeId: string) => {
+    if (!selectedNovel) return;
+
+    const result = await Swal.fire({
+      title: 'هل أنت متأكد؟',
+      text: "سيتم حذف المجلد، وستصبح الفصول التابعة له غير مصنفة.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#F87171',
+      confirmButtonText: 'نعم، احذف',
+      cancelButtonText: 'إلغاء',
+      background: '#1e1e1e',
+      color: '#fff'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        // 1. Update novel volumes
+        const updatedVolumes = selectedNovel.volumes?.filter(v => v.id !== volumeId);
+        await updateDoc(doc(db, 'novels', selectedNovel.id), {
+          volumes: updatedVolumes,
+          updatedAt: serverTimestamp()
+        });
+
+        // 2. Update chapters to remove volumeId
+        const volumeChapters = chapters.filter(c => c.volumeId === volumeId);
+        for (const chapter of volumeChapters) {
+          await updateDoc(doc(db, `novels/${selectedNovel.id}/chapters`, chapter.id), {
+            volumeId: null
+          });
+        }
+
+        Swal.fire({
+          title: 'تم الحذف!',
+          text: 'تم حذف المجلد بنجاح',
+          icon: 'success',
+          background: '#1e1e1e',
+          color: '#fff',
+          confirmButtonColor: '#F87171'
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, `novels/${selectedNovel.id}`);
+      }
+    }
+  };
+
   // --- UI Helpers ---
 
   if (!isAuthReady) {
@@ -1148,6 +1788,23 @@ export default function App() {
           <p className="mt-6 text-xs text-white/50">بواسطة NovelVerse Team</p>
         </motion.div>
       </div>
+    );
+  }
+
+  if (mode === 'reader') {
+    return (
+      <MobileReader 
+        novels={novels}
+        categories={categories}
+        onNovelSelect={(n) => {
+          setSelectedNovel(n);
+          setView('chapters');
+        }}
+        user={user}
+        onLogin={login}
+        isAdmin={isAdmin}
+        onSwitchToDashboard={() => setMode('dashboard')}
+      />
     );
   }
 
@@ -1259,6 +1916,15 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
+            {isAdmin && (
+              <button 
+                onClick={() => setMode('reader')}
+                className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl border border-white/5 transition-all text-xs font-bold"
+              >
+                <BookOpen className="w-4 h-4" />
+                عرض كقارئ
+              </button>
+            )}
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-[#121212] rounded-full border border-white/5">
               <img 
                 src={user.photoURL || ''} 
@@ -1416,7 +2082,7 @@ export default function App() {
                         {novel.categories && novel.categories.length > 0 && (
                           <div className="flex flex-wrap gap-2 mb-6">
                             {novel.categories.slice(0, 2).map((cat, i) => (
-                              <span key={i} className="px-3 py-1 rounded-lg bg-white/5 text-white/40 text-[10px] font-bold border border-white/5 uppercase tracking-wider">
+                              <span key={`${novel.id}-cat-${i}`} className="px-3 py-1 rounded-lg bg-white/5 text-white/40 text-[10px] font-bold border border-white/5 uppercase tracking-wider">
                                 {cat}
                               </span>
                             ))}
@@ -1553,7 +2219,7 @@ export default function App() {
                         <h4 className="text-xs font-black text-white/30 uppercase tracking-[0.2em] mb-4">التصنيفات</h4>
                         <div className="flex flex-wrap gap-2">
                           {selectedNovel.categories?.map((cat, i) => (
-                            <span key={i} className="px-4 py-2 rounded-xl bg-white/5 text-white/60 text-xs font-bold border border-white/5">
+                            <span key={`selected-cat-${i}`} className="px-4 py-2 rounded-xl bg-white/5 text-white/60 text-xs font-bold border border-white/5">
                               {cat}
                             </span>
                           ))}
@@ -1609,13 +2275,13 @@ export default function App() {
                       
                       return (
                         <div key={volume.id} className="bg-[#1e1e1e] rounded-[2rem] border border-white/5 overflow-hidden shadow-lg transition-all">
-                          <button 
+                          <div 
                             onClick={() => {
                               setExpandedVolumes(prev => 
                                 prev.includes(volume.id) ? prev.filter(id => id !== volume.id) : [...prev, volume.id]
                               );
                             }}
-                            className="w-full px-8 py-6 flex items-center justify-between hover:bg-white/5 transition-all group"
+                            className="w-full px-8 py-6 flex items-center justify-between hover:bg-white/5 transition-all group cursor-pointer"
                           >
                             <div className="flex items-center gap-4">
                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isExpanded ? 'bg-[#F87171] text-[#121212]' : 'bg-white/5 text-white/40'}`}>
@@ -1625,6 +2291,30 @@ export default function App() {
                                 <h4 className="font-black text-lg text-white group-hover:text-[#F87171] transition-colors">{volume.name}</h4>
                                 <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{volumeChapters.length} فصل</p>
                               </div>
+                              {isAdmin && (
+                                <div className="flex items-center gap-1 mr-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      editVolume(volume.id, volume.name);
+                                    }}
+                                    className="p-2 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-all"
+                                    title="تعديل الاسم"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteVolume(volume.id);
+                                    }}
+                                    className="p-2 hover:bg-red-500/10 rounded-lg text-white/40 hover:text-red-400 transition-all"
+                                    title="حذف المجلد"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
                             </div>
                             <motion.div
                               animate={{ rotate: isExpanded ? 180 : 0 }}
@@ -1632,7 +2322,7 @@ export default function App() {
                             >
                               <ChevronDown className="w-6 h-6" />
                             </motion.div>
-                          </button>
+                          </div>
 
                           <AnimatePresence>
                             {isExpanded && (
@@ -1942,34 +2632,12 @@ export default function App() {
                 <h2 className="text-2xl font-extrabold text-white">{editingChapter.id ? 'تعديل الفصل' : 'إضافة فصل جديد'}</h2>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                {/* Side Column: Novel Info */}
-                <div className="lg:col-span-1 space-y-6">
-                  <div className="bg-[#1e1e1e] p-6 rounded-[2rem] border border-white/5 shadow-xl">
-                    <div className="aspect-[2/3] mb-6">
-                      <CoverSlider images={selectedNovel?.coverImages || []} />
-                    </div>
-                    <div className="space-y-4">
-                      <h3 className="font-bold text-lg text-white line-clamp-1">{selectedNovel?.name}</h3>
-                      <div className="flex items-center gap-2 text-yellow-500">
-                        <Star className="w-4 h-4 fill-current" />
-                        <span className="text-sm font-bold">{selectedNovel?.rating || '0.0'}</span>
-                        <span className="text-white/50 text-xs font-normal">/ 5.0</span>
-                      </div>
-                      <div className="pt-4 border-t border-white/5">
-                        <p className="text-xs text-white/60 leading-relaxed line-clamp-6">
-                          {selectedNovel?.description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
+              <div className="w-full">
                 {/* Main Column: Chapter Form */}
-                <div className="lg:col-span-3">
+                <div className="w-full">
                   <form onSubmit={saveChapter} className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-                      <div className="md:col-span-1">
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+                      <div className="md:col-span-2">
                         <label className="block text-sm font-bold text-white/60 mb-2">عنوان الفصل</label>
                         <input 
                           type="text"
@@ -2047,43 +2715,16 @@ export default function App() {
                         </div>
                       </div>
                       
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <div className="relative group">
-                          <textarea 
-                            ref={textareaRef}
-                            required
-                            rows={22}
-                            value={editingChapter.content}
-                            onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
-                            className="w-full px-8 py-8 rounded-[2rem] border border-white/5 bg-[#121212] text-white/70 focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-sans text-base leading-relaxed resize-none scrollbar-hide"
-                            placeholder="ابدأ بكتابة أحداث الفصل هنا..."
-                          />
-                        </div>
-                        <div className="w-full px-8 py-8 rounded-[2rem] border border-white/5 bg-[#121212]/30 text-white/70 overflow-y-auto max-h-[600px] scrollbar-hide">
-                          <div className="novel-reader-content max-w-none font-sans text-[11px] leading-relaxed text-justify">
-                            <Markdown 
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                img: ({ src, alt }) => (
-                                  <div className="my-8 flex flex-col items-center">
-                                    <img 
-                                      src={src} 
-                                      alt={alt || 'Preview Image'} 
-                                      className="rounded-2xl shadow-xl max-w-full border border-white/5" 
-                                      referrerPolicy="no-referrer"
-                                    />
-                                    {alt && alt !== 'image' && <span className="mt-2 text-[10px] text-white/20 font-bold uppercase tracking-widest">{alt}</span>}
-                                  </div>
-                                ),
-                                p: ({ children }) => <div className="mb-6">{children}</div>,
-                                h1: ({ children }) => <h1 className="text-xl font-black text-white mb-4 mt-8">{children}</h1>,
-                                h2: ({ children }) => <h2 className="text-lg font-black text-white mb-3 mt-6">{children}</h2>,
-                              }}
-                            >
-                              {processChapterContent(editingChapter.content) || '*المعاينة المباشرة ستظهر هنا...*'}
-                            </Markdown>
-                          </div>
-                        </div>
+                      <div className="relative group">
+                        <textarea 
+                          ref={textareaRef}
+                          required
+                          rows={22}
+                          value={editingChapter.content}
+                          onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
+                          className="w-full px-8 py-8 rounded-[2rem] border border-white/5 bg-[#121212] text-white/70 focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-sans text-base leading-relaxed resize-none scrollbar-hide"
+                          placeholder="ابدأ بكتابة أحداث الفصل هنا..."
+                        />
                       </div>
                     </div>
 
