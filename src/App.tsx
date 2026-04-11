@@ -1085,7 +1085,7 @@ export default function App() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   
   // UI State
-  const [mode, setMode] = useState<'dashboard' | 'reader'>('reader');
+  const [mode, setMode] = useState<'dashboard' | 'reader'>('dashboard');
   const [view, setView] = useState<'novels' | 'chapters' | 'edit-novel' | 'edit-chapter'>('novels');
   const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
   const [editingNovel, setEditingNovel] = useState<Partial<Novel> | null>(null);
@@ -1103,6 +1103,7 @@ export default function App() {
   // Image Insertion State
   const [showImagePopup, setShowImagePopup] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [visibleNovelsCount, setVisibleNovelsCount] = useState(8);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const isAdmin = user?.email === "shadyabdowd2020@gmail.com";
@@ -1114,6 +1115,10 @@ export default function App() {
       setMode('reader');
     }
   }, [isAdmin]);
+
+  useEffect(() => {
+    setVisibleNovelsCount(8);
+  }, [selectedCategory, searchTerm]);
 
   const insertImage = (url: string) => {
     if (!editingChapter || !textareaRef.current) return;
@@ -1791,21 +1796,9 @@ export default function App() {
     );
   }
 
-  if (mode === 'reader') {
-    return (
-      <MobileReader 
-        novels={novels}
-        categories={categories}
-        onNovelSelect={(n) => {
-          setSelectedNovel(n);
-          setView('chapters');
-        }}
-        user={user}
-        onLogin={login}
-        isAdmin={isAdmin}
-        onSwitchToDashboard={() => setMode('dashboard')}
-      />
-    );
+  if (user && !isAdmin && mode === 'dashboard') {
+    // We can keep the dashboard for everyone now or restrict it, 
+    // but the user wanted to remove the reader mode.
   }
 
   return (
@@ -1916,15 +1909,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-4">
-            {isAdmin && (
-              <button 
-                onClick={() => setMode('reader')}
-                className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl border border-white/5 transition-all text-xs font-bold"
-              >
-                <BookOpen className="w-4 h-4" />
-                عرض كقارئ
-              </button>
-            )}
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-[#121212] rounded-full border border-white/5">
               <img 
                 src={user.photoURL || ''} 
@@ -2016,18 +2000,17 @@ export default function App() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {filteredNovels.map(novel => (
+                  {filteredNovels.slice(0, visibleNovelsCount).map(novel => (
                     <motion.div 
                       layoutId={novel.id}
                       key={novel.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ y: -8 }}
                       onClick={() => {
                         setSelectedNovel(novel);
                         setView('chapters');
                       }}
-                      className="group bg-[#1e1e1e] rounded-[2.5rem] border border-white/5 overflow-hidden hover:shadow-[0_20px_50px_rgba(248,113,113,0.1)] transition-all duration-500 flex flex-col h-full cursor-pointer relative"
+                      className={`group bg-[#1e1e1e] rounded-[17px] border ${novel.status === 'مستمرة' ? 'border-[#F87171]/30 animate-border-glow' : 'border-white/5'} overflow-hidden transition-all duration-500 flex flex-col h-full cursor-pointer relative`}
                     >
                       {/* Card Image Section */}
                       <div className="aspect-[2/3] relative overflow-hidden">
@@ -2035,7 +2018,7 @@ export default function App() {
                           <img 
                             src={novel.coverImages[0]} 
                             alt={novel.name} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                             referrerPolicy="no-referrer"
                           />
                         ) : (
@@ -2044,14 +2027,23 @@ export default function App() {
                           </div>
                         )}
                         
+                        {/* Dark Overlay on Hover */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-500 z-10 flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-500 transform">
+                            <div className="w-16 h-16 bg-[#F87171] rounded-full flex items-center justify-center shadow-2xl shadow-[#F87171]/40">
+                              <Eye className="w-8 h-8 text-[#121212]" />
+                            </div>
+                          </div>
+                        </div>
+                        
                         {/* Gradient Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] via-transparent to-transparent opacity-60 z-20" />
 
-                        {/* Status Badge */}
+                        {/* Status Badge (Top Right) */}
                         {novel.status && (
-                          <div className="absolute top-5 right-5">
+                          <div className="absolute top-5 right-5 z-30">
                             <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl backdrop-blur-md border border-white/10 ${
-                              novel.status === 'مستمرة' ? 'bg-yellow-500/80 text-white' : 
+                              novel.status === 'مستمرة' ? 'bg-blue-600/80 text-white' : 
                               novel.status === 'مكتملة' ? 'bg-emerald-500/80 text-white' : 
                               'bg-slate-800/80 text-white'
                             }`}>
@@ -2060,61 +2052,36 @@ export default function App() {
                           </div>
                         )}
 
-                        {/* Rating Badge */}
-                        <div className="absolute bottom-5 right-5 flex items-center gap-1.5 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/5 shadow-xl">
-                          <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
-                          <span className="text-xs font-black text-white">{novel.rating || '0.0'}</span>
+                        {/* Rating Badge (Top Left) */}
+                        <div className="absolute top-5 left-5 flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/5 shadow-2xl z-30">
+                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                          <span className="text-sm font-black text-white">{novel.rating || '0.0'}</span>
                         </div>
                       </div>
                       
-                      {/* Card Content Section */}
                       <div className="p-8 flex-1 flex flex-col relative">
-                        <div className="mb-4">
-                          <h3 className="text-xl font-black text-white mb-2 line-clamp-1 group-hover:text-[#F87171] transition-colors duration-300">
+                        <div className="flex items-center justify-center gap-4">
+                          <h3 className="text-xl font-black text-white line-clamp-1 group-hover:text-[#F87171] transition-colors duration-300 text-center" dir="ltr">
                             {novel.name || 'Untitled'}
                           </h3>
-                          <p className="text-xs text-white/40 mb-4 line-clamp-2 leading-relaxed font-medium">
-                            {novel.description || 'No description available.'}
-                          </p>
-                        </div>
-                        
-                        {/* Categories */}
-                        {novel.categories && novel.categories.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-6">
-                            {novel.categories.slice(0, 2).map((cat, i) => (
-                              <span key={`${novel.id}-cat-${i}`} className="px-3 py-1 rounded-lg bg-white/5 text-white/40 text-[10px] font-bold border border-white/5 uppercase tracking-wider">
-                                {cat}
-                              </span>
-                            ))}
-                            {novel.categories.length > 2 && (
-                              <span className="text-[10px] text-white/20 font-bold self-center">+{novel.categories.length - 2}</span>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Footer */}
-                        <div className="mt-auto pt-6 border-t border-white/5 flex items-center justify-between">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-[#F87171] uppercase tracking-[0.2em] mb-0.5">الكاتب</span>
-                            <span className="text-sm font-bold text-white/70 truncate max-w-[120px]">{novel.author}</span>
-                          </div>
-                          
-                          {isAdmin && (
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteNovel(novel.id);
-                              }}
-                              className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white/5 border border-white/5 text-white/30 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 transition-all duration-300 group/btn"
-                              title="حذف الرواية"
-                            >
-                              <Trash2 className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-                            </button>
-                          )}
                         </div>
                       </div>
                     </motion.div>
                   ))}
+                </div>
+              )}
+
+              {filteredNovels.length > visibleNovelsCount && (
+                <div className="mt-16 flex justify-center">
+                  <button
+                    onClick={() => setVisibleNovelsCount(prev => prev + 8)}
+                    className="group flex items-center gap-4 bg-[#1e1e1e] hover:bg-[#F87171] text-white/60 hover:text-[#121212] px-10 py-5 rounded-3xl font-black transition-all duration-500 border border-white/5 hover:border-[#F87171] shadow-xl hover:shadow-[#F87171]/20"
+                  >
+                    <div className="w-8 h-8 bg-white/5 group-hover:bg-black/10 rounded-xl flex items-center justify-center transition-colors">
+                      <Plus className="w-5 h-5" />
+                    </div>
+                    عرض المزيد من الروايات
+                  </button>
                 </div>
               )}
             </motion.div>
@@ -2706,9 +2673,9 @@ export default function App() {
                           <button
                             type="button"
                             onClick={() => setShowImagePopup(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#F87171]/10 hover:bg-[#F87171]/20 text-[#F87171] rounded-xl border border-[#F87171]/20 transition-all text-xs font-bold"
+                            className="flex items-center gap-3 px-8 py-5 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] rounded-2xl transition-all text-sm font-black shadow-lg shadow-[#F87171]/20 hover:scale-[1.02] active:scale-[0.98]"
                           >
-                            <ImageIcon className="w-4 h-4" />
+                            <ImageIcon className="w-5 h-5" />
                             إضافة صورة
                           </button>
                           <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">يدعم التنسيق البسيط (Markdown)</span>
@@ -2722,7 +2689,7 @@ export default function App() {
                           rows={22}
                           value={editingChapter.content}
                           onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
-                          className="w-full px-8 py-8 rounded-[2rem] border border-white/5 bg-[#121212] text-white/70 focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-sans text-base leading-relaxed resize-none scrollbar-hide"
+                          className="w-full px-10 py-10 rounded-[3rem] border border-white/5 bg-[#121212] text-white/80 focus:ring-4 focus:ring-[#F87171]/20 outline-none transition-all font-sans text-lg leading-relaxed resize-none scrollbar-hide shadow-inner"
                           placeholder="ابدأ بكتابة أحداث الفصل هنا..."
                         />
                       </div>
