@@ -2012,20 +2012,6 @@ export default function App() {
                       }}
                       className={`group bg-[#1e1e1e] rounded-[17px] border ${novel.status === 'مستمرة' ? 'border-[#F87171]/30 animate-border-glow' : 'border-white/5'} transition-all duration-500 flex flex-col h-full cursor-pointer relative hover:z-50`}
                     >
-                      {/* Floating Tooltip */}
-                      <div className="absolute bottom-[calc(100%+20px)] left-1/2 -translate-x-1/2 w-72 p-6 bg-[#1e1e1e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500 pointer-events-none z-[100] hidden lg:block">
-                        <div className="relative">
-                          <h4 className="font-black text-[#F87171] text-sm mb-1 leading-tight">{novel.name}</h4>
-                          <p className="text-[10px] font-bold text-white/30 mb-4 uppercase tracking-[0.2em]">{novel.author}</p>
-                          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4" />
-                          <p className="text-[11px] text-white/60 leading-relaxed line-clamp-6 text-right font-medium" dir="rtl">
-                            {novel.description}
-                          </p>
-                          {/* Arrow */}
-                          <div className="absolute top-[calc(100%+26px)] left-1/2 -translate-x-1/2 border-[10px] border-transparent border-t-[#1e1e1e]/95" />
-                        </div>
-                      </div>
-
                       {/* Card Image Section */}
                       <div className="aspect-[2/3] relative overflow-hidden rounded-t-[17px]">
                         {novel.coverImages && novel.coverImages.length > 0 ? (
@@ -2055,11 +2041,11 @@ export default function App() {
 
                         {/* Status Badge (Top Right) */}
                         {novel.status && (
-                          <div className="absolute top-5 right-5 z-30">
-                            <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl backdrop-blur-md border border-white/10 ${
-                              novel.status === 'مستمرة' ? 'bg-blue-600/80 text-white' : 
-                              novel.status === 'مكتملة' ? 'bg-emerald-500/80 text-white' : 
-                              'bg-slate-800/80 text-white'
+                          <div className="absolute top-5 right-5 z-30 flex items-center px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/5 shadow-2xl">
+                            <span className={`text-base font-black uppercase tracking-widest ${
+                              novel.status === 'مستمرة' ? 'text-blue-400' : 
+                              novel.status === 'مكتملة' ? 'text-emerald-400' : 
+                              'text-white/70'
                             }`}>
                               {novel.status}
                             </span>
@@ -2069,11 +2055,25 @@ export default function App() {
                         {/* Rating Badge (Top Left) */}
                         <div className="absolute top-5 left-5 flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/5 shadow-2xl z-30">
                           <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          <span className="text-sm font-black text-white">{novel.rating || '0.0'}</span>
+                          <span className="text-base font-black text-white">{novel.rating || '0.0'}</span>
                         </div>
                       </div>
                       
                       <div className="p-8 flex-1 flex flex-col relative">
+                        {/* Floating Tooltip (Now positioned above the title) */}
+                        <div className="absolute bottom-[calc(100%-20px)] left-1/2 -translate-x-1/2 w-72 p-6 bg-[#1e1e1e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500 pointer-events-none z-[100] hidden lg:block">
+                          <div className="relative">
+                            <h4 className="font-black text-[#F87171] text-sm mb-1 leading-tight">{novel.name}</h4>
+                            <p className="text-[10px] font-bold text-white/30 mb-4 uppercase tracking-[0.2em]">{novel.author}</p>
+                            <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4" />
+                            <p className="text-[11px] text-white/60 leading-relaxed line-clamp-6 text-right font-medium" dir="rtl">
+                              {novel.description}
+                            </p>
+                            {/* Arrow */}
+                            <div className="absolute top-[calc(100%+26px)] left-1/2 -translate-x-1/2 border-[10px] border-transparent border-t-[#1e1e1e]/95" />
+                          </div>
+                        </div>
+
                         <div className="flex items-center justify-center gap-4">
                           <h3 className="text-xl font-black text-white line-clamp-1 group-hover:text-[#F87171] transition-colors duration-300 text-center" dir="ltr">
                             {novel.name || 'Untitled'}
