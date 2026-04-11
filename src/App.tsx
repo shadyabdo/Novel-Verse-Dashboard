@@ -2010,10 +2010,24 @@ export default function App() {
                         setSelectedNovel(novel);
                         setView('chapters');
                       }}
-                      className={`group bg-[#1e1e1e] rounded-[17px] border ${novel.status === 'مستمرة' ? 'border-[#F87171]/30 animate-border-glow' : 'border-white/5'} overflow-hidden transition-all duration-500 flex flex-col h-full cursor-pointer relative`}
+                      className={`group bg-[#1e1e1e] rounded-[17px] border ${novel.status === 'مستمرة' ? 'border-[#F87171]/30 animate-border-glow' : 'border-white/5'} transition-all duration-500 flex flex-col h-full cursor-pointer relative hover:z-50`}
                     >
+                      {/* Floating Tooltip */}
+                      <div className="absolute bottom-[calc(100%+20px)] left-1/2 -translate-x-1/2 w-72 p-6 bg-[#1e1e1e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500 pointer-events-none z-[100] hidden lg:block">
+                        <div className="relative">
+                          <h4 className="font-black text-[#F87171] text-sm mb-1 leading-tight">{novel.name}</h4>
+                          <p className="text-[10px] font-bold text-white/30 mb-4 uppercase tracking-[0.2em]">{novel.author}</p>
+                          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4" />
+                          <p className="text-[11px] text-white/60 leading-relaxed line-clamp-6 text-right font-medium" dir="rtl">
+                            {novel.description}
+                          </p>
+                          {/* Arrow */}
+                          <div className="absolute top-[calc(100%+26px)] left-1/2 -translate-x-1/2 border-[10px] border-transparent border-t-[#1e1e1e]/95" />
+                        </div>
+                      </div>
+
                       {/* Card Image Section */}
-                      <div className="aspect-[2/3] relative overflow-hidden">
+                      <div className="aspect-[2/3] relative overflow-hidden rounded-t-[17px]">
                         {novel.coverImages && novel.coverImages.length > 0 ? (
                           <img 
                             src={novel.coverImages[0]} 
@@ -2028,10 +2042,10 @@ export default function App() {
                         )}
                         
                         {/* Dark Overlay on Hover */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-500 z-10 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors duration-500 z-10 flex items-center justify-center">
                           <div className="opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-500 transform">
-                            <div className="w-16 h-16 bg-[#F87171] rounded-full flex items-center justify-center shadow-2xl shadow-[#F87171]/40">
-                              <Eye className="w-8 h-8 text-[#121212]" />
+                            <div className="w-16 h-16 bg-[#F87171] rounded-2xl flex items-center justify-center shadow-2xl shadow-[#F87171]/40 rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                              <BookOpen className="w-8 h-8 text-[#121212]" />
                             </div>
                           </div>
                         </div>
