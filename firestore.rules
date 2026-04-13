@@ -73,7 +73,7 @@ service cloud.firestore {
     }
 
     match /novels/{novelId} {
-      allow read: if true;
+      allow read: if isAdmin() || !('isDraft' in resource.data) || resource.data.isDraft == false;
       allow create: if isAdmin() && isValidNovel(request.resource.data) && 
                       request.resource.data.createdAt == request.time;
       allow update: if isAdmin() && isValidNovel(request.resource.data) && 
@@ -81,7 +81,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       match /chapters/{chapterId} {
-        allow read: if true;
+        allow read: if isAdmin() || !('isDraft' in resource.data) || resource.data.isDraft == false;
         allow create: if isAdmin() && isValidChapter(request.resource.data, novelId);
         allow update: if isAdmin() && isValidChapter(request.resource.data, novelId);
         allow delete: if isAdmin();

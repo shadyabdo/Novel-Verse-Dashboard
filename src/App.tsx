@@ -67,6 +67,7 @@ import {
   Copy
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
+import { useInView } from 'react-intersection-observer';
 import Swal from 'sweetalert2';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -88,6 +89,7 @@ interface Novel {
   categories?: string[];
   status?: string;
   rating?: number;
+  isDraft?: boolean;
   volumes?: Volume[];
   createdAt?: any;
   updatedAt?: any;
@@ -101,6 +103,7 @@ interface Chapter {
   content: string;
   order: number;
   date?: string;
+  isDraft?: boolean;
   isEndOfVolume?: boolean;
   createdAt?: any;
   updatedAt?: any;
@@ -356,7 +359,14 @@ const ChapterRow = ({
           {chapter.order}
         </div>
         <div>
-          <h4 className="font-bold text-white mb-1 group-hover:text-white transition-colors">{chapter.title}</h4>
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className="font-bold text-white group-hover:text-white transition-colors">{chapter.title}</h4>
+            {chapter.isDraft && (
+              <span className="px-2 py-0.5 rounded-md bg-yellow-500/10 text-yellow-500 text-[8px] font-black uppercase tracking-widest border border-yellow-500/20">
+                مسودة
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-3 text-[10px] text-white/50 font-bold uppercase tracking-widest">
             <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {chapter.date}</span>
             <span className="w-1 h-1 bg-slate-700 rounded-full" />
@@ -1104,7 +1114,23 @@ export default function App() {
   const [showImagePopup, setShowImagePopup] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [visibleNovelsCount, setVisibleNovelsCount] = useState(8);
+  const [visibleChaptersCount, setVisibleChaptersCount] = useState(20);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const { ref: novelsEndRef, inView: novelsEndInView } = useInView();
+  const { ref: chaptersEndRef, inView: chaptersEndInView } = useInView();
+
+  useEffect(() => {
+    if (novelsEndInView) {
+      setVisibleNovelsCount(prev => prev + 8);
+    }
+  }, [novelsEndInView]);
+
+  useEffect(() => {
+    if (chaptersEndInView) {
+      setVisibleChaptersCount(prev => prev + 20);
+    }
+  }, [chaptersEndInView]);
 
   const isAdmin = user?.email === "shadyabdowd2020@gmail.com";
 
@@ -1119,6 +1145,10 @@ export default function App() {
   useEffect(() => {
     setVisibleNovelsCount(8);
   }, [selectedCategory, searchTerm]);
+
+  useEffect(() => {
+    setVisibleChaptersCount(20);
+  }, [selectedNovel]);
 
   const insertImage = (url: string) => {
     if (!editingChapter || !textareaRef.current) return;
@@ -1228,6 +1258,14 @@ export default function App() {
 
     return () => unsubscribe();
   }, [isAuthReady, user, isAdmin]);
+
+  const isRecent = (timestamp: any) => {
+    if (!timestamp) return false;
+    const date = timestamp instanceof Timestamp ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    return diff < 24 * 60 * 60 * 1000; // 24 hours
+  };
 
   // Chapters Listener
   useEffect(() => {
@@ -1439,6 +1477,10 @@ export default function App() {
     const name = n.name || '';
     const author = n.author || '';
     const search = searchTerm || '';
+    
+    // Hide drafts from non-admins
+    if (!isAdmin && n.isDraft) return false;
+
     const matchesSearch = name.toLowerCase().includes(search.toLowerCase()) || 
                          author.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategory === 'الكل' || (n.categories && n.categories.includes(selectedCategory));
@@ -2028,8 +2070,8 @@ export default function App() {
                         )}
                         
                         {/* Dark Overlay on Hover */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-colors duration-500 z-10 flex items-center justify-center">
-                          <div className="opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-500 transform">
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/85 transition-colors duration-500 z-10 flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-500 transform lg:hidden">
                             <div className="w-16 h-16 bg-[#F87171] rounded-2xl flex items-center justify-center shadow-2xl shadow-[#F87171]/40 rotate-12 group-hover:rotate-0 transition-transform duration-500">
                               <BookOpen className="w-8 h-8 text-[#121212]" />
                             </div>
@@ -2053,10 +2095,28 @@ export default function App() {
                         )}
 
                         {/* Rating Badge (Top Left) */}
-                        <div className="absolute top-5 left-5 flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/5 shadow-2xl z-30">
-                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          <span className="text-base font-black text-white">{novel.rating || '0.0'}</span>
+                        <div className="absolute top-5 left-5 flex flex-col gap-2 z-30">
+                          <div className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/5 shadow-2xl">
+                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                            <span className="text-base font-black text-white">{novel.rating || '0.0'}</span>
+                          </div>
+                          
+                          {(isRecent(novel.createdAt) || isRecent(novel.updatedAt)) && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F87171] rounded-full shadow-lg shadow-[#F87171]/20 self-start animate-pulse">
+                              <Clock className="w-3 h-3 text-[#121212]" />
+                              <span className="text-[10px] font-black text-[#121212] uppercase tracking-widest">جديد</span>
+                            </div>
+                          )}
                         </div>
+
+                        {/* Draft Badge (Bottom Right of Image) */}
+                        {novel.isDraft && isAdmin && (
+                          <div className="absolute bottom-5 right-5 z-30 flex items-center px-4 py-2 bg-yellow-500/80 backdrop-blur-md rounded-full border border-yellow-500/20 shadow-2xl">
+                            <span className="text-xs font-black text-[#121212] uppercase tracking-widest">
+                              مسودة
+                            </span>
+                          </div>
+                        )}
                       </div>
                       
                       <div className="p-8 flex-1 flex flex-col relative">
@@ -2086,16 +2146,11 @@ export default function App() {
               )}
 
               {filteredNovels.length > visibleNovelsCount && (
-                <div className="mt-16 flex justify-center">
-                  <button
-                    onClick={() => setVisibleNovelsCount(prev => prev + 8)}
-                    className="group flex items-center gap-4 bg-[#1e1e1e] hover:bg-[#F87171] text-white/60 hover:text-[#121212] px-10 py-5 rounded-3xl font-black transition-all duration-500 border border-white/5 hover:border-[#F87171] shadow-xl hover:shadow-[#F87171]/20"
-                  >
-                    <div className="w-8 h-8 bg-white/5 group-hover:bg-black/10 rounded-xl flex items-center justify-center transition-colors">
-                      <Plus className="w-5 h-5" />
-                    </div>
-                    عرض المزيد من الروايات
-                  </button>
+                <div ref={novelsEndRef} className="mt-16 flex justify-center py-10">
+                  <div className="flex items-center gap-3 text-white/20">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span className="text-sm font-bold">جاري تحميل المزيد...</span>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -2251,7 +2306,10 @@ export default function App() {
                   <div className="space-y-4">
                     {/* Explicit Volumes */}
                     {(selectedNovel.volumes || []).sort((a, b) => a.order - b.order).map(volume => {
-                      const volumeChapters = chapters.filter(c => c.volumeId === volume.id);
+                      const volumeChapters = chapters
+                        .filter(c => c.volumeId === volume.id)
+                        .filter(c => isAdmin || !c.isDraft)
+                        .slice(0, visibleChaptersCount);
                       const isExpanded = expandedVolumes.includes(volume.id);
                       
                       return (
@@ -2341,7 +2399,10 @@ export default function App() {
 
                     {/* Uncategorized Chapters (Fallback or General) */}
                     {(() => {
-                      const uncategorized = chapters.filter(c => !c.volumeId);
+                      const uncategorized = chapters
+                        .filter(c => !c.volumeId)
+                        .filter(c => isAdmin || !c.isDraft)
+                        .slice(0, visibleChaptersCount);
                       if (uncategorized.length === 0) return null;
 
                       const isExpanded = expandedVolumes.includes('uncategorized');
@@ -2401,6 +2462,14 @@ export default function App() {
                         </div>
                       );
                     })()}
+                    {chapters.length > visibleChaptersCount && (
+                      <div ref={chaptersEndRef} className="mt-8 flex justify-center py-6">
+                        <div className="flex items-center gap-3 text-white/20">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span className="text-xs font-bold">جاري تحميل المزيد من الفصول...</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -2496,6 +2565,21 @@ export default function App() {
                           className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setEditingNovel({...editingNovel, isDraft: !editingNovel.isDraft})}
+                        className={`w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border transition-all font-bold text-sm ${
+                          editingNovel.isDraft 
+                            ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500' 
+                            : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
+                        }`}
+                      >
+                        {editingNovel.isDraft ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+                        حفظ كرواية مسودة (لن تظهر للقراء)
+                      </button>
                     </div>
 
                     <div>
@@ -2673,6 +2757,20 @@ export default function App() {
                         >
                           {editingChapter.isEndOfVolume ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
                           نهاية المجلد
+                        </button>
+                      </div>
+                      <div className="flex flex-col justify-end pb-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingChapter({...editingChapter, isDraft: !editingChapter.isDraft})}
+                          className={`flex items-center gap-3 px-5 py-4 rounded-2xl border transition-all font-bold text-sm ${
+                            editingChapter.isDraft 
+                              ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500' 
+                              : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
+                          }`}
+                        >
+                          {editingChapter.isDraft ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+                          مسودة
                         </button>
                       </div>
                     </div>
