@@ -2052,7 +2052,7 @@ export default function App() {
                         setSelectedNovel(novel);
                         setView('chapters');
                       }}
-                      className={`group bg-[#1e1e1e] rounded-[17px] border ${novel.status === 'مستمرة' ? 'border-[#F87171]/30 animate-border-glow' : 'border-white/5'} transition-all duration-500 flex flex-col h-full cursor-pointer relative hover:z-50`}
+                      className={`group bg-[#1e1e1e] rounded-[17px] border-2 ${novel.status === 'مستمرة' ? 'border-[#F87171] animate-border-glow' : 'border-slate-400/20'} transition-all duration-500 flex flex-col h-full cursor-pointer relative hover:z-50`}
                     >
                       {/* Card Image Section */}
                       <div className="aspect-[2/3] relative overflow-hidden rounded-t-[17px]">
@@ -2060,7 +2060,7 @@ export default function App() {
                           <img 
                             src={novel.coverImages[0]} 
                             alt={novel.name} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                            className="w-full h-full object-cover group-hover:scale-110 group-hover:grayscale transition-all duration-700 ease-out"
                             referrerPolicy="no-referrer"
                           />
                         ) : (
@@ -2070,7 +2070,7 @@ export default function App() {
                         )}
                         
                         {/* Dark Overlay on Hover */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/85 transition-colors duration-500 z-10 flex items-center justify-center">
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-500 z-10 flex items-center justify-center">
                           <div className="opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-500 transform lg:hidden">
                             <div className="w-16 h-16 bg-[#F87171] rounded-2xl flex items-center justify-center shadow-2xl shadow-[#F87171]/40 rotate-12 group-hover:rotate-0 transition-transform duration-500">
                               <BookOpen className="w-8 h-8 text-[#121212]" />
