@@ -68,6 +68,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import { useInView } from 'react-intersection-observer';
+import QuickPinchZoom, { make3dTransformValue } from 'react-quick-pinch-zoom';
 import Swal from 'sweetalert2';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -581,8 +582,35 @@ const MobileReader = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('الكل');
   const [fontSize, setFontSize] = useState(18);
+  const [lineSpacing, setLineSpacing] = useState(1.8);
   const [theme, setTheme] = useState<'light' | 'dark' | 'sepia'>('dark');
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
+  const onUpdate = useCallback(({ x, y, scale }: { x: number, y: number, scale: number }, imgRef: React.RefObject<HTMLImageElement>) => {
+    const value = make3dTransformValue({ x, y, scale });
+    if (imgRef.current) {
+      imgRef.current.style.setProperty('transform', value);
+    }
+  }, []);
+
+  const ZoomableImage = ({ src, alt }: { src: string, alt?: string }) => {
+    const imgRef = useRef<HTMLImageElement>(null);
+    return (
+      <div className="my-10 flex flex-col items-center w-full overflow-hidden rounded-3xl">
+        <QuickPinchZoom onUpdate={(obj) => onUpdate(obj, imgRef)}>
+          <img 
+            ref={imgRef}
+            src={src} 
+            alt={alt || 'Chapter Image'} 
+            className="rounded-3xl shadow-2xl max-w-full border border-white/5" 
+            referrerPolicy="no-referrer"
+          />
+        </QuickPinchZoom>
+        {alt && alt !== 'image' && <span className="mt-5 text-[10px] text-white/20 font-black uppercase tracking-[0.3em]">{alt}</span>}
+      </div>
+    );
+  };
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -927,7 +955,10 @@ const MobileReader = ({
                     chapters.map(chapter => (
                       <button
                         key={chapter.id}
-                        onClick={() => handleChapterClick(chapter)}
+                        onClick={() => {
+                          setSelectedChapter(chapter);
+                          setShowSettings(true);
+                        }}
                         className="w-full flex items-center justify-between p-5 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all group"
                       >
                         <div className="flex items-center gap-4">
@@ -942,6 +973,103 @@ const MobileReader = ({
                   )}
                 </div>
               </div>
+
+              {/* Chapter Settings Popup */}
+              <AnimatePresence>
+                {showSettings && selectedChapter && (
+                  <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <motion.div 
+                      initial={{ y: '100%' }}
+                      animate={{ y: 0 }}
+                      exit={{ y: '100%' }}
+                      className={`w-full max-w-md rounded-t-[3rem] p-10 space-y-8 shadow-2xl border-t border-white/10 ${
+                        theme === 'dark' ? 'bg-[#1e1e1e]' : 
+                        theme === 'sepia' ? 'bg-[#f4ecd8]' : 'bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-black">إعدادات القراءة</h3>
+                        <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-white/5 rounded-xl">
+                          <X className="w-6 h-6" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold text-white/40">حجم الخط</span>
+                            <span className="text-sm font-black text-[#F87171]">{fontSize}px</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <button onClick={() => setFontSize(f => Math.max(12, f - 2))} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl border border-white/5">
+                              <Minus className="w-4 h-4" />
+                            </button>
+                            <input 
+                              type="range" 
+                              min="12" 
+                              max="32" 
+                              value={fontSize} 
+                              onChange={(e) => setFontSize(parseInt(e.target.value))}
+                              className="flex-1 h-1.5 bg-white/10 rounded-full appearance-none accent-[#F87171] cursor-pointer"
+                            />
+                            <button onClick={() => setFontSize(f => Math.min(32, f + 2))} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl border border-white/5">
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold text-white/40">تباعد الأسطر</span>
+                            <span className="text-sm font-black text-[#F87171]">{lineSpacing.toFixed(1)}</span>
+                          </div>
+                          <input 
+                            type="range" 
+                            min="1.2" 
+                            max="3.0" 
+                            step="0.1"
+                            value={lineSpacing} 
+                            onChange={(e) => setLineSpacing(parseFloat(e.target.value))}
+                            className="w-full h-1.5 bg-white/10 rounded-full appearance-none accent-[#F87171] cursor-pointer"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3">
+                          <button 
+                            onClick={() => setTheme('dark')} 
+                            className={`py-4 rounded-2xl border-2 transition-all font-bold text-xs ${theme === 'dark' ? 'border-[#F87171] bg-[#0a0a0a] text-white' : 'border-white/5 bg-[#0a0a0a] text-white/40'}`}
+                          >
+                            داكن
+                          </button>
+                          <button 
+                            onClick={() => setTheme('sepia')} 
+                            className={`py-4 rounded-2xl border-2 transition-all font-bold text-xs ${theme === 'sepia' ? 'border-[#F87171] bg-[#f4ecd8] text-[#5b4636]' : 'border-white/5 bg-[#f4ecd8] text-[#5b4636]/40'}`}
+                          >
+                            سيبيا
+                          </button>
+                          <button 
+                            onClick={() => setTheme('light')} 
+                            className={`py-4 rounded-2xl border-2 transition-all font-bold text-xs ${theme === 'light' ? 'border-[#F87171] bg-white text-gray-900' : 'border-white/5 bg-white text-gray-400'}`}
+                          >
+                            فاتح
+                          </button>
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={() => {
+                          setShowSettings(false);
+                          setReaderView('reading');
+                          window.scrollTo(0, 0);
+                        }}
+                        className="w-full py-5 bg-[#F87171] text-[#0a0a0a] font-black rounded-2xl shadow-xl shadow-[#F87171]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      >
+                        ابدأ القراءة الآن
+                      </button>
+                    </motion.div>
+                  </div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
 
@@ -963,37 +1091,16 @@ const MobileReader = ({
               }}
               className="space-y-10"
             >
-              {/* Chapter Stats */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">
-                  <Clock className="w-3 h-3" />
-                  <span>{Math.ceil(getWordCount(selectedChapter.content) / 200)} دقيقة قراءة</span>
-                </div>
-                <div className="flex items-center gap-2 text-[10px] font-black text-[#F87171] uppercase tracking-[0.2em]">
-                  <FileText className="w-3 h-3" />
-                  <span>{getWordCount(selectedChapter.content)} كلمة</span>
-                </div>
-              </div>
-
               {/* Reader Content */}
               <div 
                 className="novel-reader-content"
-                style={{ fontSize: `${fontSize}px` }}
+                style={{ fontSize: `${fontSize}px`, lineHeight: lineSpacing }}
               >
                 <Markdown 
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    img: ({ src, alt }) => (
-                      <div className="my-10 flex flex-col items-center">
-                        <img 
-                          src={src} 
-                          alt={alt || 'Chapter Image'} 
-                          className="rounded-3xl shadow-2xl max-w-full border border-white/5" 
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                    ),
-                    p: ({ children }) => <div className="mb-8 leading-relaxed text-justify">{children}</div>,
+                    img: ({ src, alt }) => <ZoomableImage src={src || ''} alt={alt || ''} />,
+                    p: ({ children }) => <div className="mb-8 text-justify">{children}</div>,
                     h1: ({ children }) => <h1 className="text-2xl font-black mb-6 mt-12">{children}</h1>,
                     h2: ({ children }) => <h2 className="text-xl font-black mb-4 mt-10">{children}</h2>,
                   }}
