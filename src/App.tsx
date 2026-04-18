@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   collection, 
   onSnapshot, 
@@ -464,6 +464,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSidebar, setShowSidebar] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const groupedChapters = useMemo(() => {
     const groups: { [key: string]: Chapter[] } = { 'none': [] };
@@ -656,6 +657,45 @@ export default function App() {
         });
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, `novels/${selectedNovel.id}/volumes/${id}`);
+      }
+    }
+  };
+
+  const addImageToContent = async () => {
+    const { value: url } = await Swal.fire({
+      title: 'إضافة صورة',
+      input: 'url',
+      inputLabel: 'رابط الصورة',
+      inputPlaceholder: 'أدخل رابط الصورة هنا...',
+      showCancelButton: true,
+      confirmButtonText: 'إضافة',
+      cancelButtonText: 'إلغاء',
+      background: '#1e1e1e',
+      color: '#fff',
+      confirmButtonColor: '#f86e7e'
+    });
+
+    if (url) {
+      const imageMarkdown = `![صورة](${url})`;
+      const textarea = textareaRef.current;
+      if (textarea) {
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = editingChapter?.content || '';
+        const newText = text.substring(0, start) + imageMarkdown + text.substring(end);
+        setEditingChapter({ ...editingChapter, content: newText });
+        
+        // Focus back to textarea after state update
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start + imageMarkdown.length, start + imageMarkdown.length);
+        }, 0);
+      } else {
+        // Fallback if ref is not ready
+        setEditingChapter({ 
+          ...editingChapter, 
+          content: (editingChapter?.content || '') + '\n' + imageMarkdown 
+        });
       }
     }
   };
@@ -1767,11 +1807,22 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-slate-400 mb-2">
-                        محتوى الفصل
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mt-1">يدعم التنسيق البسيط (Markdown)</span>
+                      <label className="block text-sm font-bold text-slate-400 mb-2 flex items-center justify-between">
+                        <span>محتوى الفصل</span>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            type="button"
+                            onClick={addImageToContent}
+                            className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border border-white/5"
+                          >
+                            <ImageIcon className="w-3.5 h-3.5 text-[#f86e7e]" />
+                            إضافة صورة
+                          </button>
+                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest hidden sm:inline">يدعم Markdown</span>
+                        </div>
                       </label>
                       <textarea 
+                        ref={textareaRef}
                         required
                         rows={22}
                         value={editingChapter.content}
