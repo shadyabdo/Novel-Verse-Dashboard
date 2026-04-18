@@ -231,7 +231,7 @@ const CoverSlider = React.memo(({ images }: { images: string[] }) => {
             {validImages.map((_, idx) => (
               <div 
                 key={idx} 
-                className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentIndex ? 'bg-[#3db5ad] w-4' : 'bg-white/30'}`}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentIndex ? 'bg-[#f86e7e] w-4' : 'bg-white/30'}`}
               />
             ))}
           </div>
@@ -313,14 +313,14 @@ const ChapterItem = ({ chapter, index, onPreview, onEdit, onDelete }: {
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: index * 0.05 }}
-    className="bg-[#1e1e1e] p-5 rounded-2xl border border-white/5 flex items-center justify-between hover:border-[#3db5ad]/30 transition-all group shadow-sm"
+    className="bg-[#1e1e1e] p-5 rounded-2xl border border-white/5 flex items-center justify-between hover:border-[#f86e7e]/30 transition-all group shadow-sm"
   >
     <div className="flex items-center gap-5 cursor-pointer flex-1" onClick={() => onPreview(chapter)}>
-      <div className="w-12 h-12 bg-[#121212] rounded-xl flex items-center justify-center text-slate-500 font-bold group-hover:bg-[#3db5ad]/10 group-hover:text-[#3db5ad] transition-colors">
+      <div className="w-12 h-12 bg-[#121212] rounded-xl flex items-center justify-center text-slate-500 font-bold group-hover:bg-[#f86e7e]/10 group-hover:text-[#f86e7e] transition-colors">
         {chapter.order}
       </div>
       <div>
-        <h4 className="font-bold text-white mb-1 group-hover:text-[#3db5ad] transition-colors">{chapter.title}</h4>
+        <h4 className="font-bold text-white mb-1 group-hover:text-[#f86e7e] transition-colors">{chapter.title}</h4>
         <div className="flex items-center gap-3 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
           <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {chapter.date}</span>
           <span className="w-1 h-1 bg-slate-700 rounded-full" />
@@ -331,14 +331,14 @@ const ChapterItem = ({ chapter, index, onPreview, onEdit, onDelete }: {
     <div className="flex items-center gap-2">
       <button 
         onClick={() => onPreview(chapter)}
-        className="p-2.5 text-slate-500 hover:text-[#3db5ad] hover:bg-[#3db5ad]/10 rounded-xl transition-all"
+        className="p-2.5 text-slate-500 hover:text-[#f86e7e] hover:bg-[#f86e7e]/10 rounded-xl transition-all"
         title="معاينة"
       >
         <Eye className="w-5 h-5" />
       </button>
       <button 
         onClick={() => onEdit(chapter)}
-        className="p-2.5 text-slate-500 hover:text-[#3db5ad] hover:bg-[#3db5ad]/10 rounded-xl transition-all"
+        className="p-2.5 text-slate-500 hover:text-[#f86e7e] hover:bg-[#f86e7e]/10 rounded-xl transition-all"
       >
         <Edit className="w-5 h-5" />
       </button>
@@ -368,7 +368,7 @@ const NovelCard = React.memo(({
       layoutId={novel.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="group bg-[#1e1e1e] rounded-[2rem] border border-white/5 overflow-hidden hover:shadow-2xl hover:shadow-[#3db5ad]/5 transition-all duration-300 flex flex-col h-full"
+      className="group bg-[#1e1e1e] rounded-[2rem] border border-white/5 overflow-hidden hover:shadow-2xl hover:shadow-[#f86e7e]/5 transition-all duration-300 flex flex-col h-full"
     >
       <div className="aspect-[3/4] relative overflow-hidden">
         {novel.coverImages && novel.coverImages.length > 0 ? (
@@ -386,7 +386,7 @@ const NovelCard = React.memo(({
         <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 gap-3">
           <button 
             onClick={() => onViewChapters(novel)}
-            className="w-full bg-[#3db5ad] text-[#121212] py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]"
+            className="w-full bg-[#f86e7e] text-[#121212] py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]"
           >
             عرض الفصول
           </button>
@@ -416,7 +416,7 @@ const NovelCard = React.memo(({
           <Star className="w-4 h-4 fill-current" />
           <span className="text-xs font-bold">{novel.rating || '0.0'}</span>
         </div>
-        <h3 className="text-lg font-bold text-white mb-2 line-clamp-1 group-hover:text-[#3db5ad] transition-colors">{novel.name || 'Untitled'}</h3>
+        <h3 className="text-lg font-bold text-white mb-2 line-clamp-1 group-hover:text-[#f86e7e] transition-colors">{novel.name || 'Untitled'}</h3>
         <p className="text-xs text-slate-400 mb-3 line-clamp-2 leading-relaxed">{novel.description || 'No description available.'}</p>
         
         {novel.categories && novel.categories.length > 0 && (
@@ -604,7 +604,7 @@ export default function App() {
       cancelButtonText: 'إلغاء',
       background: '#1e1e1e',
       color: '#fff',
-      confirmButtonColor: '#3db5ad'
+      confirmButtonColor: '#f86e7e'
     });
 
     if (name) {
@@ -621,7 +621,7 @@ export default function App() {
           icon: 'success',
           background: '#1e1e1e',
           color: '#fff',
-          confirmButtonColor: '#3db5ad'
+          confirmButtonColor: '#f86e7e'
         });
       } catch (error) {
         handleFirestoreError(error, OperationType.CREATE, `novels/${selectedNovel.id}/volumes`);
@@ -652,7 +652,7 @@ export default function App() {
           icon: 'success',
           background: '#1e1e1e',
           color: '#fff',
-          confirmButtonColor: '#3db5ad'
+          confirmButtonColor: '#f86e7e'
         });
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, `novels/${selectedNovel.id}/volumes/${id}`);
@@ -670,7 +670,7 @@ export default function App() {
         icon: 'success',
         background: '#1e1e1e',
         color: '#fff',
-        confirmButtonColor: '#3db5ad'
+        confirmButtonColor: '#f86e7e'
       });
     } catch (error) {
       console.error("Login failed", error);
@@ -680,7 +680,7 @@ export default function App() {
         icon: 'error',
         background: '#1e1e1e',
         color: '#fff',
-        confirmButtonColor: '#3db5ad'
+        confirmButtonColor: '#f86e7e'
       });
     }
   };
@@ -692,7 +692,7 @@ export default function App() {
       icon: 'info',
       background: '#1e1e1e',
       color: '#fff',
-      confirmButtonColor: '#3db5ad',
+      confirmButtonColor: '#f86e7e',
       timer: 2000,
       showConfirmButton: false
     });
@@ -709,7 +709,7 @@ export default function App() {
       cancelButtonText: 'إلغاء',
       background: '#1e1e1e',
       color: '#fff',
-      confirmButtonColor: '#3db5ad'
+      confirmButtonColor: '#f86e7e'
     });
 
     if (name) {
@@ -722,7 +722,7 @@ export default function App() {
           icon: 'success',
           background: '#1e1e1e',
           color: '#fff',
-          confirmButtonColor: '#3db5ad'
+          confirmButtonColor: '#f86e7e'
         });
       } catch (error) {
         handleFirestoreError(error, OperationType.CREATE, 'categories');
@@ -752,7 +752,7 @@ export default function App() {
           icon: 'success',
           background: '#1e1e1e',
           color: '#fff',
-          confirmButtonColor: '#3db5ad'
+          confirmButtonColor: '#f86e7e'
         });
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, `categories/${id}`);
@@ -774,7 +774,7 @@ export default function App() {
           text: "هل أنت متأكد من استيراد هذه البيانات؟ قد يؤدي ذلك لإضافة روايات مكررة.",
           icon: 'warning',
           showCancelButton: true,
-          confirmButtonColor: '#3db5ad',
+          confirmButtonColor: '#f86e7e',
           cancelButtonColor: '#d33',
           confirmButtonText: 'نعم، استيراد',
           cancelButtonText: 'إلغاء',
@@ -818,7 +818,7 @@ export default function App() {
           icon: 'success',
           background: '#1e1e1e',
           color: '#fff',
-          confirmButtonColor: '#3db5ad'
+          confirmButtonColor: '#f86e7e'
         });
       } catch (err) {
         console.error("Import failed", err);
@@ -828,7 +828,7 @@ export default function App() {
           icon: 'error',
           background: '#1e1e1e',
           color: '#fff',
-          confirmButtonColor: '#3db5ad'
+          confirmButtonColor: '#f86e7e'
         });
       } finally {
         setLoading(false);
@@ -882,7 +882,7 @@ export default function App() {
         icon: 'success',
         background: '#1e1e1e',
         color: '#fff',
-        confirmButtonColor: '#3db5ad'
+        confirmButtonColor: '#f86e7e'
       });
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'novels');
@@ -892,7 +892,7 @@ export default function App() {
         icon: 'error',
         background: '#1e1e1e',
         color: '#fff',
-        confirmButtonColor: '#3db5ad'
+        confirmButtonColor: '#f86e7e'
       });
     } finally {
       setLoading(false);
@@ -906,7 +906,7 @@ export default function App() {
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
-      cancelButtonColor: '#3db5ad',
+      cancelButtonColor: '#f86e7e',
       confirmButtonText: 'نعم، احذفها',
       cancelButtonText: 'إلغاء',
       background: '#1e1e1e',
@@ -923,7 +923,7 @@ export default function App() {
         icon: 'success',
         background: '#1e1e1e',
         color: '#fff',
-        confirmButtonColor: '#3db5ad'
+        confirmButtonColor: '#f86e7e'
       });
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `novels/${id}`);
@@ -933,7 +933,7 @@ export default function App() {
         icon: 'error',
         background: '#1e1e1e',
         color: '#fff',
-        confirmButtonColor: '#3db5ad'
+        confirmButtonColor: '#f86e7e'
       });
     }
   };
@@ -970,7 +970,7 @@ export default function App() {
         icon: 'success',
         background: '#1e1e1e',
         color: '#fff',
-        confirmButtonColor: '#3db5ad'
+        confirmButtonColor: '#f86e7e'
       });
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `novels/${selectedNovel?.id}/chapters`);
@@ -980,7 +980,7 @@ export default function App() {
         icon: 'error',
         background: '#1e1e1e',
         color: '#fff',
-        confirmButtonColor: '#3db5ad'
+        confirmButtonColor: '#f86e7e'
       });
     } finally {
       setLoading(false);
@@ -996,7 +996,7 @@ export default function App() {
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
-      cancelButtonColor: '#3db5ad',
+      cancelButtonColor: '#f86e7e',
       confirmButtonText: 'نعم، احذف',
       cancelButtonText: 'إلغاء',
       background: '#1e1e1e',
@@ -1013,7 +1013,7 @@ export default function App() {
         icon: 'success',
         background: '#1e1e1e',
         color: '#fff',
-        confirmButtonColor: '#3db5ad'
+        confirmButtonColor: '#f86e7e'
       });
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `novels/${selectedNovel.id}/chapters/${id}`);
@@ -1023,7 +1023,7 @@ export default function App() {
         icon: 'error',
         background: '#1e1e1e',
         color: '#fff',
-        confirmButtonColor: '#3db5ad'
+        confirmButtonColor: '#f86e7e'
       });
     }
   };
@@ -1034,9 +1034,9 @@ export default function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#121212]">
         <div className="relative">
-          <div className="w-16 h-16 border-4 border-[#3db5ad]/20 border-t-[#3db5ad] rounded-full animate-spin" />
+          <div className="w-16 h-16 border-4 border-[#f86e7e]/20 border-t-[#f86e7e] rounded-full animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <Book className="w-6 h-6 text-[#3db5ad]" />
+            <Book className="w-6 h-6 text-[#f86e7e]" />
           </div>
         </div>
       </div>
@@ -1048,8 +1048,8 @@ export default function App() {
       <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4 relative overflow-hidden" dir="rtl">
         {/* Background Decorative Elements */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#3db5ad]/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#3db5ad]/10 rounded-full blur-3xl" />
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#f86e7e]/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-[#f86e7e]/10 rounded-full blur-3xl" />
         </div>
 
         <motion.div 
@@ -1057,14 +1057,14 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-2xl max-w-md w-full text-center relative z-10"
         >
-          <div className="w-20 h-20 bg-[#3db5ad] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#3db5ad]/30">
+          <div className="w-20 h-20 bg-[#f86e7e] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#f86e7e]/30">
             <Book className="w-10 h-10 text-[#121212]" />
           </div>
           <h1 className="text-3xl font-extrabold text-white mb-3 tracking-tight">لوحة الروايات</h1>
           <p className="text-slate-400 mb-8 leading-relaxed">نظام إدارة الروايات وفصولها بكل سهولة.</p>
           <button 
             onClick={login}
-            className="w-full flex items-center justify-center gap-3 bg-[#3db5ad] hover:bg-[#34a098] text-[#121212] font-bold py-4 rounded-2xl transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-3 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] font-bold py-4 rounded-2xl transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98]"
           >
             <LogIn className="w-5 h-5" />
             تسجيل الدخول باستخدام جوجل
@@ -1096,8 +1096,8 @@ export default function App() {
             >
               <div className="p-6 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-[#3db5ad]/10 rounded-lg flex items-center justify-center">
-                    <Compass className="w-4 h-4 text-[#3db5ad]" />
+                  <div className="w-8 h-8 bg-[#f86e7e]/10 rounded-lg flex items-center justify-center">
+                    <Compass className="w-4 h-4 text-[#f86e7e]" />
                   </div>
                   <h3 className="font-bold text-lg">التصنيفات</h3>
                 </div>
@@ -1117,7 +1117,7 @@ export default function App() {
                   }}
                   className={`w-full text-right px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-between ${
                     selectedCategory === 'الكل' 
-                      ? 'bg-[#3db5ad] text-[#121212]' 
+                      ? 'bg-[#f86e7e] text-[#121212]' 
                       : 'text-slate-400 hover:bg-white/5'
                   }`}
                 >
@@ -1133,7 +1133,7 @@ export default function App() {
                       }}
                       className={`w-full text-right px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-between ${
                         selectedCategory === cat.name 
-                          ? 'bg-[#3db5ad] text-[#121212]' 
+                          ? 'bg-[#f86e7e] text-[#121212]' 
                           : 'text-slate-400 hover:bg-white/5'
                       }`}
                     >
@@ -1156,7 +1156,7 @@ export default function App() {
                 <div className="p-6 border-t border-white/5">
                   <button 
                     onClick={addCategory}
-                    className="w-full flex items-center justify-center gap-2 bg-[#3db5ad]/10 hover:bg-[#3db5ad]/20 text-[#3db5ad] py-4 rounded-2xl font-bold transition-all border border-[#3db5ad]/20"
+                    className="w-full flex items-center justify-center gap-2 bg-[#f86e7e]/10 hover:bg-[#f86e7e]/20 text-[#f86e7e] py-4 rounded-2xl font-bold transition-all border border-[#f86e7e]/20"
                   >
                     <Plus className="w-4 h-4" />
                     إضافة تصنيف جديد
@@ -1172,12 +1172,12 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-[#1e1e1e]/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#3db5ad] rounded-xl flex items-center justify-center shadow-md shadow-[#3db5ad]/20">
+            <div className="w-10 h-10 bg-[#f86e7e] rounded-xl flex items-center justify-center shadow-md shadow-[#f86e7e]/20">
               <Book className="w-6 h-6 text-[#121212]" />
             </div>
             <div>
               <h1 className="text-xl font-extrabold text-white tracking-tight">لوحة الروايات</h1>
-              <p className="text-[10px] text-[#3db5ad] font-bold uppercase tracking-widest">الإدارة</p>
+              <p className="text-[10px] text-[#f86e7e] font-bold uppercase tracking-widest">الإدارة</p>
             </div>
           </div>
 
@@ -1227,24 +1227,24 @@ export default function App() {
                         placeholder="ابحث عن رواية، كاتب..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pr-12 pl-4 py-3.5 rounded-2xl border border-white/5 bg-[#1e1e1e] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all font-medium"
+                        className="w-full pr-12 pl-4 py-3.5 rounded-2xl border border-white/5 bg-[#1e1e1e] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all font-medium"
                       />
                     </div>
                     <button 
                       onClick={() => setShowSidebar(true)}
-                      className={`p-3.5 rounded-2xl border border-white/5 bg-[#1e1e1e] hover:bg-white/5 transition-all relative ${selectedCategory !== 'الكل' ? 'text-[#3db5ad]' : 'text-slate-400'}`}
+                      className={`p-3.5 rounded-2xl border border-white/5 bg-[#1e1e1e] hover:bg-white/5 transition-all relative ${selectedCategory !== 'الكل' ? 'text-[#f86e7e]' : 'text-slate-400'}`}
                       title="تصفية حسب التصنيف"
                     >
                       <Compass className="w-6 h-6" />
                       {selectedCategory !== 'الكل' && (
-                        <span className="absolute -top-1 -left-1 w-3 h-3 bg-[#3db5ad] rounded-full border-2 border-[#121212]" />
+                        <span className="absolute -top-1 -left-1 w-3 h-3 bg-[#f86e7e] rounded-full border-2 border-[#121212]" />
                       )}
                     </button>
                   </div>
                   
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 bg-[#1e1e1e] border border-white/5 hover:bg-white/5 text-slate-300 px-6 py-3.5 rounded-2xl font-bold transition-all cursor-pointer">
-                      <FileText className="w-4 h-4 text-[#3db5ad]" />
+                      <FileText className="w-4 h-4 text-[#f86e7e]" />
                       استيراد
                       <input type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
                     </label>
@@ -1254,7 +1254,7 @@ export default function App() {
                         setEditingNovel({ name: '', description: '', author: user.displayName || '', coverImages: ['', '', '', ''], categories: [] });
                         setView('edit-novel');
                       }}
-                      className="flex items-center gap-2 bg-[#3db5ad] hover:bg-[#34a098] text-[#121212] px-8 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-[#3db5ad]/20"
+                      className="flex items-center gap-2 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] px-8 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-[#f86e7e]/20"
                     >
                       <Plus className="w-4 h-4" />
                       رواية جديدة
@@ -1335,7 +1335,7 @@ export default function App() {
                       <div className="space-y-4 mb-8">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-slate-500">عدد الفصول</span>
-                          <span className="font-bold text-[#3db5ad] bg-[#3db5ad]/10 px-3 py-1 rounded-lg">{chapters.length}</span>
+                          <span className="font-bold text-[#f86e7e] bg-[#f86e7e]/10 px-3 py-1 rounded-lg">{chapters.length}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-slate-500">الحالة</span>
@@ -1361,7 +1361,7 @@ export default function App() {
                           setEditingChapter({ novelId: selectedNovel.id, title: '', content: '', order: chapters.length + 1, date: new Date().toLocaleDateString('ar-EG') });
                           setView('edit-chapter');
                         }}
-                        className="w-full flex items-center justify-center gap-2 bg-[#3db5ad] hover:bg-[#34a098] text-[#121212] py-4 rounded-2xl font-bold transition-all shadow-lg shadow-[#3db5ad]/10"
+                        className="w-full flex items-center justify-center gap-2 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] py-4 rounded-2xl font-bold transition-all shadow-lg shadow-[#f86e7e]/10"
                       >
                         <Plus className="w-5 h-5" />
                         إضافة فصل جديد
@@ -1373,7 +1373,7 @@ export default function App() {
                             <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">المجلدات</h4>
                             <button 
                               onClick={addVolume}
-                              className="w-8 h-8 flex items-center justify-center bg-[#3db5ad]/10 text-[#3db5ad] rounded-lg hover:bg-[#3db5ad]/20 transition-all"
+                              className="w-8 h-8 flex items-center justify-center bg-[#f86e7e]/10 text-[#f86e7e] rounded-lg hover:bg-[#f86e7e]/20 transition-all"
                             >
                               <Plus className="w-4 h-4" />
                             </button>
@@ -1413,7 +1413,7 @@ export default function App() {
                       {volumes.map(vol => groupedChapters[vol.id] && groupedChapters[vol.id].length > 0 && (
                         <div key={vol.id} className="space-y-4">
                           <div className="flex items-center gap-4 group">
-                            <div className="flex items-center gap-3 bg-[#3db5ad] text-[#121212] px-5 py-2.5 rounded-2xl shadow-lg shadow-[#3db5ad]/20 transition-all hover:scale-[1.02]">
+                            <div className="flex items-center gap-3 bg-[#f86e7e] text-[#121212] px-5 py-2.5 rounded-2xl shadow-lg shadow-[#f86e7e]/20 transition-all hover:scale-[1.02]">
                               <Folder className="w-5 h-5 fill-current" />
                               <h3 className="text-lg font-black tracking-wide">
                                 {vol.name}
@@ -1505,7 +1505,7 @@ export default function App() {
                         required
                         value={editingNovel.name}
                         onChange={e => setEditingNovel({...editingNovel, name: e.target.value})}
-                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all"
+                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
                         placeholder="أدخل اسم الرواية..."
                       />
                     </div>
@@ -1517,7 +1517,7 @@ export default function App() {
                         required
                         value={editingNovel.author}
                         onChange={e => setEditingNovel({...editingNovel, author: e.target.value})}
-                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all"
+                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
                       />
                     </div>
 
@@ -1534,7 +1534,7 @@ export default function App() {
                               newCovers[idx] = e.target.value;
                               setEditingNovel({...editingNovel, coverImages: newCovers});
                             }}
-                            className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all text-sm"
+                            className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all text-sm"
                             placeholder={`رابط الصورة ${idx + 1}...`}
                           />
                         ))}
@@ -1547,7 +1547,7 @@ export default function App() {
                         <select 
                           value={editingNovel.status || 'مستمرة'}
                           onChange={e => setEditingNovel({...editingNovel, status: e.target.value})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all appearance-none"
+                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all appearance-none"
                         >
                           <option value="مستمرة">مستمرة</option>
                           <option value="متوقفة">متوقفة</option>
@@ -1563,7 +1563,7 @@ export default function App() {
                           max="5"
                           value={editingNovel.rating || 0}
                           onChange={e => setEditingNovel({...editingNovel, rating: parseFloat(e.target.value)})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all"
+                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
                         />
                       </div>
                     </div>
@@ -1586,7 +1586,7 @@ export default function App() {
                               }}
                               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
                                 isSelected 
-                                  ? 'bg-[#3db5ad] text-[#121212] border-[#3db5ad]' 
+                                  ? 'bg-[#f86e7e] text-[#121212] border-[#f86e7e]' 
                                   : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'
                               }`}
                             >
@@ -1609,7 +1609,7 @@ export default function App() {
                         rows={12}
                         value={editingNovel.description}
                         onChange={e => setEditingNovel({...editingNovel, description: e.target.value})}
-                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all leading-relaxed resize-none"
+                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all leading-relaxed resize-none"
                         placeholder="اكتب ملخصاً للرواية..."
                       />
                     </div>
@@ -1648,7 +1648,7 @@ export default function App() {
                   <button 
                     type="submit"
                     disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-3 bg-[#3db5ad] hover:bg-[#34a098] text-[#121212] font-extrabold py-5 rounded-2xl transition-all shadow-xl shadow-[#3db5ad]/20 disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-3 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] font-extrabold py-5 rounded-2xl transition-all shadow-xl shadow-[#f86e7e]/20 disabled:opacity-50"
                   >
                     {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
                     حفظ الرواية
@@ -1717,7 +1717,7 @@ export default function App() {
                           required
                           value={editingChapter.title}
                           onChange={e => setEditingChapter({...editingChapter, title: e.target.value})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all"
+                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
                           placeholder="أدخل عنوان الفصل..."
                         />
                       </div>
@@ -1727,7 +1727,7 @@ export default function App() {
                           <button 
                             type="button"
                             onClick={(e) => { e.preventDefault(); addVolume(); }}
-                            className="bg-[#3db5ad]/10 text-[#3db5ad] p-1.5 rounded-lg hover:bg-[#3db5ad]/20 transition-all"
+                            className="bg-[#f86e7e]/10 text-[#f86e7e] p-1.5 rounded-lg hover:bg-[#f86e7e]/20 transition-all"
                             title="إضافة مجلد جديد"
                           >
                             <Plus className="w-3 h-3" />
@@ -1736,7 +1736,7 @@ export default function App() {
                         <select 
                           value={editingChapter.volumeId || ''}
                           onChange={e => setEditingChapter({...editingChapter, volumeId: e.target.value})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all appearance-none"
+                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all appearance-none"
                         >
                           <option value="">بدون مجلد</option>
                           {volumes.map(v => (
@@ -1751,7 +1751,7 @@ export default function App() {
                           required
                           value={editingChapter.order}
                           onChange={e => setEditingChapter({...editingChapter, order: parseInt(e.target.value)})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all"
+                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
                         />
                       </div>
                       <div>
@@ -1760,7 +1760,7 @@ export default function App() {
                           type="text"
                           value={editingChapter.date || ''}
                           onChange={e => setEditingChapter({...editingChapter, date: e.target.value})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all"
+                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
                           placeholder="مثال: 13/3/2026"
                         />
                       </div>
@@ -1776,7 +1776,7 @@ export default function App() {
                         rows={22}
                         value={editingChapter.content}
                         onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
-                        className="w-full px-8 py-8 rounded-[2rem] border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all font-serif text-xl leading-relaxed resize-none"
+                        className="w-full px-8 py-8 rounded-[2rem] border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all font-serif text-xl leading-relaxed resize-none"
                         placeholder="ابدأ بكتابة أحداث الفصل هنا..."
                       />
                     </div>
@@ -1785,7 +1785,7 @@ export default function App() {
                       <button 
                         type="submit"
                         disabled={loading}
-                        className="flex-1 flex items-center justify-center gap-3 bg-[#3db5ad] hover:bg-[#34a098] text-[#121212] font-extrabold py-5 rounded-2xl transition-all shadow-xl shadow-[#3db5ad]/20 disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-3 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] font-extrabold py-5 rounded-2xl transition-all shadow-xl shadow-[#f86e7e]/20 disabled:opacity-50"
                       >
                         {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
                         حفظ الفصل
@@ -1810,15 +1810,15 @@ export default function App() {
       <footer className="py-12 border-t border-white/5 mt-20 bg-[#1e1e1e]">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#3db5ad] rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#f86e7e] rounded-lg flex items-center justify-center">
               <Book className="w-4 h-4 text-[#121212]" />
             </div>
             <span className="font-extrabold text-white tracking-tight">لوحة الروايات</span>
           </div>
           <p className="text-slate-500 text-xs">© 2026 جميع الحقوق محفوظة.</p>
           <div className="flex items-center gap-6 text-xs font-bold text-slate-400">
-            <a href="#" className="hover:text-[#3db5ad] transition-colors">الدعم الفني</a>
-            <a href="#" className="hover:text-[#3db5ad] transition-colors">سياسة الخصوصية</a>
+            <a href="#" className="hover:text-[#f86e7e] transition-colors">الدعم الفني</a>
+            <a href="#" className="hover:text-[#f86e7e] transition-colors">سياسة الخصوصية</a>
           </div>
         </div>
       </footer>

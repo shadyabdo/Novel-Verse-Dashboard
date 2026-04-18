@@ -4,10 +4,10 @@
 @theme {
   --font-sans: "Almarai", ui-sans-serif, system-ui, sans-serif;
   
-  --color-primary: #3db5ad;
+  --color-primary: #f86e7e;
   --color-dark: #121212;
   --color-surface: #1e1e1e;
-  --color-accent: #3db5ad;
+  --color-accent: #f86e7e;
   --color-light: #ffffff;
 }
 
