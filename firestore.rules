@@ -59,6 +59,13 @@ service cloud.firestore {
       return data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
              data.content is string && data.content.size() <= 200000 &&
              data.order is number &&
+             data.novelId == novelId &&
+             (!('volumeId' in data) || data.volumeId == null || (data.volumeId is string && data.volumeId.size() <= 128));
+    }
+
+    function isValidVolume(data, novelId) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.order is number &&
              data.novelId == novelId;
     }
 
@@ -84,6 +91,13 @@ service cloud.firestore {
         allow read: if true;
         allow create: if isAdmin() && isValidChapter(request.resource.data, novelId);
         allow update: if isAdmin() && isValidChapter(request.resource.data, novelId);
+        allow delete: if isAdmin();
+      }
+
+      match /volumes/{volumeId} {
+        allow read: if true;
+        allow create: if isAdmin() && isValidVolume(request.resource.data, novelId);
+        allow update: if isAdmin() && isValidVolume(request.resource.data, novelId);
         allow delete: if isAdmin();
       }
     }

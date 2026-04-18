@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   collection, 
   onSnapshot, 
@@ -73,9 +73,17 @@ interface Novel {
   updatedAt?: any;
 }
 
+interface Volume {
+  id: string;
+  novelId: string;
+  name: string;
+  order: number;
+}
+
 interface Chapter {
   id: string;
   novelId: string;
+  volumeId?: string;
   title: string;
   content: string;
   order: number;
@@ -290,6 +298,58 @@ const ChapterPreviewModal = ({ chapter, onClose }: { chapter: Chapter, onClose: 
   );
 };
 
+// --- Components ---
+
+const ChapterItem = ({ chapter, index, onPreview, onEdit, onDelete }: { 
+  chapter: Chapter, 
+  index: number, 
+  onPreview: (c: Chapter) => void, 
+  onEdit: (c: Chapter) => void, 
+  onDelete: (id: string) => void 
+}) => (
+  <motion.div 
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.05 }}
+    className="bg-[#1e1e1e] p-5 rounded-2xl border border-white/5 flex items-center justify-between hover:border-[#3db5ad]/30 transition-all group shadow-sm"
+  >
+    <div className="flex items-center gap-5 cursor-pointer flex-1" onClick={() => onPreview(chapter)}>
+      <div className="w-12 h-12 bg-[#121212] rounded-xl flex items-center justify-center text-slate-500 font-bold group-hover:bg-[#3db5ad]/10 group-hover:text-[#3db5ad] transition-colors">
+        {chapter.order}
+      </div>
+      <div>
+        <h4 className="font-bold text-white mb-1 group-hover:text-[#3db5ad] transition-colors">{chapter.title}</h4>
+        <div className="flex items-center gap-3 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+          <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {chapter.date}</span>
+          <span className="w-1 h-1 bg-slate-700 rounded-full" />
+          <span>{chapter.content.length} حرف</span>
+        </div>
+      </div>
+    </div>
+    <div className="flex items-center gap-2">
+      <button 
+        onClick={() => onPreview(chapter)}
+        className="p-2.5 text-slate-500 hover:text-[#3db5ad] hover:bg-[#3db5ad]/10 rounded-xl transition-all"
+        title="معاينة"
+      >
+        <Eye className="w-5 h-5" />
+      </button>
+      <button 
+        onClick={() => onEdit(chapter)}
+        className="p-2.5 text-slate-500 hover:text-[#3db5ad] hover:bg-[#3db5ad]/10 rounded-xl transition-all"
+      >
+        <Edit className="w-5 h-5" />
+      </button>
+      <button 
+        onClick={() => onDelete(chapter.id)}
+        className="p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+      >
+        <Trash2 className="w-5 h-5" />
+      </button>
+    </div>
+  </motion.div>
+);
+
 const NovelCard = React.memo(({ 
   novel, 
   onViewChapters, 
@@ -389,6 +449,7 @@ export default function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [novels, setNovels] = useState<Novel[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [volumes, setVolumes] = useState<Volume[]>([]);
   const [selectedNovel, setSelectedNovel] = useState<Novel | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   
@@ -400,6 +461,18 @@ export default function App() {
   const [previewChapter, setPreviewChapter] = useState<Chapter | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const groupedChapters = useMemo(() => {
+    const groups: { [key: string]: Chapter[] } = { 'none': [] };
+    volumes.forEach(v => {
+      groups[v.id] = [];
+    });
+    chapters.forEach(c => {
+      const volId = c.volumeId && groups[c.volumeId] ? c.volumeId : 'none';
+      groups[volId].push(c);
+    });
+    return groups;
+  }, [chapters, volumes]);
 
   const isAdmin = user?.email === "shadyabdowd2020@gmail.com";
 
@@ -498,7 +571,91 @@ export default function App() {
     return () => unsubscribe();
   }, [selectedNovel]);
 
+  // Volumes Listener
+  useEffect(() => {
+    if (!selectedNovel) {
+      setVolumes([]);
+      return;
+    }
+
+    const q = query(collection(db, `novels/${selectedNovel.id}/volumes`), orderBy('order', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const volumeData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Volume));
+      setVolumes(volumeData);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, `novels/${selectedNovel.id}/volumes`));
+
+    return () => unsubscribe();
+  }, [selectedNovel]);
+
   // --- Actions ---
+
+  const addVolume = async () => {
+    if (!selectedNovel) return;
+    const { value: name } = await Swal.fire({
+      title: 'إضافة مجلد جديد',
+      input: 'text',
+      inputLabel: 'اسم المجلد',
+      inputPlaceholder: 'مثال: المجلد الأول، الجزء الثاني...',
+      showCancelButton: true,
+      confirmButtonText: 'إضافة',
+      cancelButtonText: 'إلغاء',
+      background: '#1e1e1e',
+      color: '#fff',
+      confirmButtonColor: '#3db5ad'
+    });
+
+    if (name) {
+      try {
+        await addDoc(collection(db, `novels/${selectedNovel.id}/volumes`), { 
+          name, 
+          novelId: selectedNovel.id,
+          order: volumes.length + 1,
+          createdAt: serverTimestamp() 
+        });
+        Swal.fire({
+          title: 'تم!',
+          text: 'تم إضافة المجلد بنجاح',
+          icon: 'success',
+          background: '#1e1e1e',
+          color: '#fff',
+          confirmButtonColor: '#3db5ad'
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, `novels/${selectedNovel.id}/volumes`);
+      }
+    }
+  };
+
+  const deleteVolume = async (id: string, name: string) => {
+    if (!selectedNovel) return;
+    const result = await Swal.fire({
+      title: 'هل أنت متأكد؟',
+      text: `سيتم حذف المجلد "${name}". ملاحظة: الفصول التابعة له لن تحذف لكنها لن تكون مرتبطة بمجلد.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'نعم، احذف',
+      cancelButtonText: 'إلغاء',
+      background: '#1e1e1e',
+      color: '#fff',
+      confirmButtonColor: '#ef4444'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await deleteDoc(doc(db, `novels/${selectedNovel.id}/volumes`, id));
+        Swal.fire({
+          title: 'تم!',
+          text: 'تم حذف المجلد',
+          icon: 'success',
+          background: '#1e1e1e',
+          color: '#fff',
+          confirmButtonColor: '#3db5ad'
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, `novels/${selectedNovel.id}/volumes/${id}`);
+      }
+    }
+  };
 
   const login = async () => {
     const provider = new GoogleAuthProvider();
@@ -789,6 +946,7 @@ export default function App() {
       const data = {
         ...dataToSave,
         novelId: selectedNovel.id,
+        volumeId: editingChapter.volumeId || null,
         date: editingChapter.date || new Date().toLocaleDateString('ar-EG'),
         updatedAt: serverTimestamp(),
       };
@@ -1145,64 +1303,99 @@ export default function App() {
                         <Plus className="w-5 h-5" />
                         إضافة فصل جديد
                       </button>
+
+                      {isAdmin && (
+                        <div className="mt-8 pt-8 border-t border-white/5">
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">المجلدات</h4>
+                            <button 
+                              onClick={addVolume}
+                              className="w-8 h-8 flex items-center justify-center bg-[#3db5ad]/10 text-[#3db5ad] rounded-lg hover:bg-[#3db5ad]/20 transition-all"
+                            >
+                              <Plus className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="space-y-2">
+                            {volumes.length === 0 ? (
+                              <p className="text-[10px] text-slate-500 italic">لا توجد مجلدات بعد.</p>
+                            ) : (
+                              volumes.map(vol => (
+                                <div key={vol.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group">
+                                  <span className="text-sm font-bold text-slate-300">{vol.name}</span>
+                                  <button 
+                                    onClick={() => deleteVolume(vol.id, vol.name)}
+                                    className="p-1 text-slate-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                <div className="lg:col-span-2 space-y-4">
+                <div className="lg:col-span-2 space-y-8">
                   {chapters.length === 0 ? (
                     <div className="bg-[#1e1e1e] rounded-[2.5rem] border-2 border-dashed border-white/5 p-20 text-center">
                       <FileText className="w-12 h-12 text-slate-700 mx-auto mb-4" />
                       <p className="text-slate-500 font-bold">لا توجد فصول لهذه الرواية بعد.</p>
                     </div>
                   ) : (
-                    chapters.map((chapter, index) => (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        key={chapter.id}
-                        className="bg-[#1e1e1e] p-5 rounded-2xl border border-white/5 flex items-center justify-between hover:border-[#3db5ad]/30 transition-all group shadow-sm"
-                      >
-                        <div className="flex items-center gap-5 cursor-pointer flex-1" onClick={() => setPreviewChapter(chapter)}>
-                          <div className="w-12 h-12 bg-[#121212] rounded-xl flex items-center justify-center text-slate-500 font-bold group-hover:bg-[#3db5ad]/10 group-hover:text-[#3db5ad] transition-colors">
-                            {chapter.order}
+                    <>
+                      {/* Volumes with Chapters */}
+                      {volumes.map(vol => groupedChapters[vol.id] && groupedChapters[vol.id].length > 0 && (
+                        <div key={vol.id} className="space-y-4">
+                          <div className="flex items-center gap-4">
+                            <h3 className="text-lg font-bold text-[#3db5ad] bg-[#3db5ad]/10 px-4 py-1.5 rounded-xl border border-[#3db5ad]/20">
+                              {vol.name}
+                            </h3>
+                            <div className="h-px bg-white/5 flex-1" />
                           </div>
-                          <div>
-                            <h4 className="font-bold text-white mb-1 group-hover:text-[#3db5ad] transition-colors">{chapter.title}</h4>
-                            <div className="flex items-center gap-3 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {chapter.date}</span>
-                              <span className="w-1 h-1 bg-slate-700 rounded-full" />
-                              <span>{chapter.content.length} حرف</span>
+                          <div className="space-y-4">
+                            {groupedChapters[vol.id].map((chapter, index) => (
+                              <ChapterItem 
+                                key={chapter.id} 
+                                chapter={chapter} 
+                                index={index} 
+                                onPreview={setPreviewChapter}
+                                onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
+                                onDelete={deleteChapter}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Chapters without Volume */}
+                      {groupedChapters['none'] && groupedChapters['none'].length > 0 && (
+                        <div className="space-y-4">
+                          {(volumes.length > 0) && (
+                            <div className="flex items-center gap-4">
+                              <h3 className="text-lg font-bold text-slate-500 bg-white/5 px-4 py-1.5 rounded-xl border border-white/5">
+                                فصول غير مجلدة
+                              </h3>
+                              <div className="h-px bg-white/5 flex-1" />
                             </div>
+                          )}
+                          <div className="space-y-4">
+                            {groupedChapters['none'].map((chapter, index) => (
+                              <ChapterItem 
+                                key={chapter.id} 
+                                chapter={chapter} 
+                                index={index} 
+                                onPreview={setPreviewChapter}
+                                onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
+                                onDelete={deleteChapter}
+                              />
+                            ))}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => setPreviewChapter(chapter)}
-                            className="p-2.5 text-slate-500 hover:text-[#3db5ad] hover:bg-[#3db5ad]/10 rounded-xl transition-all"
-                            title="معاينة"
-                          >
-                            <Eye className="w-5 h-5" />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setEditingChapter(chapter);
-                              setView('edit-chapter');
-                            }}
-                            className="p-2.5 text-slate-500 hover:text-[#3db5ad] hover:bg-[#3db5ad]/10 rounded-xl transition-all"
-                          >
-                            <Edit className="w-5 h-5" />
-                          </button>
-                          <button 
-                            onClick={() => deleteChapter(chapter.id)}
-                            className="p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </motion.div>
-                    ))
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -1441,8 +1634,8 @@ export default function App() {
                 {/* Main Column: Chapter Form */}
                 <div className="lg:col-span-3">
                   <form onSubmit={saveChapter} className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="md:col-span-1">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                      <div className="md:col-span-2">
                         <label className="block text-sm font-bold text-slate-400 mb-2">عنوان الفصل</label>
                         <input 
                           type="text"
@@ -1452,6 +1645,19 @@ export default function App() {
                           className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all"
                           placeholder="أدخل عنوان الفصل..."
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-400 mb-2">المجلد</label>
+                        <select 
+                          value={editingChapter.volumeId || ''}
+                          onChange={e => setEditingChapter({...editingChapter, volumeId: e.target.value})}
+                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all appearance-none"
+                        >
+                          <option value="">بدون مجلد</option>
+                          {volumes.map(v => (
+                            <option key={v.id} value={v.id}>{v.name}</option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-slate-400 mb-2">الترتيب</label>
