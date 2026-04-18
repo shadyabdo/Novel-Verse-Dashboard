@@ -40,7 +40,9 @@ import {
   Loader2,
   Image as ImageIcon,
   Search,
+  Compass,
   SlidersHorizontal,
+  Folder,
   LayoutDashboard,
   Settings,
   Star,
@@ -461,6 +463,7 @@ export default function App() {
   const [previewChapter, setPreviewChapter] = useState<Chapter | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const groupedChapters = useMemo(() => {
     const groups: { [key: string]: Chapter[] } = { 'none': [] };
@@ -1073,6 +1076,98 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white flex flex-col font-sans relative overflow-hidden" dir="rtl">
+      {/* Offcanvas Sidebar */}
+      <AnimatePresence>
+        {showSidebar && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSidebar(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            />
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 bottom-0 w-80 bg-[#1e1e1e] border-l border-white/5 z-50 flex flex-col shadow-2xl"
+            >
+              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-[#3db5ad]/10 rounded-lg flex items-center justify-center">
+                    <Compass className="w-4 h-4 text-[#3db5ad]" />
+                  </div>
+                  <h3 className="font-bold text-lg">التصنيفات</h3>
+                </div>
+                <button 
+                  onClick={() => setShowSidebar(false)}
+                  className="p-2 hover:bg-white/5 rounded-lg transition-all"
+                >
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-2">
+                <button 
+                  onClick={() => {
+                    setSelectedCategory('الكل');
+                    setShowSidebar(false);
+                  }}
+                  className={`w-full text-right px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-between ${
+                    selectedCategory === 'الكل' 
+                      ? 'bg-[#3db5ad] text-[#121212]' 
+                      : 'text-slate-400 hover:bg-white/5'
+                  }`}
+                >
+                  <span>الكل</span>
+                  {selectedCategory === 'الكل' && <ChevronLeft className="w-4 h-4" />}
+                </button>
+                {categories.map(cat => (
+                  <div key={cat.id} className="group relative">
+                    <button 
+                      onClick={() => {
+                        setSelectedCategory(cat.name);
+                        setShowSidebar(false);
+                      }}
+                      className={`w-full text-right px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-between ${
+                        selectedCategory === cat.name 
+                          ? 'bg-[#3db5ad] text-[#121212]' 
+                          : 'text-slate-400 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="truncate">{cat.name}</span>
+                      {selectedCategory === cat.name && <ChevronLeft className="w-4 h-4" />}
+                    </button>
+                    {isAdmin && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); deleteCategory(cat.id, cat.name); }}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 rounded-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {isAdmin && (
+                <div className="p-6 border-t border-white/5">
+                  <button 
+                    onClick={addCategory}
+                    className="w-full flex items-center justify-center gap-2 bg-[#3db5ad]/10 hover:bg-[#3db5ad]/20 text-[#3db5ad] py-4 rounded-2xl font-bold transition-all border border-[#3db5ad]/20"
+                  >
+                    <Plus className="w-4 h-4" />
+                    إضافة تصنيف جديد
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Modern Dark Header */}
       <header className="sticky top-0 z-40 bg-[#1e1e1e]/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
@@ -1135,6 +1230,16 @@ export default function App() {
                         className="w-full pr-12 pl-4 py-3.5 rounded-2xl border border-white/5 bg-[#1e1e1e] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all font-medium"
                       />
                     </div>
+                    <button 
+                      onClick={() => setShowSidebar(true)}
+                      className={`p-3.5 rounded-2xl border border-white/5 bg-[#1e1e1e] hover:bg-white/5 transition-all relative ${selectedCategory !== 'الكل' ? 'text-[#3db5ad]' : 'text-slate-400'}`}
+                      title="تصفية حسب التصنيف"
+                    >
+                      <Compass className="w-6 h-6" />
+                      {selectedCategory !== 'الكل' && (
+                        <span className="absolute -top-1 -left-1 w-3 h-3 bg-[#3db5ad] rounded-full border-2 border-[#121212]" />
+                      )}
+                    </button>
                   </div>
                   
                   <div className="flex items-center gap-3">
@@ -1156,48 +1261,6 @@ export default function App() {
                     </button>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide">
-                <button 
-                  onClick={() => setSelectedCategory('الكل')}
-                  className={`px-6 py-2 rounded-xl font-bold whitespace-nowrap transition-all border ${
-                    selectedCategory === 'الكل' 
-                      ? 'bg-[#3db5ad] text-[#121212] border-[#3db5ad]' 
-                      : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'
-                  }`}
-                >الكل</button>
-                {categories.map(cat => (
-                  <div key={cat.id} className="relative group">
-                    <button 
-                      onClick={() => setSelectedCategory(cat.name)}
-                      className={`px-6 py-2 rounded-xl font-bold whitespace-nowrap transition-all border ${
-                        selectedCategory === cat.name 
-                          ? 'bg-[#3db5ad] text-[#121212] border-[#3db5ad]' 
-                          : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10'
-                      }`}
-                    >
-                      {cat.name}
-                    </button>
-                    {isAdmin && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); deleteCategory(cat.id, cat.name); }}
-                        className="absolute -top-2 -left-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {isAdmin && (
-                  <button 
-                    onClick={addCategory}
-                    className="px-4 py-2 rounded-xl font-bold text-[#3db5ad] border border-[#3db5ad]/30 hover:bg-[#3db5ad]/10 transition-all flex items-center gap-2 whitespace-nowrap"
-                  >
-                    <Plus className="w-4 h-4" />
-                    إضافة
-                  </button>
-                )}
               </div>
 
               {filteredNovels.length === 0 ? (
@@ -1349,13 +1412,25 @@ export default function App() {
                       {/* Volumes with Chapters */}
                       {volumes.map(vol => groupedChapters[vol.id] && groupedChapters[vol.id].length > 0 && (
                         <div key={vol.id} className="space-y-4">
-                          <div className="flex items-center gap-4">
-                            <h3 className="text-lg font-bold text-[#3db5ad] bg-[#3db5ad]/10 px-4 py-1.5 rounded-xl border border-[#3db5ad]/20">
-                              {vol.name}
-                            </h3>
+                          <div className="flex items-center gap-4 group">
+                            <div className="flex items-center gap-3 bg-[#3db5ad] text-[#121212] px-5 py-2.5 rounded-2xl shadow-lg shadow-[#3db5ad]/20 transition-all hover:scale-[1.02]">
+                              <Folder className="w-5 h-5 fill-current" />
+                              <h3 className="text-lg font-black tracking-wide">
+                                {vol.name}
+                              </h3>
+                            </div>
                             <div className="h-px bg-white/5 flex-1" />
+                            {isAdmin && (
+                              <button 
+                                onClick={() => deleteVolume(vol.id, vol.name)}
+                                className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
-                          <div className="space-y-4">
+                          <div className="grid grid-cols-1 gap-4 pr-12 relative">
+                            <div className="absolute top-0 right-6 bottom-0 w-0.5 bg-white/5" />
                             {groupedChapters[vol.id].map((chapter, index) => (
                               <ChapterItem 
                                 key={chapter.id} 
@@ -1647,7 +1722,17 @@ export default function App() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-slate-400 mb-2">المجلد</label>
+                        <label className="block text-sm font-bold text-slate-400 mb-2 flex items-center justify-between">
+                          المجلد
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); addVolume(); }}
+                            className="bg-[#3db5ad]/10 text-[#3db5ad] p-1.5 rounded-lg hover:bg-[#3db5ad]/20 transition-all"
+                            title="إضافة مجلد جديد"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </label>
                         <select 
                           value={editingChapter.volumeId || ''}
                           onChange={e => setEditingChapter({...editingChapter, volumeId: e.target.value})}
@@ -1682,39 +1767,18 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-slate-400 mb-2 flex justify-between">
+                      <label className="block text-sm font-bold text-slate-400 mb-2">
                         محتوى الفصل
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">يدعم التنسيق البسيط (Markdown)</span>
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest block mt-1">يدعم التنسيق البسيط (Markdown)</span>
                       </label>
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <textarea 
-                          required
-                          rows={22}
-                          value={editingChapter.content}
-                          onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
-                          className="w-full px-8 py-8 rounded-[2rem] border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all font-serif text-xl leading-relaxed resize-none"
-                          placeholder="ابدأ بكتابة أحداث الفصل هنا..."
-                        />
-                        <div className="w-full px-8 py-8 rounded-[2rem] border border-white/5 bg-[#121212]/50 text-slate-300 overflow-y-auto max-h-[600px] scrollbar-hide">
-                          <div className="markdown-body prose prose-invert prose-slate max-w-none font-serif text-lg leading-relaxed">
-                            <Markdown 
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                img: ({ src, alt }) => (
-                                  <img 
-                                    src={src} 
-                                    alt={alt || 'Preview Image'} 
-                                    className="rounded-xl shadow-lg max-w-full my-4 border border-white/5" 
-                                    referrerPolicy="no-referrer"
-                                  />
-                                )
-                              }}
-                            >
-                              {processChapterContent(editingChapter.content) || '*المعاينة المباشرة ستظهر هنا...*'}
-                            </Markdown>
-                          </div>
-                        </div>
-                      </div>
+                      <textarea 
+                        required
+                        rows={22}
+                        value={editingChapter.content}
+                        onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
+                        className="w-full px-8 py-8 rounded-[2rem] border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#3db5ad]/50 outline-none transition-all font-serif text-xl leading-relaxed resize-none"
+                        placeholder="ابدأ بكتابة أحداث الفصل هنا..."
+                      />
                     </div>
 
                     <div className="flex gap-4 pt-6">
