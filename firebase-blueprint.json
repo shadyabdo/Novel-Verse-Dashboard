@@ -33,7 +33,6 @@
       "type": "object",
       "properties": {
         "novelId": { "type": "string", "description": "The ID of the parent novel." },
-        "volumeId": { "type": "string", "description": "The ID of the volume this chapter belongs to (optional)." },
         "title": { "type": "string", "description": "The title of the chapter." },
         "content": { "type": "string", "description": "The full text content of the chapter." },
         "order": { "type": "number", "description": "The sequence order of the chapter." },
@@ -41,18 +40,6 @@
         "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp." }
       },
       "required": ["novelId", "title", "content", "order"]
-    },
-    "Volume": {
-      "title": "Volume",
-      "description": "A volume grouping for chapters within a novel.",
-      "type": "object",
-      "properties": {
-        "novelId": { "type": "string", "description": "The ID of the parent novel." },
-        "name": { "type": "string", "description": "The name of the volume." },
-        "order": { "type": "number", "description": "The sequence order of the volume." },
-        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
-      },
-      "required": ["novelId", "name", "order"]
     }
   },
   "firestore": {
@@ -67,10 +54,6 @@
     "/novels/{novelId}/chapters/{chapterId}": {
       "schema": "Chapter",
       "description": "Sub-collection of chapters for a specific novel."
-    },
-    "/novels/{novelId}/volumes/{volumeId}": {
-      "schema": "Volume",
-      "description": "Sub-collection of volumes for a specific novel."
     }
   }
 }

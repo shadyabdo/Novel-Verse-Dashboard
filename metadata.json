@@ -1,5 +1,5 @@
 {
-  "name": "Novel Dashboard",
-  "description": "A dashboard for managing novels and chapters, connected to Firebase Firestore.",
+  "name": "NovelVerse: Dashboard & Reader",
+  "description": "منصة متكاملة لإدارة وقراءة الروايات مع لوحة تحكم احترافية وتطبيق قارئ للهاتف.",
   "requestFramePermissions": []
 }
