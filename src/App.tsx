@@ -2417,15 +2417,6 @@ export default function App() {
         </div>
       </footer>
 
-      <AnimatePresence>
-        {previewChapter && (
-          <ChapterPreviewModal 
-            chapter={previewChapter} 
-            onClose={() => setPreviewChapter(null)} 
-          />
-        )}
-      </AnimatePresence>
-
       {/* Volume Creation Popup */}
       <AnimatePresence>
         {showVolumePopup && (
