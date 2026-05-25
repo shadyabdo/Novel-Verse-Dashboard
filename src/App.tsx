@@ -1900,10 +1900,10 @@ export default function App() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[150] bg-[#0a0a0a] overflow-y-auto"
+              className="fixed inset-0 z-[150] bg-[#1e1e1e] overflow-y-auto"
             >
               {/* Reader Header */}
-              <div className="sticky top-0 z-30 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
+              <div className="sticky top-0 z-30 bg-[#1e1e1e]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <button 
                     onClick={() => setView('chapters')}
@@ -1928,14 +1928,30 @@ export default function App() {
               {/* Reader Content */}
               <div className="max-w-4xl mx-auto px-6 py-20">
                 <div 
-                  className="text-white/90 whitespace-pre-wrap leading-relaxed transition-all duration-300 text-right"
+                  className="text-white/90 transition-all duration-300 text-right"
                   style={{ 
                     fontSize: `${readerSettings.fontSize}px`,
                     lineHeight: readerSettings.lineHeight,
                     fontWeight: readerSettings.fontWeight
                   }}
                 >
-                  {readingChapter.content}
+                  {readingChapter.content.split(/(\[https?:\/\/[^\]]+\])/g).map((part, i) => {
+                    const match = part.match(/\[(https?:\/\/[^\]]+)\]/);
+                    if (match) {
+                      const url = match[1];
+                      return (
+                        <div key={i} className="my-8 flex justify-center">
+                          <img 
+                            src={url} 
+                            alt="Chapter visual" 
+                            className="max-w-full rounded-2xl shadow-2xl border border-white/10"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      );
+                    }
+                    return <p key={i} className="mb-4 whitespace-pre-wrap">{part}</p>;
+                  })}
                 </div>
 
                 {/* Reader Footer Navigation */}
