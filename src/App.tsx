@@ -69,6 +69,7 @@ import {
   CheckSquare,
   Square,
   XCircle,
+  AlertTriangle,
   Minus,
   Copy,
   List
@@ -406,6 +407,7 @@ export default function App() {
   });
   const [showReaderSettings, setShowReaderSettings] = useState(false);
   const [showReaderSidebar, setShowReaderSidebar] = useState(false);
+  const [showAdultWarning, setShowAdultWarning] = useState(true);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const { ref: novelsEndRef, inView: novelsEndInView } = useInView();
@@ -1588,6 +1590,36 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
+              {/* Adult Content Warning */}
+              <AnimatePresence>
+                {showAdultWarning && (selectedNovel.isAdult || selectedNovel.categories?.includes('إيتشي')) && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="mb-8 p-6 bg-red-500/10 border border-red-500/20 rounded-[2rem] flex items-center justify-between gap-6"
+                  >
+                    <div className="flex items-center gap-4 text-right">
+                      <div className="w-12 h-12 rounded-2xl bg-red-500/20 flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-6 h-6 text-red-500" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-white mb-1">تنبيه المحتوى</h4>
+                        <p className="text-xs font-medium text-white/50 leading-relaxed">
+                          هذه الرواية مخصصة للبالغين وقد تحتوي على مشاهد عنيفة، إيحاءات، أو محتوى غير مناسب للجمهور العام. يرجى المتابعة بمسؤولية.
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setShowAdultWarning(false)}
+                      className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/5 text-white/20 hover:text-white transition-all shrink-0"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Story Section - Simple & Compact */}
               <div className="mb-10 bg-[#1e1e1e]/40 p-8 rounded-[2rem] border border-white/5">
