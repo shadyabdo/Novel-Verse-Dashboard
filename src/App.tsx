@@ -192,152 +192,68 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 
 const CoverSlider = ({ images }: { images: string[] }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
   const validImages = images.filter(img => img && img.trim() !== '');
-
-  useEffect(() => {
-    if (validImages.length <= 1) return;
-    
-    setProgress(0);
-    const duration = 10000; // 10 seconds
-    const interval = 100; // update every 100ms
-    
-    const timer = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          setCurrentIndex(curr => (curr + 1) % validImages.length);
-          return 0;
-        }
-        return prev + (interval / duration) * 100;
-      });
-    }, interval);
-
-    return () => clearInterval(timer);
-  }, [validImages.length, currentIndex]);
 
   if (validImages.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-[#0a0a0a] text-slate-800">
-        <ImageIcon className="w-12 h-12 opacity-20" />
+      <div className="w-full h-full flex items-center justify-center bg-[#121212] rounded-[2.5rem] border border-white/5">
+        <ImageIcon className="w-10 h-10 text-white/5" />
       </div>
     );
   }
 
-  const next = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % validImages.length);
-    setProgress(0);
-  };
-
-  const prev = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev - 1 + validImages.length) % validImages.length);
-    setProgress(0);
-  };
-
   return (
-    <div className="relative w-full h-full group overflow-hidden rounded-[2.5rem] bg-[#0a0a0a] shadow-2xl border border-white/5">
-      {/* Dynamic Background Layer */}
-      <AnimatePresence>
+    <div className="relative w-full h-full group overflow-hidden rounded-[2.5rem] bg-[#121212] border border-white/5 shadow-2xl">
+      <AnimatePresence mode="wait">
         <motion.div
-          key={`bg-${currentIndex}`}
-          initial={{ opacity: 0, scale: 1.2 }}
-          animate={{ opacity: 0.4, scale: 1.1 }}
-          exit={{ opacity: 0, scale: 1.2 }}
-          transition={{ duration: 1.2 }}
-          className="absolute inset-0 z-0"
+          key={currentIndex}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full h-full"
         >
           <img 
             src={validImages[currentIndex]} 
-            className="w-full h-full object-cover blur-[60px] saturate-150"
+            alt="Novel Cover" 
+            className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0a0a]/40 to-[#0a0a0a]" />
         </motion.div>
       </AnimatePresence>
 
-      {/* Main Image Stage */}
-      <div className="relative w-full h-full flex items-center justify-center p-6 z-10">
-        <AnimatePresence>
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 1.1, y: -20 }}
-            transition={{ type: "spring", damping: 20, stiffness: 100 }}
-            className="relative w-full h-full flex items-center justify-center"
-          >
-            {/* Subtle Glow behind image */}
-            <div className="absolute inset-0 bg-white/5 blur-[100px] rounded-full scale-75" />
-            
-            <motion.img 
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              src={validImages[currentIndex]} 
-              alt={`Cover ${currentIndex + 1}`} 
-              className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] border border-white/10"
-              referrerPolicy="no-referrer"
-            />
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
 
-      {/* Premium Controls */}
+      {validImages.length > 1 && (
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
+          {validImages.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                currentIndex === idx ? 'w-6 bg-[#F87171]' : 'w-1.5 bg-white/20 hover:bg-white/40'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+
       {validImages.length > 1 && (
         <>
-          <div className="absolute inset-y-0 left-0 w-24 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-            <button 
-              onClick={prev}
-              className="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white rounded-2xl backdrop-blur-xl border border-white/10 transition-all hover:scale-110 active:scale-95"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-          </div>
-          
-          <div className="absolute inset-y-0 right-0 w-24 flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-            <button 
-              onClick={next}
-              className="w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white rounded-2xl backdrop-blur-xl border border-white/10 transition-all hover:scale-110 active:scale-95"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </div>
-
-          {/* Progress & Pagination */}
-          <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-4 z-20">
-            <div className="flex gap-2">
-              {validImages.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentIndex(idx);
-                    setProgress(0);
-                  }}
-                  className="group relative py-2"
-                >
-                  <div className={`h-1 rounded-full transition-all duration-500 ${
-                    idx === currentIndex ? 'bg-[#F87171] w-8' : 'bg-white/20 w-2 hover:bg-white/40'
-                  }`} />
-                </button>
-              ))}
-            </div>
-            
-            {/* Auto-play Progress Bar */}
-            <div className="w-32 h-[2px] bg-white/5 rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full bg-[#F87171]/40"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.1, ease: "linear" }}
-              />
-            </div>
-          </div>
+          <button 
+            onClick={() => setCurrentIndex((prev) => (prev - 1 + validImages.length) % validImages.length)}
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all border border-white/5"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={() => setCurrentIndex((prev) => (prev + 1) % validImages.length)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all border border-white/5"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </>
       )}
-      
-      {/* Vignette Overlay */}
-      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)] z-10" />
     </div>
   );
 };
