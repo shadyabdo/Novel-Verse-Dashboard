@@ -206,7 +206,7 @@ const CoverSlider = ({ images }: { images: string[] }) => {
       <img 
         src={validImages[0]} 
         alt="Novel Main Cover" 
-        className="w-full h-full object-cover"
+        className="w-full h-full object-contain p-4"
         referrerPolicy="no-referrer"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
@@ -394,6 +394,7 @@ export default function App() {
   const [imageUrl, setImageUrl] = useState('');
   const [visibleNovelsCount, setVisibleNovelsCount] = useState(8);
   const [visibleChaptersCount, setVisibleChaptersCount] = useState(20);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const { ref: novelsEndRef, inView: novelsEndInView } = useInView();
@@ -1643,7 +1644,8 @@ export default function App() {
                       <motion.div 
                         key={`gallery-img-${idx}`}
                         whileHover={{ y: -10 }}
-                        className="aspect-[2/3] rounded-2xl bg-[#121212] border border-white/5 overflow-hidden shadow-xl group relative"
+                        onClick={() => setLightboxImage(img)}
+                        className="aspect-[2/3] rounded-2xl bg-[#121212] border border-white/5 overflow-hidden shadow-xl group relative cursor-zoom-in"
                       >
                         <img 
                           src={img} 
@@ -2543,6 +2545,41 @@ export default function App() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 md:p-10 cursor-zoom-out"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-5xl w-full h-full flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={lightboxImage} 
+                className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                alt="Enlarged view"
+                referrerPolicy="no-referrer"
+              />
+              <button 
+                onClick={() => setLightboxImage(null)}
+                className="absolute top-0 right-0 -translate-y-full md:translate-y-0 md:translate-x-full mb-4 md:mb-0 md:ml-4 p-4 text-white/40 hover:text-white transition-colors"
+                title="إغلاق"
+              >
+                <X className="w-8 h-8" />
+              </button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
