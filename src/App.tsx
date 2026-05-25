@@ -2276,7 +2276,7 @@ export default function App() {
 
               <form onSubmit={saveChapter} className="space-y-10 pb-20">
                 {/* Chapter Settings Card */}
-                <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl relative overflow-hidden">
+                <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl relative">
                   <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[100px] -ml-32 -mt-32 pointer-events-none" />
                   
                   <div className="flex items-center gap-3 mb-10 relative z-10">
@@ -2461,19 +2461,9 @@ export default function App() {
       </main>
 
       {/* Modern Dark Footer */}
-      <footer className="py-12 border-t border-white/5 mt-20 bg-[#1e1e1e]">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#F87171] rounded-lg flex items-center justify-center">
-              <Book className="w-4 h-4 text-[#121212]" />
-            </div>
-            <span className="font-normal text-white tracking-wide text-xl" style={{ fontFamily: "'New Rocker', system-ui" }}>كوم روايات</span>
-          </div>
-          <p className="text-white/50 text-xs">© 2026 لوحة تحكم الروايات الاحترافية. جميع الحقوق محفوظة.</p>
-          <div className="flex items-center gap-6 text-xs font-bold text-white/60">
-            <a href="#" className="hover:text-white transition-colors">الدعم الفني</a>
-            <a href="#" className="hover:text-white transition-colors">سياسة الخصوصية</a>
-          </div>
+      <footer className="py-8 border-t border-white/5 mt-20 bg-[#1e1e1e]">
+        <div className="max-w-7xl mx-auto px-6 flex justify-center">
+          <p className="text-white/40 text-sm font-bold tracking-widest uppercase">صنع بواسطة شادي أبودنيا</p>
         </div>
       </footer>
 
