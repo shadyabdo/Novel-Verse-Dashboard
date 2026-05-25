@@ -1423,7 +1423,17 @@ export default function App() {
                     
                     <button 
                       onClick={() => {
-                        setEditingNovel({ name: '', description: '', author: user.displayName || '', coverImages: ['', '', '', ''], categories: [] });
+                        setEditingNovel({ 
+                          name: '', 
+                          description: '', 
+                          author: user.displayName || '', 
+                          coverImages: [''], 
+                          categories: [],
+                          status: 'مستمرة',
+                          rating: 0,
+                          isAdult: false,
+                          isDraft: false
+                        });
                         setView('edit-novel');
                       }}
                       className="flex items-center gap-2 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] px-8 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-[#F87171]/20"
@@ -1646,9 +1656,7 @@ export default function App() {
                           <button 
                             onClick={() => {
                               const currentCovers = selectedNovel.coverImages || [];
-                              const paddedCovers = [...currentCovers];
-                              while (paddedCovers.length < 4) paddedCovers.push('');
-                              setEditingNovel({ ...selectedNovel, coverImages: paddedCovers });
+                              setEditingNovel({ ...selectedNovel, coverImages: currentCovers.length > 0 ? currentCovers : [''] });
                               setView('edit-novel');
                             }}
                             className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-6 py-3.5 rounded-2xl font-bold transition-all border border-white/5"
@@ -1897,224 +1905,343 @@ export default function App() {
               key="edit-novel"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="max-w-4xl mx-auto"
+              className="max-w-7xl mx-auto"
             >
-              <div className="flex items-center gap-6 mb-10">
-                <button 
-                  onClick={() => setView('novels')}
-                  className="w-12 h-12 flex items-center justify-center bg-[#1e1e1e] border border-white/5 rounded-2xl hover:bg-white/5 transition-all shadow-sm"
-                >
-                  <ArrowLeft className="w-6 h-6 text-white/60" />
-                </button>
-                <h2 className="text-2xl font-extrabold text-white">{editingNovel.id ? 'تعديل الرواية' : 'إضافة رواية جديدة'}</h2>
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex items-center gap-6">
+                  <button 
+                    onClick={() => setView(editingNovel.id ? 'chapters' : 'novels')}
+                    className="w-12 h-12 flex items-center justify-center bg-[#1e1e1e] border border-white/5 rounded-2xl hover:bg-white/5 transition-all shadow-sm group"
+                  >
+                    <ArrowLeft className="w-6 h-6 text-white/40 group-hover:text-white transition-colors" />
+                  </button>
+                  <div>
+                    <h2 className="text-3xl font-black text-white">{editingNovel.id ? 'تعديل الرواية' : 'إضافة رواية جديدة'}</h2>
+                    <p className="text-white/30 text-xs font-bold uppercase tracking-widest mt-1">لوحة التحكم / الروايات</p>
+                  </div>
+                </div>
               </div>
 
-              <form onSubmit={saveNovel} className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-bold text-white/60 mb-2">اسم الرواية</label>
-                      <input 
-                        type="text"
-                        required
-                        value={editingNovel.name}
-                        onChange={e => setEditingNovel({...editingNovel, name: e.target.value})}
-                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all"
-                        placeholder="أدخل اسم الرواية..."
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-bold text-white/60 mb-2">اسم الكاتب</label>
-                      <input 
-                        type="text"
-                        required
-                        value={editingNovel.author}
-                        onChange={e => setEditingNovel({...editingNovel, author: e.target.value})}
-                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all"
-                      />
-                    </div>
+              <form onSubmit={saveNovel} className="space-y-10 pb-20">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                  {/* Left Column: Form Fields */}
+                  <div className="lg:col-span-8 space-y-8">
+                    {/* Basic Information Section */}
+                    <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-[#F87171]/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+                      
+                      <div className="flex items-center gap-3 mb-8 relative z-10">
+                        <div className="w-10 h-10 bg-[#F87171]/10 rounded-xl flex items-center justify-center border border-[#F87171]/20">
+                          <Book className="w-5 h-5 text-[#F87171]" />
+                        </div>
+                        <h3 className="text-lg font-black text-white">المعلومات الأساسية</h3>
+                      </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-white/60 mb-2">روابط صور الغلاف (حتى 4 صور)</label>
-                      <div className="grid grid-cols-1 gap-3">
-                        {[0, 1, 2, 3].map((idx) => (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">اسم الرواية</label>
                           <input 
-                            key={idx}
-                            type="url"
-                            value={editingNovel.coverImages?.[idx] || ''}
-                            onChange={e => {
-                              const newCovers = [...(editingNovel.coverImages || ['', '', '', ''])];
-                              newCovers[idx] = e.target.value;
-                              setEditingNovel({...editingNovel, coverImages: newCovers});
-                            }}
-                            className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all text-sm"
-                            placeholder={`رابط الصورة ${idx + 1}...`}
+                            type="text"
+                            required
+                            value={editingNovel.name}
+                            onChange={e => setEditingNovel({...editingNovel, name: e.target.value})}
+                            className="w-full px-6 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-bold placeholder:text-white/10"
+                            placeholder="أدخل اسم الرواية بالكامل..."
                           />
-                        ))}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">اسم الكاتب</label>
+                          <input 
+                            type="text"
+                            required
+                            value={editingNovel.author}
+                            onChange={e => setEditingNovel({...editingNovel, author: e.target.value})}
+                            className="w-full px-6 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-bold"
+                            placeholder="اسم المؤلف..."
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">التقييم (من 5)</label>
+                          <div className="relative">
+                            <input 
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="5"
+                              value={editingNovel.rating || 0}
+                              onChange={e => setEditingNovel({...editingNovel, rating: parseFloat(e.target.value)})}
+                              className="w-full px-6 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-bold"
+                            />
+                            <Star className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-500 fill-current opacity-20" />
+                          </div>
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">وصف الرواية</label>
+                          <textarea 
+                            required
+                            rows={8}
+                            value={editingNovel.description}
+                            onChange={e => setEditingNovel({...editingNovel, description: e.target.value})}
+                            className="w-full px-6 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all leading-relaxed resize-none font-medium text-sm scrollbar-hide"
+                            placeholder="اكتب ملخصاً مشوقاً للرواية..."
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-bold text-white/60 mb-2">الحالة</label>
-                        <CustomSelect 
-                          value={editingNovel.status || 'مستمرة'}
-                          onChange={val => setEditingNovel({...editingNovel, status: val})}
-                          options={[
-                            { value: 'مستمرة', label: 'مستمرة' },
-                            { value: 'متوقفة', label: 'متوقفة' },
-                            { value: 'مكتملة', label: 'مكتملة' }
-                          ]}
-                        />
+                    {/* Preview Section - Moved to Bottom or Side */}
+                    <div className="p-10 bg-[#121212] rounded-[3rem] border border-white/5 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-[#F87171]/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+                      
+                      <div className="flex items-center gap-3 mb-8 relative z-10">
+                        <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center border border-green-500/20">
+                          <Eye className="w-5 h-5 text-green-400" />
+                        </div>
+                        <h3 className="text-lg font-black text-white">معاينة مباشرة للبطاقة</h3>
                       </div>
-                      <div>
-                        <label className="block text-sm font-bold text-white/60 mb-2">التقييم</label>
-                        <input 
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="5"
-                          value={editingNovel.rating || 0}
-                          onChange={e => setEditingNovel({...editingNovel, rating: parseFloat(e.target.value)})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all"
-                        />
-                      </div>
-                    </div>
+                      
+                      <div className="flex flex-col md:flex-row gap-10 relative z-10">
+                        <div className="md:w-1/2 aspect-[2/3] bg-[#0a0a0a] rounded-3xl border border-white/5 overflow-hidden shadow-2xl group-hover:scale-[1.02] transition-transform duration-700">
+                          <CoverSlider images={editingNovel.coverImages || []} />
+                        </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => setEditingNovel({...editingNovel, isAdult: !editingNovel.isAdult})}
-                          className={`w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border transition-all font-bold text-sm ${
-                            editingNovel.isAdult 
-                              ? 'bg-red-500/10 border-red-500 text-red-500 shadow-lg shadow-red-500/20' 
-                              : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
-                          }`}
-                        >
-                          {editingNovel.isAdult ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
-                          محتوى للبالغين (+16)
-                        </button>
-                      </div>
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => setEditingNovel({...editingNovel, isDraft: !editingNovel.isDraft})}
-                          className={`w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border transition-all font-bold text-sm ${
-                            editingNovel.isDraft 
-                              ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500' 
-                              : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
-                          }`}
-                        >
-                          {editingNovel.isDraft ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
-                          حفظ كمسودة
-                        </button>
-                      </div>
-                    </div>
+                        <div className="md:w-1/2 space-y-6 flex flex-col justify-center">
+                          <div className="space-y-4">
+                            <h3 className="font-black text-3xl text-white leading-tight group-hover:text-[#F87171] transition-colors">
+                              {editingNovel.name || 'عنوان الرواية'}
+                            </h3>
+                            <p className="text-white/30 text-sm font-bold uppercase tracking-[0.3em] flex items-center gap-2">
+                              بواسطة: {editingNovel.author || 'اسم الكاتب'}
+                            </p>
+                          </div>
+                          
+                          <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-1.5 text-yellow-500 bg-yellow-500/10 px-4 py-2 rounded-2xl border border-yellow-500/20 shadow-sm">
+                              <Star className="w-4 h-4 fill-current" />
+                              <span className="text-base font-black">{editingNovel.rating || '0.0'}</span>
+                            </div>
+                            <div className={`px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border shadow-sm ${
+                              editingNovel.status === 'مكتملة' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
+                              editingNovel.status === 'متوقفة' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                              'bg-[#F87171]/10 border-[#F87171]/20 text-[#F87171]'
+                            }`}>
+                              {editingNovel.status || 'مستمرة'}
+                            </div>
+                          </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-white/60 mb-2">التصنيفات</label>
-                      <div className="flex flex-wrap gap-2 p-4 rounded-2xl border border-white/5 bg-[#121212]">
-                        {categories.map(cat => {
-                          const isSelected = editingNovel.categories?.includes(cat.name);
-                          return (
-                            <button
-                              key={cat.id}
-                              type="button"
-                              onClick={() => {
-                                const currentCats = editingNovel.categories || [];
-                                const newCats = isSelected 
-                                  ? currentCats.filter(c => c !== cat.name)
-                                  : [...currentCats, cat.name];
-                                setEditingNovel({...editingNovel, categories: newCats});
-                              }}
-                              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                                isSelected 
-                                  ? 'bg-[#F87171] text-[#121212] border-[#F87171]' 
-                                  : 'bg-white/5 text-white/60 border-white/5 hover:bg-white/10'
-                              }`}
-                            >
-                              {cat.name}
-                            </button>
-                          );
-                        })}
-                        {categories.length === 0 && (
-                          <p className="text-xs text-slate-600 italic">جاري تحميل التصنيفات...</p>
-                        )}
+                          <div className="pt-6 border-t border-white/5">
+                            <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                              <FileText className="w-4 h-4" />
+                              بداية الملخص
+                            </h4>
+                            <div className="text-sm text-white/40 leading-relaxed line-clamp-5 bg-[#0a0a0a]/40 p-6 rounded-[2rem] border border-white/5 italic font-medium relative italic">
+                              <div className="absolute top-4 left-4 text-white/5 text-4xl font-serif">"</div>
+                              {editingNovel.description || 'ما تكتبه في خانة الوصف سيظهر هنا بشكل منسق وجذاب للقرّاء...'}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-bold text-white/60 mb-2">وصف الرواية</label>
-                      <textarea 
-                        required
-                        rows={12}
-                        value={editingNovel.description}
-                        onChange={e => setEditingNovel({...editingNovel, description: e.target.value})}
-                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all leading-relaxed resize-none"
-                        placeholder="اكتب ملخصاً للرواية..."
-                      />
+                  {/* Right Column: Settings & Images */}
+                  <div className="lg:col-span-4 space-y-8">
+                    {/* Status & Options Section */}
+                    <div className="bg-[#1e1e1e] p-8 rounded-[2.5rem] border border-white/5 shadow-xl">
+                      <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center border border-purple-500/20">
+                          <Settings className="w-5 h-5 text-purple-400" />
+                        </div>
+                        <h3 className="text-lg font-black text-white">الإعدادات</h3>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">حالة الرواية</label>
+                          <CustomSelect 
+                            value={editingNovel.status || 'مستمرة'}
+                            onChange={val => setEditingNovel({...editingNovel, status: val})}
+                            options={[
+                              { value: 'مستمرة', label: 'مستمرة' },
+                              { value: 'متوقفة', label: 'متوقفة' },
+                              { value: 'مكتملة', label: 'مكتملة' }
+                            ]}
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setEditingNovel({...editingNovel, isAdult: !editingNovel.isAdult})}
+                            className={`flex items-center justify-between px-6 py-5 rounded-2xl border transition-all group ${
+                              editingNovel.isAdult 
+                                ? 'bg-red-500/10 border-red-500/40 text-red-500' 
+                                : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              {editingNovel.isAdult ? <XCircle className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+                              <span className="font-bold text-sm">محتوى للكبار (+18)</span>
+                            </div>
+                            {editingNovel.isAdult && <Check className="w-4 h-4 animate-in fade-in zoom-in" />}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setEditingNovel({...editingNovel, isDraft: !editingNovel.isDraft})}
+                            className={`flex items-center justify-between px-6 py-5 rounded-2xl border transition-all group ${
+                              editingNovel.isDraft 
+                                ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-500' 
+                                : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              {editingNovel.isDraft ? <FileText className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+                              <span className="font-bold text-sm">حفظ كمسودة</span>
+                            </div>
+                            {editingNovel.isDraft && <Check className="w-4 h-4" />}
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-4">التصنيفات</label>
+                          <div className="flex flex-wrap gap-2 p-1">
+                            {categories.map(cat => {
+                              const isSelected = editingNovel.categories?.includes(cat.name);
+                              return (
+                                <button
+                                  key={cat.id}
+                                  type="button"
+                                  onClick={() => {
+                                    const currentCats = editingNovel.categories || [];
+                                    const newCats = isSelected 
+                                      ? currentCats.filter(c => c !== cat.name)
+                                      : [...currentCats, cat.name];
+                                    setEditingNovel({...editingNovel, categories: newCats});
+                                  }}
+                                  className={`px-4 py-2.5 rounded-xl text-[10px] font-black transition-all border shadow-sm ${
+                                    isSelected 
+                                      ? 'bg-[#F87171] text-[#121212] border-[#F87171] scale-110' 
+                                      : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+                                  }`}
+                                >
+                                  {cat.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div className="p-8 bg-[#121212] rounded-[2rem] border border-white/5">
-                      <div className="flex items-center gap-2 text-white/50 mb-6">
-                        <ImageIcon className="w-5 h-5" />
-                        <span className="text-xs font-bold">معاينة الرواية</span>
+
+                    {/* Cover Images Section */}
+                    <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
+                            <ImageIcon className="w-5 h-5 text-blue-400" />
+                          </div>
+                          <h3 className="text-lg font-black text-white">صور الغلاف</h3>
+                        </div>
                       </div>
                       
-                      <div className="aspect-[2/3] bg-[#1e1e1e] rounded-2xl border border-white/5 overflow-hidden mb-6">
-                        <CoverSlider images={editingNovel.coverImages || []} />
-                      </div>
-
                       <div className="space-y-4">
-                        <h3 className="font-bold text-lg text-white line-clamp-1">{editingNovel.name || 'اسم الرواية'}</h3>
+                        <AnimatePresence mode="popLayout">
+                          {(editingNovel.coverImages || ['']).map((url, idx) => (
+                            <motion.div 
+                              key={idx}
+                              layout
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              className="flex gap-4 group"
+                            >
+                              <div className="relative flex-1">
+                                <input 
+                                  type="url"
+                                  value={url}
+                                  onChange={e => {
+                                    const newCovers = [...(editingNovel.coverImages || [''])];
+                                    newCovers[idx] = e.target.value;
+                                    setEditingNovel({...editingNovel, coverImages: newCovers});
+                                  }}
+                                  className="w-full pl-6 pr-14 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-mono text-xs overflow-hidden text-ellipsis"
+                                  placeholder={`رابط الصورة ${idx + 1}...`}
+                                />
+                                <div className="absolute inset-y-0 right-6 flex items-center pointer-events-none text-white/20 group-focus-within:text-[#F87171] transition-colors">
+                                  <Link className="w-4 h-4" />
+                                </div>
+                              </div>
+                              {(editingNovel.coverImages || ['']).length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newCovers = [...(editingNovel.coverImages || [''])];
+                                    newCovers.splice(idx, 1);
+                                    setEditingNovel({...editingNovel, coverImages: newCovers});
+                                  }}
+                                  className="w-16 h-16 flex items-center justify-center bg-red-500/10 text-red-500 rounded-2xl border border-red-500/10 hover:bg-red-500 hover:text-white transition-all active:scale-90"
+                                >
+                                  <Minus className="w-5 h-5" />
+                                </button>
+                              )}
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
                         
-                        <div className="flex items-center gap-2 text-yellow-500">
-                          <Star className="w-4 h-4 fill-current" />
-                          <span className="text-sm font-bold">{editingNovel.rating || '0.0'}</span>
-                          <span className="text-white/50 text-xs font-normal">/ 5.0</span>
-                        </div>
-
-                        <div className="pt-4 border-t border-white/5">
-                          <h4 className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-2">معاينة الوصف</h4>
-                          <p className="text-xs text-white/60 leading-relaxed line-clamp-4">
-                            {editingNovel.description || 'لا يوجد وصف متاح حالياً...'}
-                          </p>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newCovers = [...(editingNovel.coverImages || ['']), ''];
+                            setEditingNovel({...editingNovel, coverImages: newCovers});
+                          }}
+                          className="w-full py-5 flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/5 text-white/20 hover:border-[#F87171]/40 hover:text-[#F87171] hover:bg-[#F87171]/5 transition-all group mt-2"
+                        >
+                          <Plus className="w-5 h-5 group-hover:scale-125 transition-transform" />
+                          <span className="text-sm font-black uppercase tracking-widest">غلاف إضافي</span>
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-4 pt-6">
-                  <button 
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-extrabold py-5 rounded-2xl transition-all shadow-xl shadow-[#F87171]/20 disabled:opacity-50"
+                {/* Fixed Action Bar */}
+                <div className="fixed bottom-0 left-0 right-0 z-[100] p-6 flex justify-center pointer-events-none">
+                  <motion.div 
+                    initial={{ y: 100 }}
+                    animate={{ y: 0 }}
+                    className="max-w-4xl w-full bg-[#1e1e1e]/80 backdrop-blur-2xl border border-white/10 p-4 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] flex items-center gap-4 pointer-events-auto"
                   >
-                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                    حفظ الرواية
-                  </button>
-                  {editingNovel.id && (
+                    <button 
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 flex items-center justify-center gap-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-black py-5 rounded-[1.8rem] transition-all shadow-xl shadow-[#F87171]/20 disabled:opacity-50 group active:scale-95"
+                    >
+                      {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
+                      حفظ التغييرات
+                    </button>
+                    
+                    {editingNovel.id && (
+                      <button 
+                        type="button"
+                        onClick={() => deleteNovel(editingNovel.id!)}
+                        className="w-16 h-16 flex items-center justify-center bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-[1.8rem] transition-all border border-red-500/10 active:scale-90"
+                      >
+                        <Trash2 className="w-6 h-6" />
+                      </button>
+                    )}
+
                     <button 
                       type="button"
-                      onClick={() => deleteNovel(editingNovel.id!)}
-                      className="px-8 py-5 flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl transition-all font-bold border border-red-500/20"
+                      onClick={() => setView('novels')}
+                      className="px-8 py-5 font-black text-white/40 hover:text-white hover:bg-white/5 rounded-[1.8rem] transition-all"
                     >
-                      <Trash2 className="w-5 h-5" />
-                      حذف الرواية
+                      إلغاء
                     </button>
-                  )}
-                  <button 
-                    type="button"
-                    onClick={() => setView('novels')}
-                    className="px-10 py-5 font-bold text-white/50 hover:bg-white/5 rounded-2xl transition-all"
-                  >
-                    إلغاء
-                  </button>
+                  </motion.div>
                 </div>
               </form>
             </motion.div>
