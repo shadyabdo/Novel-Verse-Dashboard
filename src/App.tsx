@@ -1944,7 +1944,8 @@ export default function App() {
                           <img 
                             src={url} 
                             alt="Chapter visual" 
-                            className="max-w-full rounded-2xl shadow-2xl border border-white/10"
+                            onClick={() => setLightboxImage(url)}
+                            className="max-w-[70%] rounded-2xl shadow-2xl border border-white/10 cursor-zoom-in hover:scale-[1.02] transition-transform"
                             referrerPolicy="no-referrer"
                           />
                         </div>
