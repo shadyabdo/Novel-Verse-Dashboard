@@ -1170,7 +1170,6 @@ export default function App() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   
   // UI State
-  const [mode, setMode] = useState<'dashboard' | 'reader'>('dashboard');
   const [view, setView] = useState<'novels' | 'chapters' | 'edit-novel' | 'edit-chapter'>('novels');
   const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
   const [editingNovel, setEditingNovel] = useState<Partial<Novel> | null>(null);
@@ -1210,14 +1209,6 @@ export default function App() {
   const isAdmin = user?.email === "shadyabdowd2020@gmail.com";
 
   useEffect(() => {
-    if (isAdmin) {
-      setMode('dashboard');
-    } else {
-      setMode('reader');
-    }
-  }, [isAdmin]);
-
-  useEffect(() => {
     setVisibleNovelsCount(8);
   }, [selectedCategory, searchTerm]);
 
@@ -1251,8 +1242,20 @@ export default function App() {
 
   // Auth Listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      if (u && u.email !== "shadyabdowd2020@gmail.com") {
+        await signOut(auth);
+        setUser(null);
+        Swal.fire({
+          title: 'دخول غير مصرح!',
+          text: 'عذراً، هذا التطبيق مخصص للإدارة فقط.',
+          icon: 'error',
+          background: '#1e1e1e',
+          color: '#fff',
+        });
+      } else {
+        setUser(u);
+      }
       setIsAuthReady(true);
     });
     return () => unsubscribe();
