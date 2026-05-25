@@ -1489,147 +1489,92 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Novel Details Branding Header */}
-              <div className="bg-[#1e1e1e] rounded-[3rem] border border-white/5 overflow-hidden shadow-2xl relative mb-12">
-                {/* Background Accent */}
-                <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-[#F87171]/5 via-transparent to-transparent pointer-events-none" />
-                
-                <div className="flex flex-col lg:flex-row relative z-10">
-                  {/* Left: Enhanced Cover Image Area */}
-                  <div className="lg:w-1/3 xl:w-1/4 aspect-[2/3] relative group flex items-center justify-center">
+              {/* Compact Novel Details Header */}
+              <div className="bg-[#1e1e1e] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-xl relative mb-10">
+                <div className="flex flex-col md:flex-row relative z-10">
+                  {/* Left: Compact Cover Area */}
+                  <div className="md:w-[240px] aspect-[2/3] md:aspect-auto flex items-center justify-center p-6 bg-[#121212]/50">
                     <CoverSlider images={selectedNovel.coverImages || []} />
                   </div>
 
-                  {/* Right: Rich Novel Details Content */}
-                  <div className="lg:w-2/3 xl:w-3/4 p-10 lg:p-16 flex flex-col">
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-10 mb-12">
-                      <div className="space-y-6">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className={`px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-sm border ${
+                  {/* Right: Refined Info Area */}
+                  <div className="flex-1 p-8 md:p-10 flex flex-col justify-center">
+                    <div className="mb-6">
+                      <div className="flex flex-wrap items-center gap-3 mb-4">
+                        <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border ${
                             selectedNovel.status === 'مستمرة' ? 'bg-yellow-500/10 border-yellow-500/20 text-yellow-500' : 
                             selectedNovel.status === 'مكتملة' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 
                             'bg-white/5 border-white/10 text-white/40'
-                          }`}>
-                            {selectedNovel.status || 'غير محدد'}
+                        }`}>
+                          {selectedNovel.status || 'غير محدد'}
+                        </span>
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-[#121212] rounded-xl border border-white/5">
+                          <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
+                          <span className="text-xs font-black text-white">{selectedNovel.rating || '0.0'}</span>
+                        </div>
+                        {selectedNovel.isAdult && (
+                          <span className="px-3 py-1.5 bg-red-500/10 border border-red-500/20 text-red-500 text-[9px] font-black uppercase tracking-widest rounded-xl">
+                            +16
                           </span>
-                          <div className="flex items-center gap-2 px-4 py-2 bg-[#121212] rounded-2xl border border-white/5 shadow-inner">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span className="text-sm font-black text-white">{selectedNovel.rating || '0.0'}</span>
-                          </div>
-                          {selectedNovel.isAdult && (
-                            <span className="px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-2xl">
-                              +16 محتوى للكبار
-                            </span>
-                          )}
-                        </div>
-
-                        <h2 className="text-4xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight">
-                          {selectedNovel.name}
-                        </h2>
-
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
-                            <UserIcon className="w-5 h-5 text-[#F87171]" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">تأليف المبدع</p>
-                            <h4 className="text-xl font-black text-white tracking-wide">{selectedNovel.author}</h4>
-                          </div>
-                        </div>
+                        )}
                       </div>
 
-                      {isAdmin && (
-                        <div className="flex flex-wrap items-center gap-3 md:pt-4">
-                          <button 
-                            onClick={() => {
-                              setEditingChapter({ novelId: selectedNovel.id, title: '', content: '', order: chapters.length + 1, date: new Date().toLocaleDateString('ar-EG') });
-                              setView('edit-chapter');
-                            }}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] px-8 py-5 rounded-[1.8rem] font-black transition-all shadow-xl shadow-[#F87171]/20 active:scale-95 group"
-                          >
-                            <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-                            <span className="text-sm uppercase tracking-widest">إضافة فصل</span>
-                          </button>
-                          
-                          <div className="flex items-center gap-2">
-                             <button 
-                              onClick={() => setShowVolumePopup(true)}
-                              className="w-16 h-16 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white rounded-[1.5rem] border border-white/5 transition-all group"
-                              title="إضافة مجلد"
-                            >
-                              <Layers className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
-                            </button>
-                            <button 
-                              onClick={() => {
-                                const currentCovers = selectedNovel.coverImages || [];
-                                setEditingNovel({ ...selectedNovel, coverImages: currentCovers.length > 0 ? currentCovers : [''] });
-                                setView('edit-novel');
-                              }}
-                              className="w-16 h-16 flex items-center justify-center bg-white/5 hover:bg-white/10 text-white rounded-[1.5rem] border border-white/5 transition-all group"
-                              title="تعديل الرواية"
-                            >
-                              <Edit className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
-                            </button>
-                            <button 
-                              onClick={() => deleteNovel(selectedNovel.id)}
-                              className="w-16 h-16 flex items-center justify-center bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-[1.5rem] border border-red-500/10 transition-all active:scale-90"
-                              title="حذف الرواية"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
+                      <h2 className="text-3xl lg:text-4xl font-black text-white leading-tight tracking-tight mb-4">
+                        {selectedNovel.name}
+                      </h2>
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5">
+                          <UserIcon className="w-4 h-4 text-[#F87171]" />
                         </div>
-                      )}
+                        <div>
+                          <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">المؤلف</p>
+                          <h4 className="text-lg font-black text-white tracking-wide">{selectedNovel.author}</h4>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-10 mb-12 items-center">
-                      <div className="md:col-span-7">
-                        <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-5 flex items-center gap-2">
-                          <LayoutDashboard className="w-3.5 h-3.5" />
-                          التصنيفات الفنية
-                        </h4>
-                        <div className="flex flex-wrap gap-2.5">
-                          {selectedNovel.categories?.map((cat, i) => (
-                            <span key={`selected-cat-${i}`} className="px-5 py-2.5 rounded-2xl bg-[#121212] text-white/70 text-xs font-black border border-white/5 shadow-sm hover:border-[#F87171]/20 transition-colors">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-end pt-6 border-t border-white/5">
+                      <div>
+                        <h4 className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">التصنيفات</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedNovel.categories?.slice(0, 4).map((cat, i) => (
+                            <span key={`selected-cat-${i}`} className="px-4 py-1.5 rounded-xl bg-[#121212] text-white/50 text-[10px] font-black border border-white/5">
                               {cat}
                             </span>
                           ))}
                         </div>
                       </div>
-                      <div className="md:col-span-5 bg-[#121212] p-8 rounded-[2.5rem] border border-white/5 shadow-inner">
-                        <div className="flex items-center justify-between">
-                          <div className="text-right">
-                            <span className="text-4xl font-black text-white block mb-1">{chapters.length}</span>
-                            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">فصل مكتوب</span>
-                          </div>
-                          <div className="w-px h-12 bg-white/5" />
-                          <div className="text-right">
-                            <span className="text-4xl font-black text-white block mb-1">{selectedNovel.volumes?.length || 0}</span>
-                            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">مجلد منشور</span>
-                          </div>
+                      <div className="flex items-center gap-8 justify-end">
+                        <div className="text-right">
+                          <span className="text-2xl font-black text-white block -mb-1">{chapters.length}</span>
+                          <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">فصل</span>
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-10 border-t border-white/5 mt-auto">
-                      <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5" />
-                        القصة والملخص
-                      </h4>
-                      <div className="bg-[#121212]/40 p-8 rounded-[2rem] border border-white/5 relative group">
-                        <div className="absolute top-4 left-6 text-6xl font-serif text-white/5 opacity-0 group-hover:opacity-100 transition-opacity">"</div>
-                        <p className="text-white/50 leading-[2] text-sm lg:text-base font-medium italic">
-                          {selectedNovel.description || 'لا يوجد وصف متاح لهذه الرواية حالياً.'}
-                        </p>
+                        <div className="w-px h-8 bg-white/5" />
+                        <div className="text-right">
+                          <span className="text-2xl font-black text-white block -mb-1">{selectedNovel.volumes?.length || 0}</span>
+                          <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">مجلد</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* Story Section - Simple & Compact */}
+              <div className="mb-10 bg-[#1e1e1e]/40 p-8 rounded-[2rem] border border-white/5">
+                <h4 className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-4 flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5" />
+                  القصة
+                </h4>
+                <p className="text-white/40 leading-[1.8] text-sm font-medium italic">
+                  {selectedNovel.description || 'لا يوجد وصف متاح لهذه الرواية حالياً.'}
+                </p>
+              </div>
+
               {/* Cover Gallery Section */}
               {selectedNovel.coverImages && selectedNovel.coverImages.filter(img => img && img.trim() !== '').length > 0 && (
-                <div className="mb-12 mt-12 bg-[#1e1e1e] p-10 rounded-[3rem] border border-white/5 shadow-xl">
+                <div className="mb-12 bg-[#1e1e1e] p-10 rounded-[3rem] border border-white/5 shadow-xl">
                   <div className="flex items-center gap-3 mb-8">
                     <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
                       <ImageIcon className="w-5 h-5 text-blue-400" />
@@ -1677,175 +1622,176 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                {/* Explicit Volumes */}
-                {(selectedNovel.volumes || []).sort((a, b) => a.order - b.order).map(volume => {
-                  const volumeChapters = chapters
-                    .filter(c => c.volumeId === volume.id)
-                    .filter(c => isAdmin || !c.isDraft)
-                    .slice(0, visibleChaptersCount);
-                  const isExpanded = expandedVolumes.includes(volume.id);
-                  
-                  return (
-                    <div key={volume.id} className="bg-[#1e1e1e] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-xl transition-all">
-                      <div 
-                        onClick={() => {
-                          setExpandedVolumes(prev => 
-                            prev.includes(volume.id) ? prev.filter(id => id !== volume.id) : [...prev, volume.id]
-                          );
-                        }}
-                        className="w-full px-10 py-8 flex items-center justify-between hover:bg-white/[0.02] transition-all group cursor-pointer"
-                      >
-                        <div className="flex items-center gap-6">
-                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all border shadow-lg ${
-                            isExpanded ? 'bg-[#F87171] border-[#F87171] text-[#121212]' : 'bg-[#121212] border-white/5 text-white/20'
-                          }`}>
-                            <Layers className="w-6 h-6" />
-                          </div>
-                          <div className="text-right">
-                            <h4 className="font-black text-xl text-white group-hover:text-[#F87171] transition-colors mb-1">{volume.name}</h4>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{volumeChapters.length} فصلاً متاحاً</span>
-                              {isAdmin && (
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      editVolume(volume.id, volume.name);
-                                    }}
-                                    className="p-1 text-white/20 hover:text-white"
-                                  >
-                                    <Edit className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      deleteVolume(volume.id);
-                                    }}
-                                    className="p-1 text-white/20 hover:text-red-400"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <motion.div
-                          animate={{ rotate: isExpanded ? 180 : 0 }}
-                          className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-colors ${
-                            isExpanded ? 'border-[#F87171]/20 text-[#F87171]' : 'border-white/5 text-white/20'
-                          }`}
-                        >
-                          <ChevronDown className="w-6 h-6" />
-                        </motion.div>
-                      </div>
-
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="bg-[#1a1a1a]/50"
+                    {/* Explicit Volumes */}
+                    {(selectedNovel.volumes || []).sort((a, b) => a.order - b.order).map(volume => {
+                      const volumeChapters = chapters
+                        .filter(c => c.volumeId === volume.id)
+                        .filter(c => isAdmin || !c.isDraft)
+                        .slice(0, visibleChaptersCount);
+                      const isExpanded = expandedVolumes.includes(volume.id);
+                      
+                      return (
+                        <div key={volume.id} className="bg-[#1e1e1e] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-xl transition-all">
+                          <div 
+                            onClick={() => {
+                              setExpandedVolumes(prev => 
+                                prev.includes(volume.id) ? prev.filter(id => id !== volume.id) : [...prev, volume.id]
+                              );
+                            }}
+                            className="w-full px-10 py-8 flex items-center justify-between hover:bg-white/[0.02] transition-all group cursor-pointer"
                           >
-                            <div className="px-10 pb-10 space-y-3">
-                              <div className="h-px bg-white/5 w-full mb-6" />
-                              {volumeChapters.length === 0 ? (
-                                <div className="py-20 text-center bg-[#121212]/40 rounded-[2rem] border border-dashed border-white/5">
-                                  <FileQuestion className="w-12 h-12 text-white/5 mx-auto mb-4" />
-                                  <p className="text-white/20 text-xs font-black uppercase tracking-widest">لا توجد فصول في هذا المجلد حالياً</p>
+                            <div className="flex items-center gap-6">
+                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all border shadow-lg ${
+                                isExpanded ? 'bg-[#F87171] border-[#F87171] text-[#121212]' : 'bg-[#121212] border-white/5 text-white/20'
+                              }`}>
+                                <Layers className="w-6 h-6" />
+                              </div>
+                              <div className="text-right">
+                                <h4 className="font-black text-xl text-white group-hover:text-[#F87171] transition-colors mb-1">{volume.name}</h4>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{volumeChapters.length} فصلاً متاحاً</span>
+                                  {isAdmin && (
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          editVolume(volume.id, volume.name);
+                                        }}
+                                        className="p-1 text-white/20 hover:text-white"
+                                      >
+                                        <Edit className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          deleteVolume(volume.id);
+                                        }}
+                                        className="p-1 text-white/20 hover:text-red-400"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
-                              ) : (
-                                volumeChapters.map((chapter, idx) => (
-                                  <ChapterRow 
-                                    key={chapter.id} 
-                                    chapter={chapter} 
-                                    index={idx} 
-                                    onEdit={(c) => {
-                                      setEditingChapter(c);
-                                      setView('edit-chapter');
-                                    }}
-                                    onDelete={deleteChapter}
-                                  />
-                                ))
-                              )}
+                              </div>
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-
-                {/* Uncategorized Chapters Header */}
-                {(() => {
-                  const uncategorized = chapters
-                    .filter(c => !c.volumeId)
-                    .filter(c => isAdmin || !c.isDraft)
-                    .slice(0, visibleChaptersCount);
-                  if (uncategorized.length === 0) return null;
-
-                  const isExpanded = expandedVolumes.includes('uncategorized');
-                  return (
-                    <div className="bg-[#1e1e1e] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-xl transition-all">
-                      <button 
-                        onClick={() => {
-                          setExpandedVolumes(prev => 
-                            prev.includes('uncategorized') ? prev.filter(id => id !== 'uncategorized') : [...prev, 'uncategorized']
-                          );
-                        }}
-                        className="w-full px-10 py-8 flex items-center justify-between hover:bg-white/[0.02] transition-all group"
-                      >
-                        <div className="flex items-center gap-6">
-                          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all border shadow-lg ${
-                            isExpanded ? 'bg-[#F87171] border-[#F87171] text-[#121212]' : 'bg-[#121212] border-white/5 text-white/20'
-                          }`}>
-                            <Book className="w-6 h-6" />
+                            <motion.div
+                              animate={{ rotate: isExpanded ? 180 : 0 }}
+                              className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-colors ${
+                                isExpanded ? 'border-[#F87171]/20 text-[#F87171]' : 'border-white/5 text-white/20'
+                              }`}
+                            >
+                              <ChevronDown className="w-6 h-6" />
+                            </motion.div>
                           </div>
-                          <div className="text-right">
-                            <h4 className="font-black text-xl text-white group-hover:text-[#F87171] transition-colors mb-1">الفصول العامة</h4>
-                            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{uncategorized.length} فصلاً مستقلاً</p>
-                          </div>
+
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="bg-[#1a1a1a]/50"
+                              >
+                                <div className="px-10 pb-10 space-y-3">
+                                  <div className="h-px bg-white/5 w-full mb-6" />
+                                  {volumeChapters.length === 0 ? (
+                                    <div className="py-20 text-center bg-[#121212]/40 rounded-[2rem] border border-dashed border-white/5">
+                                      <FileQuestion className="w-12 h-12 text-white/5 mx-auto mb-4" />
+                                      <p className="text-white/20 text-xs font-black uppercase tracking-widest">لا توجد فصول في هذا المجلد حالياً</p>
+                                    </div>
+                                  ) : (
+                                    volumeChapters.map((chapter, idx) => (
+                                      <ChapterRow 
+                                        key={chapter.id} 
+                                        chapter={chapter} 
+                                        index={idx} 
+                                        onEdit={(c) => {
+                                          setEditingChapter(c);
+                                          setView('edit-chapter');
+                                        }}
+                                        onDelete={deleteChapter}
+                                      />
+                                    ))
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
-                        <motion.div
-                          animate={{ rotate: isExpanded ? 180 : 0 }}
-                          className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-colors ${
-                            isExpanded ? 'border-[#F87171]/20 text-[#F87171]' : 'border-white/5 text-white/20'
-                          }`}
-                        >
-                          <ChevronDown className="w-6 h-6" />
-                        </motion.div>
-                      </button>
+                      );
+                    })}
 
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="bg-[#1a1a1a]/50"
+                    {/* Uncategorized Chapters Header */}
+                    {(() => {
+                      const uncategorized = chapters
+                        .filter(c => !c.volumeId)
+                        .filter(c => isAdmin || !c.isDraft)
+                        .slice(0, visibleChaptersCount);
+                      if (uncategorized.length === 0) return null;
+
+                      const isExpanded = expandedVolumes.includes('uncategorized');
+                      return (
+                        <div className="bg-[#1e1e1e] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-xl transition-all">
+                          <button 
+                            onClick={() => {
+                              setExpandedVolumes(prev => 
+                                prev.includes('uncategorized') ? prev.filter(id => id !== 'uncategorized') : [...prev, 'uncategorized']
+                              );
+                            }}
+                            className="w-full px-10 py-8 flex items-center justify-between hover:bg-white/[0.02] transition-all group"
                           >
-                            <div className="px-10 pb-10 space-y-3">
-                              <div className="h-px bg-white/5 w-full mb-6" />
-                              {uncategorized.map((chapter, idx) => (
-                                <ChapterRow 
-                                  key={chapter.id} 
-                                  chapter={chapter} 
-                                  index={idx} 
-                                  onEdit={(c) => {
-                                    setEditingChapter(c);
-                                    setView('edit-chapter');
-                                  }}
-                                  onDelete={deleteChapter}
-                                />
-                              ))}
+                            <div className="flex items-center gap-6">
+                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all border shadow-lg ${
+                                isExpanded ? 'bg-[#F87171] border-[#F87171] text-[#121212]' : 'bg-[#121212] border-white/5 text-white/20'
+                              }`}>
+                                <Book className="w-6 h-6" />
+                              </div>
+                              <div className="text-right">
+                                <h4 className="font-black text-xl text-white group-hover:text-[#F87171] transition-colors mb-1">الفصول العامة</h4>
+                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{uncategorized.length} فصلاً مستقلاً</p>
+                              </div>
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })()}
+                            <motion.div
+                              animate={{ rotate: isExpanded ? 180 : 0 }}
+                              className={`w-10 h-10 flex items-center justify-center rounded-xl border transition-colors ${
+                                isExpanded ? 'border-[#F87171]/20 text-[#F87171]' : 'border-white/5 text-white/20'
+                              }`}
+                            >
+                              <ChevronDown className="w-6 h-6" />
+                            </motion.div>
+                          </button>
+
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="bg-[#1a1a1a]/50"
+                              >
+                                <div className="px-10 pb-10 space-y-3">
+                                  <div className="h-px bg-white/5 w-full mb-6" />
+                                  {uncategorized.map((chapter, idx) => (
+                                    <ChapterRow 
+                                      key={chapter.id} 
+                                      chapter={chapter} 
+                                      index={idx} 
+                                      onEdit={(c) => {
+                                        setEditingChapter(c);
+                                        setView('edit-chapter');
+                                      }}
+                                      onDelete={deleteChapter}
+                                    />
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })()}
+                    
                     {chapters.length > visibleChaptersCount && (
                       <div ref={chaptersEndRef} className="mt-8 flex justify-center py-6">
                         <div className="flex items-center gap-3 text-white/20">
@@ -1857,6 +1803,59 @@ export default function App() {
                   </div>
                 )}
               </div>
+
+              {/* Management Controls - Administrative Section at Bottom */}
+              {isAdmin && (
+                <div className="mt-16 pt-16 border-t border-white/5">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 bg-[#F87171]/10 rounded-xl flex items-center justify-center border border-[#F87171]/20">
+                      <Settings2 className="w-5 h-5 text-[#F87171]" />
+                    </div>
+                    <h3 className="text-xl font-black text-white">إدارة الرواية</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-20">
+                    <button 
+                      onClick={() => {
+                        setEditingChapter({ novelId: selectedNovel.id, title: '', content: '', order: chapters.length + 1, date: new Date().toLocaleDateString('ar-EG') });
+                        setView('edit-chapter');
+                      }}
+                      className="flex items-center justify-center gap-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] px-8 py-5 rounded-[1.8rem] font-black transition-all shadow-xl shadow-[#F87171]/20 active:scale-95 group"
+                    >
+                      <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
+                      إضافة فصل
+                    </button>
+
+                    <button 
+                      onClick={() => setShowVolumePopup(true)}
+                      className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 text-white px-8 py-5 rounded-[1.8rem] font-black border border-white/10 transition-all active:scale-95 group"
+                    >
+                      <Layers className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
+                      إضافة مجلد
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        const currentCovers = selectedNovel.coverImages || [];
+                        setEditingNovel({ ...selectedNovel, coverImages: currentCovers.length > 0 ? currentCovers : [''] });
+                        setView('edit-novel');
+                      }}
+                      className="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 text-white px-8 py-5 rounded-[1.8rem] font-black border border-white/10 transition-all active:scale-95 group"
+                    >
+                      <Edit className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
+                      تعديل البيانات
+                    </button>
+
+                    <button 
+                      onClick={() => deleteNovel(selectedNovel.id)}
+                      className="flex items-center justify-center gap-3 bg-red-500/10 hover:bg-red-500 text-red-500 px-8 py-5 rounded-[1.8rem] font-black border border-red-500/10 transition-all active:scale-95"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                      حذف الرواية
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
