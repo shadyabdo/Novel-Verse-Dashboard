@@ -234,7 +234,7 @@ const ChapterRow = ({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => onRead(chapter)}
-      className="bg-[#1a1a1a] p-6 rounded-[1.2rem] border border-white/5 flex items-center justify-between hover:border-[#F87171]/20 transition-all group shadow-sm hover:shadow-xl hover:shadow-black/20 cursor-pointer"
+      className="bg-[#232323] p-6 rounded-[1.2rem] border border-white/5 flex items-center justify-between hover:border-[#F87171]/20 transition-all group shadow-sm hover:shadow-xl hover:shadow-black/20 cursor-pointer"
     >
       <div className="flex items-center gap-6 flex-1">
         <div className="w-14 h-14 bg-[#222222] rounded-2xl flex items-center justify-center text-white/20 font-black text-lg group-hover:bg-[#F87171] group-hover:text-[#121212] transition-all duration-300 border border-white/5 shadow-inner">
@@ -1751,7 +1751,7 @@ export default function App() {
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className="bg-[#1a1a1a]/50"
+                                className="bg-[#232323]/30"
                               >
                                 <div className="px-10 pb-10 space-y-3">
                                   <div className="h-px bg-white/5 w-full mb-6" />
@@ -1832,7 +1832,7 @@ export default function App() {
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                className="bg-[#1a1a1a]/50"
+                                className="bg-[#232323]/30"
                               >
                                 <div className="px-10 pb-10 space-y-3">
                                   <div className="h-px bg-white/5 w-full mb-6" />
