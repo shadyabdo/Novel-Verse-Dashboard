@@ -231,7 +231,7 @@ const CoverSlider = ({ images }: { images: string[] }) => {
   return (
     <div className="relative w-full h-full group overflow-hidden rounded-[2.5rem] bg-[#0a0a0a] shadow-2xl border border-white/5">
       {/* Dynamic Background Layer */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <motion.div
           key={`bg-${currentIndex}`}
           initial={{ opacity: 0, scale: 1.2 }}
@@ -251,7 +251,7 @@ const CoverSlider = ({ images }: { images: string[] }) => {
 
       {/* Main Image Stage */}
       <div className="relative w-full h-full flex items-center justify-center p-6 z-10">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           <motion.div
             key={currentIndex}
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -338,13 +338,11 @@ const CoverSlider = ({ images }: { images: string[] }) => {
 const ChapterRow = ({ 
   chapter, 
   index, 
-  onPreview, 
   onEdit, 
   onDelete 
 }: { 
   chapter: Chapter, 
   index: number, 
-  onPreview: (c: Chapter) => void, 
   onEdit: (c: Chapter) => void, 
   onDelete: (id: string) => void 
 }) => {
@@ -355,7 +353,7 @@ const ChapterRow = ({
       transition={{ delay: index * 0.05 }}
       className="bg-[#1e1e1e] p-5 rounded-2xl border border-white/5 flex items-center justify-between hover:border-[#F87171]/30 transition-all group shadow-sm"
     >
-      <div className="flex items-center gap-5 cursor-pointer flex-1" onClick={() => onPreview(chapter)}>
+      <div className="flex items-center gap-5 flex-1">
         <div className="w-12 h-12 bg-[#121212] rounded-xl flex items-center justify-center text-white/50 font-bold group-hover:bg-[#F87171]/10 group-hover:text-white transition-colors">
           {chapter.order}
         </div>
@@ -382,13 +380,6 @@ const ChapterRow = ({
         </div>
       </div>
       <div className="flex items-center gap-2.5">
-        <button 
-          onClick={() => onPreview(chapter)}
-          className="w-9 h-9 flex items-center justify-center text-white bg-white/5 hover:bg-[#F87171] hover:text-[#121212] hover:scale-110 rounded-[0.8rem] border border-white/5 transition-all shadow-sm"
-          title="معاينة"
-        >
-          <Eye className="w-4 h-4" />
-        </button>
         <button 
           onClick={() => onEdit(chapter)}
           className="w-9 h-9 flex items-center justify-center text-white bg-white/5 hover:bg-[#F87171] hover:text-[#121212] hover:scale-110 rounded-[0.8rem] border border-white/5 transition-all shadow-sm"
@@ -484,77 +475,6 @@ const CustomSelect = ({
   );
 };
 
-const ChapterPreviewModal = ({ chapter, onClose }: { chapter: Chapter, onClose: () => void }) => {
-  return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-[#121212]/95 backdrop-blur-xl"
-    >
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="bg-[#1e1e1e] w-full max-w-4xl max-h-[90vh] rounded-[2.5rem] border border-white/5 shadow-2xl flex flex-col overflow-hidden"
-      >
-        <div className="p-6 md:p-8 border-b border-white/5 flex items-center justify-between bg-[#1e1e1e] sticky top-0 z-10">
-          <div>
-            <h3 className="text-xl md:text-2xl font-black text-white mb-1">{chapter.title}</h3>
-            <p className="text-white/50 text-xs font-bold uppercase tracking-widest">الفصل {chapter.order}</p>
-          </div>
-          <button 
-            onClick={onClose}
-            className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/60 hover:text-white"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-        
-        <div className="flex-1 overflow-y-auto p-8 md:p-16 scrollbar-hide bg-[#121212]/30">
-          <div className="max-w-3xl mx-auto">
-            <div className="novel-reader-content text-white/70 leading-[2.4] text-sm md:text-base font-sans text-justify">
-              <Markdown 
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  img: ({ src, alt }) => (
-                    <div className="my-12 flex flex-col items-center">
-                      <img 
-                        src={src} 
-                        alt={alt || 'Chapter Image'} 
-                        className="rounded-[2rem] shadow-2xl max-w-full border border-white/5 hover:scale-[1.01] transition-transform duration-700" 
-                        referrerPolicy="no-referrer"
-                      />
-                      {alt && alt !== 'image' && <span className="mt-5 text-[10px] text-white/20 font-black uppercase tracking-[0.3em]">{alt}</span>}
-                    </div>
-                  ),
-                  p: ({ children }) => <div className="mb-10 last:mb-0">{children}</div>,
-                  h1: ({ children }) => <h1 className="text-3xl font-black text-white mb-8 mt-16 first:mt-0">{children}</h1>,
-                  h2: ({ children }) => <h2 className="text-2xl font-black text-white mb-6 mt-12 first:mt-0">{children}</h2>,
-                  h3: ({ children }) => <h3 className="text-xl font-black text-white mb-4 mt-10 first:mt-0">{children}</h3>,
-                  hr: () => <hr className="my-16 border-white/5" />,
-                  blockquote: ({ children }) => (
-                    <blockquote className="border-r-4 border-[#F87171] pr-6 my-10 italic text-white/50">
-                      {children}
-                    </blockquote>
-                  ),
-                  ul: ({ children }) => <ul className="list-disc pr-6 mb-10 space-y-3">{children}</ul>,
-                  ol: ({ children }) => <ol className="list-decimal pr-6 mb-10 space-y-3">{children}</ol>,
-                }}
-              >
-                {processChapterContent(chapter.content)}
-              </Markdown>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-6 border-t border-white/5 bg-[#121212]/50 flex justify-center">
-          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">كوم روايات Reader Preview</p>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -568,7 +488,6 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
   const [editingNovel, setEditingNovel] = useState<Partial<Novel> | null>(null);
   const [editingChapter, setEditingChapter] = useState<Partial<Chapter> | null>(null);
-  const [previewChapter, setPreviewChapter] = useState<Chapter | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSidebar, setShowSidebar] = useState(false);
@@ -1456,7 +1375,7 @@ export default function App() {
       </header>
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           {/* Novels List View */}
           {view === 'novels' && (
             <motion.div 
@@ -1878,7 +1797,6 @@ export default function App() {
                                         key={chapter.id} 
                                         chapter={chapter} 
                                         index={idx} 
-                                        onPreview={setPreviewChapter}
                                         onEdit={(c) => {
                                           setEditingChapter(c);
                                           setView('edit-chapter');
@@ -1945,7 +1863,6 @@ export default function App() {
                                       key={chapter.id} 
                                       chapter={chapter} 
                                       index={idx} 
-                                      onPreview={setPreviewChapter}
                                       onEdit={(c) => {
                                         setEditingChapter(c);
                                         setView('edit-chapter');
@@ -1960,14 +1877,6 @@ export default function App() {
                         </div>
                       );
                     })()}
-                    {chapters.length > visibleChaptersCount && (
-                      <div ref={chaptersEndRef} className="mt-8 flex justify-center py-6">
-                        <div className="flex items-center gap-3 text-white/20">
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span className="text-xs font-bold">جاري تحميل المزيد من الفصول...</span>
-                        </div>
-                      </div>
-                    )}
                     {chapters.length > visibleChaptersCount && (
                       <div ref={chaptersEndRef} className="mt-8 flex justify-center py-6">
                         <div className="flex items-center gap-3 text-white/20">
