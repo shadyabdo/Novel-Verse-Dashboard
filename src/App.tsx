@@ -62,8 +62,6 @@ import {
   Square,
   XCircle,
   Check,
-  Maximize2,
-  Minimize2,
   Copy,
   Minus
 } from 'lucide-react';
@@ -91,6 +89,7 @@ interface Novel {
   categories?: string[];
   status?: string;
   rating?: number;
+  isAdult?: boolean;
   isDraft?: boolean;
   volumes?: Volume[];
   createdAt?: any;
@@ -549,7 +548,7 @@ const ChapterPreviewModal = ({ chapter, onClose }: { chapter: Chapter, onClose: 
         </div>
         
         <div className="p-6 border-t border-white/5 bg-[#121212]/50 flex justify-center">
-          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">NovelVerse Reader Preview</p>
+          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.2em]">كوم روايات Reader Preview</p>
         </div>
       </motion.div>
     </motion.div>
@@ -587,11 +586,14 @@ const MobileReader = ({
   const [loadingChapters, setLoadingChapters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('الكل');
+  
+  // App Title for reuse
+  const APP_NAME = "كوم روايات";
   const [fontSize, setFontSize] = useState(18);
   const [lineSpacing, setLineSpacing] = useState(1.8);
+  const [fontWeight, setFontWeight] = useState(400);
+  const [showReadingSettings, setShowReadingSettings] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark' | 'sepia'>('dark');
-  const [isFocusMode, setIsFocusMode] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
   const onUpdate = useCallback(({ x, y, scale }: { x: number, y: number, scale: number }, imgRef: React.RefObject<HTMLImageElement>) => {
     const value = make3dTransformValue({ x, y, scale });
@@ -720,9 +722,7 @@ const MobileReader = ({
     }`}>
       {/* Vignette Effect for Reading Mode */}
       {readerView === 'reading' && (
-        <div className={`fixed inset-0 pointer-events-none z-[45] transition-opacity duration-1000 ${
-          isFocusMode ? 'opacity-100' : 'opacity-60'
-        } ${
+        <div className={`fixed inset-0 pointer-events-none z-[45] transition-opacity duration-1000 opacity-60 ${
           theme === 'dark' 
             ? 'bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]' 
             : 'bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.15)_100%)]'
@@ -731,17 +731,16 @@ const MobileReader = ({
 
       {/* Mobile Top Bar */}
       <AnimatePresence>
-        {!isFocusMode && (
-          <motion.header 
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            exit={{ y: -100 }}
-            className={`fixed top-0 left-0 right-0 z-50 px-6 py-4 backdrop-blur-xl border-b flex items-center justify-between ${
-              theme === 'dark' ? 'bg-[#0a0a0a]/80 border-white/5' : 
-              theme === 'sepia' ? 'bg-[#f4ecd8]/80 border-[#5b4636]/10' : 
-              'bg-white/80 border-gray-100'
-            }`}
-          >
+        <motion.header 
+          initial={{ y: -100 }}
+          animate={{ y: 0 }}
+          exit={{ y: -100 }}
+          className={`fixed top-0 left-0 right-0 z-50 px-6 py-4 backdrop-blur-xl border-b flex items-center justify-between ${
+            theme === 'dark' ? 'bg-[#0a0a0a]/80 border-white/5' : 
+            theme === 'sepia' ? 'bg-[#f4ecd8]/80 border-[#5b4636]/10' : 
+            'bg-white/80 border-gray-100'
+          }`}
+        >
             {readerView === 'reading' && (
               <motion.div 
                 className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#F87171] origin-left"
@@ -755,25 +754,25 @@ const MobileReader = ({
                 </button>
               )}
               <span className="font-black text-xl tracking-tight" style={{ fontFamily: "'New Rocker', system-ui" }}>
-                {readerView === 'reading' ? selectedChapter?.title : 'NovelVerse'}
+                {readerView === 'reading' ? selectedChapter?.title : 'كوم روايات'}
               </span>
             </div>
             <div className="flex items-center gap-4">
               {readerView === 'reading' && (
                 <>
                   <button 
+                    onClick={() => setShowReadingSettings(true)}
+                    className="p-2 bg-white/5 rounded-xl hover:bg-white/10 transition-all"
+                    title="إعدادات القراءة"
+                  >
+                    <Settings className="w-5 h-5" />
+                  </button>
+                  <button 
                     onClick={() => selectedChapter && copyToClipboard(selectedChapter.content)}
                     className="p-2 bg-white/5 rounded-xl hover:bg-white/10 transition-all"
                     title="نسخ المحتوى"
                   >
                     <Copy className="w-5 h-5" />
-                  </button>
-                  <button 
-                    onClick={() => setIsFocusMode(true)}
-                    className="p-2 bg-white/5 rounded-xl hover:bg-white/10 transition-all"
-                    title="وضع التركيز"
-                  >
-                    <Maximize2 className="w-5 h-5" />
                   </button>
                 </>
               )}
@@ -796,38 +795,10 @@ const MobileReader = ({
               )}
             </div>
           </motion.header>
-        )}
       </AnimatePresence>
 
-      {/* Exit Focus Mode & Copy Button */}
-      <AnimatePresence>
-        {isFocusMode && (
-          <div className="fixed top-6 right-6 z-[60] flex flex-col gap-4">
-            <motion.button
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.5 }}
-              onClick={() => setIsFocusMode(false)}
-              className="w-12 h-12 bg-[#F87171] text-[#0a0a0a] rounded-full flex items-center justify-center shadow-2xl shadow-[#F87171]/40"
-              title="خروج من وضع التركيز"
-            >
-              <Minimize2 className="w-6 h-6" />
-            </motion.button>
-            <motion.button
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.5 }}
-              onClick={() => selectedChapter && copyToClipboard(selectedChapter.content)}
-              className="w-12 h-12 bg-white/10 backdrop-blur-md text-white rounded-full flex items-center justify-center border border-white/20 shadow-2xl"
-              title="نسخ المحتوى"
-            >
-              <Copy className="w-5 h-5" />
-            </motion.button>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <main className={`transition-all duration-500 ${isFocusMode ? 'pt-10' : 'pt-24'} pb-32 px-6 max-w-2xl mx-auto`}>
+      {/* Header Spacer and Content Alignment */}
+      <main className={`transition-all duration-500 pt-24 pb-32 px-6 max-w-2xl mx-auto`}>
         <AnimatePresence mode="wait">
           {readerView === 'home' && (
             <motion.div
@@ -949,7 +920,7 @@ const MobileReader = ({
               {/* Description */}
               <div className="space-y-4">
                 <h3 className="text-sm font-black uppercase tracking-widest text-white/30">القصة</h3>
-                <p className="text-sm leading-relaxed text-white/60 text-justify">
+                <p className="text-sm leading-relaxed text-white/60 text-justify whitespace-pre-wrap">
                   {selectedNovel.description}
                 </p>
               </div>
@@ -972,7 +943,8 @@ const MobileReader = ({
                         key={chapter.id}
                         onClick={() => {
                           setSelectedChapter(chapter);
-                          setShowSettings(true);
+                          setReaderView('reading');
+                          window.scrollTo(0, 0);
                         }}
                         className="w-full flex items-center justify-between p-5 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all group"
                       >
@@ -989,102 +961,6 @@ const MobileReader = ({
                 </div>
               </div>
 
-              {/* Chapter Settings Popup */}
-              <AnimatePresence>
-                {showSettings && selectedChapter && (
-                  <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <motion.div 
-                      initial={{ y: '100%' }}
-                      animate={{ y: 0 }}
-                      exit={{ y: '100%' }}
-                      className={`w-full max-w-md rounded-t-[3rem] p-10 space-y-8 shadow-2xl border-t border-white/10 ${
-                        theme === 'dark' ? 'bg-[#1e1e1e]' : 
-                        theme === 'sepia' ? 'bg-[#f4ecd8]' : 'bg-white'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-black">إعدادات القراءة</h3>
-                        <button onClick={() => setShowSettings(false)} className="p-2 hover:bg-white/5 rounded-xl">
-                          <X className="w-6 h-6" />
-                        </button>
-                      </div>
-
-                      <div className="space-y-6">
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-white/40">حجم الخط</span>
-                            <span className="text-sm font-black text-[#F87171]">{fontSize}px</span>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <button onClick={() => setFontSize(f => Math.max(12, f - 2))} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl border border-white/5">
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <input 
-                              type="range" 
-                              min="12" 
-                              max="32" 
-                              value={fontSize} 
-                              onChange={(e) => setFontSize(parseInt(e.target.value))}
-                              className="flex-1 h-1.5 bg-white/10 rounded-full appearance-none accent-[#F87171] cursor-pointer"
-                            />
-                            <button onClick={() => setFontSize(f => Math.min(32, f + 2))} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl border border-white/5">
-                              <Plus className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-white/40">تباعد الأسطر</span>
-                            <span className="text-sm font-black text-[#F87171]">{lineSpacing.toFixed(1)}</span>
-                          </div>
-                          <input 
-                            type="range" 
-                            min="1.2" 
-                            max="3.0" 
-                            step="0.1"
-                            value={lineSpacing} 
-                            onChange={(e) => setLineSpacing(parseFloat(e.target.value))}
-                            className="w-full h-1.5 bg-white/10 rounded-full appearance-none accent-[#F87171] cursor-pointer"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-3">
-                          <button 
-                            onClick={() => setTheme('dark')} 
-                            className={`py-4 rounded-2xl border-2 transition-all font-bold text-xs ${theme === 'dark' ? 'border-[#F87171] bg-[#0a0a0a] text-white' : 'border-white/5 bg-[#0a0a0a] text-white/40'}`}
-                          >
-                            داكن
-                          </button>
-                          <button 
-                            onClick={() => setTheme('sepia')} 
-                            className={`py-4 rounded-2xl border-2 transition-all font-bold text-xs ${theme === 'sepia' ? 'border-[#F87171] bg-[#f4ecd8] text-[#5b4636]' : 'border-white/5 bg-[#f4ecd8] text-[#5b4636]/40'}`}
-                          >
-                            سيبيا
-                          </button>
-                          <button 
-                            onClick={() => setTheme('light')} 
-                            className={`py-4 rounded-2xl border-2 transition-all font-bold text-xs ${theme === 'light' ? 'border-[#F87171] bg-white text-gray-900' : 'border-white/5 bg-white text-gray-400'}`}
-                          >
-                            فاتح
-                          </button>
-                        </div>
-                      </div>
-
-                      <button 
-                        onClick={() => {
-                          setShowSettings(false);
-                          setReaderView('reading');
-                          window.scrollTo(0, 0);
-                        }}
-                        className="w-full py-5 bg-[#F87171] text-[#0a0a0a] font-black rounded-2xl shadow-xl shadow-[#F87171]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                      >
-                        ابدأ القراءة الآن
-                      </button>
-                    </motion.div>
-                  </div>
-                )}
-              </AnimatePresence>
             </motion.div>
           )}
 
@@ -1109,7 +985,11 @@ const MobileReader = ({
               {/* Reader Content */}
               <div 
                 className="novel-reader-content"
-                style={{ fontSize: `${fontSize}px`, lineHeight: lineSpacing }}
+                style={{ 
+                  fontSize: `${fontSize}px`, 
+                  lineHeight: lineSpacing,
+                  fontWeight: fontWeight
+                }}
               >
                 <Markdown 
                   remarkPlugins={[remarkGfm]}
@@ -1148,37 +1028,110 @@ const MobileReader = ({
         </AnimatePresence>
       </main>
 
-      {/* Reader Controls (Only in reading view) */}
+      {/* Reading Settings Sidebar/Drawer */}
       <AnimatePresence>
-        {readerView === 'reading' && !isFocusMode && (
-          <motion.div 
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            exit={{ y: 100 }}
-            className={`fixed bottom-0 left-0 right-0 z-50 p-6 border-t backdrop-blur-xl flex items-center justify-around ${
-              theme === 'dark' ? 'bg-[#0a0a0a]/80 border-white/5' : 
-              theme === 'sepia' ? 'bg-[#f4ecd8]/80 border-[#5b4636]/10' : 
-              'bg-white/80 border-gray-100'
-            }`}
-          >
-            <button onClick={() => setFontSize(f => Math.max(12, f - 2))} className="p-3 bg-white/5 rounded-xl">
-              <span className="text-xs font-bold">A-</span>
-            </button>
-            <button onClick={() => setFontSize(f => Math.min(32, f + 2))} className="p-3 bg-white/5 rounded-xl">
-              <span className="text-lg font-bold">A+</span>
-            </button>
-            <div className="flex gap-2">
-              <button onClick={() => setTheme('dark')} className="w-8 h-8 rounded-full bg-[#0a0a0a] border border-white/20" />
-              <button onClick={() => setTheme('sepia')} className="w-8 h-8 rounded-full bg-[#f4ecd8] border border-black/10" />
-              <button onClick={() => setTheme('light')} className="w-8 h-8 rounded-full bg-white border border-black/10" />
-            </div>
-          </motion.div>
+        {showReadingSettings && (
+          <div className="fixed inset-0 z-[110] flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              className={`w-full max-w-md rounded-t-[3rem] p-10 space-y-8 shadow-2xl border-t border-white/10 bg-[#1e1e1e]`}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-black text-white">إعدادات القراءة</h3>
+                <button onClick={() => setShowReadingSettings(false)} className="p-2 hover:bg-white/5 rounded-xl text-white">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-white/40">حجم الخط</span>
+                    <span className="text-sm font-black text-[#F87171]">{fontSize}px</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => setFontSize(f => Math.max(12, f - 2))} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl border border-white/5 text-white">
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <input 
+                      type="range" 
+                      min="12" 
+                      max="40" 
+                      value={fontSize} 
+                      onChange={(e) => setFontSize(parseInt(e.target.value))}
+                      className="flex-1 h-1.5 bg-white/10 rounded-full appearance-none accent-[#F87171] cursor-pointer"
+                    />
+                    <button onClick={() => setFontSize(f => Math.min(40, f + 2))} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl border border-white/5 text-white">
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-white/40">تباعد الأسطر</span>
+                    <span className="text-sm font-black text-[#F87171]">{lineSpacing.toFixed(1)}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => setLineSpacing(s => Math.max(1.0, s - 0.2))} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl border border-white/5 text-white">
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <input 
+                      type="range" 
+                      min="1.0" 
+                      max="3.5" 
+                      step="0.1"
+                      value={lineSpacing} 
+                      onChange={(e) => setLineSpacing(parseFloat(e.target.value))}
+                      className="flex-1 h-1.5 bg-white/10 rounded-full appearance-none accent-[#F87171] cursor-pointer"
+                    />
+                    <button onClick={() => setLineSpacing(s => Math.min(3.5, s + 0.2))} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl border border-white/5 text-white">
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-white/40">سمك الخط</span>
+                    <span className="text-sm font-black text-[#F87171]">{fontWeight}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button onClick={() => setFontWeight(w => Math.max(300, w - 100))} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl border border-white/5 text-white">
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <input 
+                      type="range" 
+                      min="300" 
+                      max="900" 
+                      step="100"
+                      value={fontWeight} 
+                      onChange={(e) => setFontWeight(parseInt(e.target.value))}
+                      className="flex-1 h-1.5 bg-white/10 rounded-full appearance-none accent-[#F87171] cursor-pointer"
+                    />
+                    <button onClick={() => setFontWeight(w => Math.min(900, w + 100))} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-xl border border-white/5 text-white">
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setShowReadingSettings(false)}
+                  className="w-full py-5 bg-[#F87171] text-[#0a0a0a] font-black rounded-2xl shadow-xl shadow-[#F87171]/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  إغلاق
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Bottom Navigation (Only in home and details) */}
       <AnimatePresence>
-        {readerView !== 'reading' && !isFocusMode && (
+        {readerView !== 'reading' && (
           <motion.nav 
             initial={{ y: 100 }}
             animate={{ y: 0 }}
@@ -1267,10 +1220,6 @@ export default function App() {
   useEffect(() => {
     setVisibleNovelsCount(8);
   }, [selectedCategory, searchTerm]);
-
-  useEffect(() => {
-    setVisibleChaptersCount(20);
-  }, [selectedNovel]);
 
   useEffect(() => {
     setVisibleChaptersCount(20);
@@ -1417,7 +1366,7 @@ export default function App() {
       await signInWithPopup(auth, provider);
       Swal.fire({
         title: 'تم تسجيل الدخول!',
-        text: 'مرحباً بك في NovelVerse',
+        text: 'مرحباً بك في كوم روايات',
         icon: 'success',
         background: '#1e1e1e',
         color: '#fff',
@@ -1627,6 +1576,7 @@ export default function App() {
         ...dataToSave,
         coverImages: cleanedCovers,
         categories: editingNovel.categories || [],
+        isAdult: editingNovel.isAdult || false,
         updatedAt: serverTimestamp(),
       };
 
@@ -1949,7 +1899,7 @@ export default function App() {
           <div className="w-20 h-20 bg-[#F87171] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#F87171]/30">
             <Book className="w-10 h-10 text-[#121212]" />
           </div>
-          <h1 className="text-3xl font-normal text-white mb-3 tracking-wide" style={{ fontFamily: "'New Rocker', system-ui" }}>NovelVerse</h1>
+          <h1 className="text-3xl font-normal text-white mb-3 tracking-wide" style={{ fontFamily: "'New Rocker', system-ui" }}>كوم روايات</h1>
           <p className="text-white/60 mb-8 leading-relaxed">لوحة التحكم الاحترافية لإدارة رواياتك وفصولك بكل سهولة وأناقة.</p>
           <button 
             onClick={login}
@@ -1958,7 +1908,7 @@ export default function App() {
             <LogIn className="w-5 h-5" />
             تسجيل الدخول باستخدام جوجل
           </button>
-          <p className="mt-6 text-xs text-white/50">بواسطة NovelVerse Team</p>
+          <p className="mt-6 text-xs text-white/50">بواسطة فريق كوم روايات</p>
         </motion.div>
       </div>
     );
@@ -2085,8 +2035,8 @@ export default function App() {
               <Book className="w-6 h-6 text-[#121212]" />
             </div>
             <div>
-              <h1 className="text-xl font-normal text-white tracking-wide" style={{ fontFamily: "'New Rocker', system-ui" }}>NovelVerse</h1>
-              <p className="text-[10px] text-[#F87171] font-bold uppercase tracking-widest">Dashboard Pro</p>
+              <h1 className="text-xl font-normal text-white tracking-wide" style={{ fontFamily: "'New Rocker', system-ui" }}>كوم روايات</h1>
+              <p className="text-[10px] text-[#F87171] font-bold uppercase tracking-widest">لوحة التحكم</p>
             </div>
           </div>
 
@@ -2241,6 +2191,12 @@ export default function App() {
                             <span className="text-base font-black text-white">{novel.rating || '0.0'}</span>
                           </div>
                           
+                          {novel.isAdult && (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-red-600 rounded-full shadow-lg shadow-red-600/40 border border-red-500/30">
+                              <span className="text-[10px] font-black text-white uppercase tracking-widest">+16</span>
+                            </div>
+                          )}
+
                           {(isRecent(novel.createdAt) || isRecent(novel.updatedAt)) && (
                             <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F87171] rounded-full shadow-lg shadow-[#F87171]/20 self-start animate-pulse">
                               <Clock className="w-3 h-3 text-[#121212]" />
@@ -2260,17 +2216,20 @@ export default function App() {
                       </div>
                       
                       <div className="p-8 flex-1 flex flex-col relative">
-                        {/* Floating Tooltip (Now positioned above the title) */}
-                        <div className="absolute bottom-[calc(100%-20px)] left-1/2 -translate-x-1/2 w-72 p-6 bg-[#1e1e1e]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)] opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500 pointer-events-none z-[100] hidden lg:block">
-                          <div className="relative">
-                            <h4 className="font-black text-[#F87171] text-sm mb-1 leading-tight">{novel.name}</h4>
-                            <p className="text-[10px] font-bold text-white/30 mb-4 uppercase tracking-[0.2em]">{novel.author}</p>
-                            <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-4" />
-                            <p className="text-[11px] text-white/60 leading-relaxed line-clamp-6 text-right font-medium" dir="rtl">
+                        {/* Floating Tooltip (Positioned right above the title area) */}
+                        <div className="absolute bottom-[80%] left-1/2 -translate-x-1/2 w-80 p-6 bg-[#121212]/95 backdrop-blur-3xl border border-red-500/20 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 group-hover:opacity-100 translate-y-10 group-hover:-translate-y-4 transition-all duration-500 pointer-events-none z-[100] hidden lg:block">
+                          <div className="relative text-center">
+                            {novel.isAdult && (
+                              <div className="inline-block px-3 py-1 bg-red-600 text-white text-[9px] font-black rounded-full mb-3 shadow-lg shadow-red-600/20">
+                                محتوى للبالغين +16
+                              </div>
+                            )}
+                            <h4 className="font-black text-white text-base mb-1 leading-tight">{novel.name}</h4>
+                            <p className="text-[10px] font-bold text-white/30 mb-3 uppercase tracking-widest">{novel.author}</p>
+                            <div className="h-px w-20 mx-auto bg-gradient-to-r from-transparent via-[#F87171]/40 to-transparent mb-3" />
+                            <p className="text-[11px] text-white/60 leading-relaxed line-clamp-4 text-center font-medium" dir="rtl">
                               {novel.description}
                             </p>
-                            {/* Arrow */}
-                            <div className="absolute top-[calc(100%+26px)] left-1/2 -translate-x-1/2 border-[10px] border-transparent border-t-[#1e1e1e]/95" />
                           </div>
                         </div>
 
@@ -2341,6 +2300,11 @@ export default function App() {
                           </div>
                         </div>
                         <h2 className="text-4xl lg:text-5xl font-black text-white leading-tight">{selectedNovel.name}</h2>
+                        {selectedNovel.isAdult && (
+                          <div className="flex items-center gap-2 px-4 py-2 bg-red-600 rounded-full w-fit shadow-lg shadow-red-600/30">
+                            <span className="text-xs font-black text-white uppercase tracking-widest">محتوى للبالغين +16</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-bold text-[#F87171] uppercase tracking-widest">المؤلف:</span>
                           <span className="text-lg font-bold text-white/80">{selectedNovel.author}</span>
@@ -2715,34 +2679,35 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setEditingNovel({...editingNovel, isDraft: !editingNovel.isDraft})}
-                        className={`w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border transition-all font-bold text-sm ${
-                          editingNovel.isDraft 
-                            ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500' 
-                            : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
-                        }`}
-                      >
-                        {editingNovel.isDraft ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
-                        حفظ كرواية مسودة (لن تظهر للقراء)
-                      </button>
-                    </div>
-
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setEditingNovel({...editingNovel, isDraft: !editingNovel.isDraft})}
-                        className={`w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border transition-all font-bold text-sm ${
-                          editingNovel.isDraft 
-                            ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500' 
-                            : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
-                        }`}
-                      >
-                        {editingNovel.isDraft ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
-                        حفظ كرواية مسودة (لن تظهر للقراء)
-                      </button>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setEditingNovel({...editingNovel, isAdult: !editingNovel.isAdult})}
+                          className={`w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border transition-all font-bold text-sm ${
+                            editingNovel.isAdult 
+                              ? 'bg-red-500/10 border-red-500 text-red-500 shadow-lg shadow-red-500/20' 
+                              : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
+                          }`}
+                        >
+                          {editingNovel.isAdult ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+                          محتوى للبالغين (+16)
+                        </button>
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setEditingNovel({...editingNovel, isDraft: !editingNovel.isDraft})}
+                          className={`w-full flex items-center justify-center gap-3 px-5 py-4 rounded-2xl border transition-all font-bold text-sm ${
+                            editingNovel.isDraft 
+                              ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500' 
+                              : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
+                          }`}
+                        >
+                          {editingNovel.isDraft ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
+                          حفظ كمسودة
+                        </button>
+                      </div>
                     </div>
 
                     <div>
@@ -3012,7 +2977,7 @@ export default function App() {
             <div className="w-8 h-8 bg-[#F87171] rounded-lg flex items-center justify-center">
               <Book className="w-4 h-4 text-[#121212]" />
             </div>
-            <span className="font-normal text-white tracking-wide text-xl" style={{ fontFamily: "'New Rocker', system-ui" }}>NovelVerse</span>
+            <span className="font-normal text-white tracking-wide text-xl" style={{ fontFamily: "'New Rocker', system-ui" }}>كوم روايات</span>
           </div>
           <p className="text-white/50 text-xs">© 2026 لوحة تحكم الروايات الاحترافية. جميع الحقوق محفوظة.</p>
           <div className="flex items-center gap-6 text-xs font-bold text-white/60">
