@@ -1924,7 +1924,7 @@ export default function App() {
 
               <form onSubmit={saveNovel} className="space-y-10 pb-20">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                  {/* Left Column: Form Fields */}
+                  {/* Right Column (Start): Main Form Fields */}
                   <div className="lg:col-span-8 space-y-8">
                     {/* Basic Information Section */}
                     <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl relative overflow-hidden">
@@ -1992,62 +1992,77 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Preview Section - Moved to Bottom or Side */}
-                    <div className="p-10 bg-[#121212] rounded-[3rem] border border-white/5 relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 w-64 h-64 bg-[#F87171]/5 rounded-full blur-[100px] -mr-32 -mt-32 pointer-events-none" />
-                      
-                      <div className="flex items-center gap-3 mb-8 relative z-10">
-                        <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center border border-green-500/20">
-                          <Eye className="w-5 h-5 text-green-400" />
+                    {/* Cover Images Section */}
+                    <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
+                            <ImageIcon className="w-5 h-5 text-blue-400" />
+                          </div>
+                          <h3 className="text-lg font-black text-white">صور الغلاف</h3>
                         </div>
-                        <h3 className="text-lg font-black text-white">معاينة مباشرة للبطاقة</h3>
                       </div>
                       
-                      <div className="flex flex-col md:flex-row gap-10 relative z-10">
-                        <div className="md:w-1/2 aspect-[2/3] bg-[#0a0a0a] rounded-3xl border border-white/5 overflow-hidden shadow-2xl group-hover:scale-[1.02] transition-transform duration-700">
-                          <CoverSlider images={editingNovel.coverImages || []} />
-                        </div>
-
-                        <div className="md:w-1/2 space-y-6 flex flex-col justify-center">
-                          <div className="space-y-4">
-                            <h3 className="font-black text-3xl text-white leading-tight group-hover:text-[#F87171] transition-colors">
-                              {editingNovel.name || 'عنوان الرواية'}
-                            </h3>
-                            <p className="text-white/30 text-sm font-bold uppercase tracking-[0.3em] flex items-center gap-2">
-                              بواسطة: {editingNovel.author || 'اسم الكاتب'}
-                            </p>
-                          </div>
-                          
-                          <div className="flex flex-wrap items-center gap-4">
-                            <div className="flex items-center gap-1.5 text-yellow-500 bg-yellow-500/10 px-4 py-2 rounded-2xl border border-yellow-500/20 shadow-sm">
-                              <Star className="w-4 h-4 fill-current" />
-                              <span className="text-base font-black">{editingNovel.rating || '0.0'}</span>
-                            </div>
-                            <div className={`px-5 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border shadow-sm ${
-                              editingNovel.status === 'مكتملة' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
-                              editingNovel.status === 'متوقفة' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                              'bg-[#F87171]/10 border-[#F87171]/20 text-[#F87171]'
-                            }`}>
-                              {editingNovel.status || 'مستمرة'}
-                            </div>
-                          </div>
-
-                          <div className="pt-6 border-t border-white/5">
-                            <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                              <FileText className="w-4 h-4" />
-                              بداية الملخص
-                            </h4>
-                            <div className="text-sm text-white/40 leading-relaxed line-clamp-5 bg-[#0a0a0a]/40 p-6 rounded-[2rem] border border-white/5 italic font-medium relative italic">
-                              <div className="absolute top-4 left-4 text-white/5 text-4xl font-serif">"</div>
-                              {editingNovel.description || 'ما تكتبه في خانة الوصف سيظهر هنا بشكل منسق وجذاب للقرّاء...'}
-                            </div>
-                          </div>
-                        </div>
+                      <div className="space-y-4">
+                        <AnimatePresence mode="popLayout">
+                          {(editingNovel.coverImages || ['']).map((url, idx) => (
+                            <motion.div 
+                              key={idx}
+                              layout
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.9 }}
+                              className="flex gap-4 group"
+                            >
+                              <div className="relative flex-1">
+                                <input 
+                                  type="url"
+                                  value={url}
+                                  onChange={e => {
+                                    const newCovers = [...(editingNovel.coverImages || [''])];
+                                    newCovers[idx] = e.target.value;
+                                    setEditingNovel({...editingNovel, coverImages: newCovers});
+                                  }}
+                                  className="w-full pl-6 pr-14 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-mono text-xs overflow-hidden text-ellipsis"
+                                  placeholder={`رابط الصورة ${idx + 1}...`}
+                                />
+                                <div className="absolute inset-y-0 right-6 flex items-center pointer-events-none text-white/20 group-focus-within:text-[#F87171] transition-colors">
+                                  <Link className="w-4 h-4" />
+                                </div>
+                              </div>
+                              {(editingNovel.coverImages || ['']).length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newCovers = [...(editingNovel.coverImages || [''])];
+                                    newCovers.splice(idx, 1);
+                                    setEditingNovel({...editingNovel, coverImages: newCovers});
+                                  }}
+                                  className="w-16 h-16 flex items-center justify-center bg-red-500/10 text-red-500 rounded-2xl border border-red-500/10 hover:bg-red-500 hover:text-white transition-all active:scale-90"
+                                >
+                                  <Minus className="w-5 h-5" />
+                                </button>
+                              )}
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+                        
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newCovers = [...(editingNovel.coverImages || ['']), ''];
+                            setEditingNovel({...editingNovel, coverImages: newCovers});
+                          }}
+                          className="w-full py-5 flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/5 text-white/20 hover:border-[#F87171]/40 hover:text-[#F87171] hover:bg-[#F87171]/5 transition-all group mt-2"
+                        >
+                          <Plus className="w-5 h-5 group-hover:scale-125 transition-transform" />
+                          <span className="text-sm font-black uppercase tracking-widest">غلاف إضافي</span>
+                        </button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Right Column: Settings & Images */}
+                  {/* Left Column (End): Sidebar & Preview */}
                   <div className="lg:col-span-4 space-y-8">
                     {/* Status & Options Section */}
                     <div className="bg-[#1e1e1e] p-8 rounded-[2.5rem] border border-white/5 shadow-xl">
@@ -2137,72 +2152,56 @@ export default function App() {
                       </div>
                     </div>
 
-                    {/* Cover Images Section */}
-                    <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl">
-                      <div className="flex items-center justify-between mb-8">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
-                            <ImageIcon className="w-5 h-5 text-blue-400" />
-                          </div>
-                          <h3 className="text-lg font-black text-white">صور الغلاف</h3>
+                    {/* Preview Section - Sidebar Version */}
+                    <div className="p-8 bg-[#121212] rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 w-48 h-48 bg-[#F87171]/5 rounded-full blur-[80px] -mr-24 -mt-24 pointer-events-none" />
+                      
+                      <div className="flex items-center gap-3 mb-8 relative z-10">
+                        <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center border border-green-500/20">
+                          <Eye className="w-5 h-5 text-green-400" />
                         </div>
+                        <h3 className="text-lg font-black text-white">معاينة مباشرة</h3>
                       </div>
                       
-                      <div className="space-y-4">
-                        <AnimatePresence mode="popLayout">
-                          {(editingNovel.coverImages || ['']).map((url, idx) => (
-                            <motion.div 
-                              key={idx}
-                              layout
-                              initial={{ opacity: 0, scale: 0.9 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.9 }}
-                              className="flex gap-4 group"
-                            >
-                              <div className="relative flex-1">
-                                <input 
-                                  type="url"
-                                  value={url}
-                                  onChange={e => {
-                                    const newCovers = [...(editingNovel.coverImages || [''])];
-                                    newCovers[idx] = e.target.value;
-                                    setEditingNovel({...editingNovel, coverImages: newCovers});
-                                  }}
-                                  className="w-full pl-6 pr-14 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-mono text-xs overflow-hidden text-ellipsis"
-                                  placeholder={`رابط الصورة ${idx + 1}...`}
-                                />
-                                <div className="absolute inset-y-0 right-6 flex items-center pointer-events-none text-white/20 group-focus-within:text-[#F87171] transition-colors">
-                                  <Link className="w-4 h-4" />
-                                </div>
-                              </div>
-                              {(editingNovel.coverImages || ['']).length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newCovers = [...(editingNovel.coverImages || [''])];
-                                    newCovers.splice(idx, 1);
-                                    setEditingNovel({...editingNovel, coverImages: newCovers});
-                                  }}
-                                  className="w-16 h-16 flex items-center justify-center bg-red-500/10 text-red-500 rounded-2xl border border-red-500/10 hover:bg-red-500 hover:text-white transition-all active:scale-90"
-                                >
-                                  <Minus className="w-5 h-5" />
-                                </button>
-                              )}
-                            </motion.div>
-                          ))}
-                        </AnimatePresence>
-                        
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newCovers = [...(editingNovel.coverImages || ['']), ''];
-                            setEditingNovel({...editingNovel, coverImages: newCovers});
-                          }}
-                          className="w-full py-5 flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-white/5 text-white/20 hover:border-[#F87171]/40 hover:text-[#F87171] hover:bg-[#F87171]/5 transition-all group mt-2"
-                        >
-                          <Plus className="w-5 h-5 group-hover:scale-125 transition-transform" />
-                          <span className="text-sm font-black uppercase tracking-widest">غلاف إضافي</span>
-                        </button>
+                      <div className="space-y-8 relative z-10">
+                        <div className="w-full aspect-[2/3] bg-[#0a0a0a] rounded-3xl border border-white/5 overflow-hidden shadow-2xl group-hover:scale-[1.02] transition-transform duration-700">
+                          <CoverSlider images={editingNovel.coverImages || []} />
+                        </div>
+
+                        <div className="space-y-6">
+                          <div className="space-y-3">
+                            <h3 className="font-black text-2xl text-white leading-tight group-hover:text-[#F87171] transition-colors">
+                              {editingNovel.name || 'عنوان الرواية'}
+                            </h3>
+                            <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                              بواسطة: {editingNovel.author || 'اسم الكاتب'}
+                            </p>
+                          </div>
+                          
+                          <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-1.5 text-yellow-500 bg-yellow-500/10 px-3 py-1.5 rounded-xl border border-yellow-500/20 shadow-sm">
+                              <Star className="w-3.5 h-3.5 fill-current" />
+                              <span className="text-sm font-black">{editingNovel.rating || '0.0'}</span>
+                            </div>
+                            <div className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border shadow-sm ${
+                              editingNovel.status === 'مكتملة' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
+                              editingNovel.status === 'متوقفة' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                              'bg-[#F87171]/10 border-[#F87171]/20 text-[#F87171]'
+                            }`}>
+                              {editingNovel.status || 'مستمرة'}
+                            </div>
+                          </div>
+
+                          <div className="pt-6 border-t border-white/5">
+                            <h4 className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                              <FileText className="w-3.5 h-3.5" />
+                              الملخص
+                            </h4>
+                            <div className="text-xs text-white/40 leading-relaxed line-clamp-6 bg-[#0a0a0a]/40 p-5 rounded-[1.5rem] border border-white/5 italic font-medium">
+                              {editingNovel.description || 'اكتب وصفاً للرواية لتظهر المعاينة هنا...'}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
