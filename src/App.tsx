@@ -202,14 +202,13 @@ const CoverSlider = ({ images }: { images: string[] }) => {
   }
 
   return (
-    <div className="relative w-full h-full group overflow-hidden rounded-[2.5rem] bg-[#121212] border border-white/5 shadow-2xl">
+    <div className="relative w-full h-full group overflow-hidden rounded-[2.5rem] flex items-center justify-center">
       <img 
         src={validImages[0]} 
         alt="Novel Main Cover" 
-        className="w-full h-full object-contain p-4"
+        className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl p-2"
         referrerPolicy="no-referrer"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
     </div>
   );
 };
@@ -1497,9 +1496,8 @@ export default function App() {
                 
                 <div className="flex flex-col lg:flex-row relative z-10">
                   {/* Left: Enhanced Cover Image Area */}
-                  <div className="lg:w-1/3 xl:w-1/4 aspect-[2/3] relative group">
+                  <div className="lg:w-1/3 xl:w-1/4 aspect-[2/3] relative group flex items-center justify-center">
                     <CoverSlider images={selectedNovel.coverImages || []} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent opacity-60 pointer-events-none" />
                   </div>
 
                   {/* Right: Rich Novel Details Content */}
@@ -1645,12 +1643,12 @@ export default function App() {
                         key={`gallery-img-${idx}`}
                         whileHover={{ y: -10 }}
                         onClick={() => setLightboxImage(img)}
-                        className="aspect-[2/3] rounded-2xl bg-[#121212] border border-white/5 overflow-hidden shadow-xl group relative cursor-zoom-in"
+                        className="aspect-[2/3] flex items-center justify-center group relative cursor-zoom-in"
                       >
                         <img 
                           src={img} 
                           alt={`Cover ${idx + 1}`} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          className="max-w-full max-h-full object-contain rounded-xl shadow-xl transition-transform duration-700"
                           referrerPolicy="no-referrer"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
@@ -2127,7 +2125,7 @@ export default function App() {
                       </div>
                       
                       <div className="space-y-8 relative z-10">
-                        <div className="w-full aspect-[2/3] bg-[#0a0a0a] rounded-3xl border border-white/5 overflow-hidden shadow-2xl group-hover:scale-[1.02] transition-transform duration-700">
+                        <div className="w-full aspect-[2/3] flex items-center justify-center rounded-3xl overflow-hidden group-hover:scale-[1.02] transition-transform duration-700">
                           <CoverSlider images={editingNovel.coverImages || []} />
                         </div>
 
