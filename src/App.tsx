@@ -234,10 +234,10 @@ const ChapterRow = ({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => onRead(chapter)}
-      className="bg-[#121212] p-6 rounded-[1.8rem] border border-white/5 flex items-center justify-between hover:border-[#F87171]/20 transition-all group shadow-sm hover:shadow-xl hover:shadow-black/20 cursor-pointer"
+      className="bg-[#1a1a1a] p-6 rounded-[1.2rem] border border-white/5 flex items-center justify-between hover:border-[#F87171]/20 transition-all group shadow-sm hover:shadow-xl hover:shadow-black/20 cursor-pointer"
     >
       <div className="flex items-center gap-6 flex-1">
-        <div className="w-14 h-14 bg-[#0a0a0a] rounded-2xl flex items-center justify-center text-white/20 font-black text-lg group-hover:bg-[#F87171] group-hover:text-[#121212] transition-all duration-300 border border-white/5 shadow-inner">
+        <div className="w-14 h-14 bg-[#222222] rounded-2xl flex items-center justify-center text-white/20 font-black text-lg group-hover:bg-[#F87171] group-hover:text-[#121212] transition-all duration-300 border border-white/5 shadow-inner">
           {chapter.order}
         </div>
         <div>
@@ -1691,7 +1691,7 @@ export default function App() {
                       const isExpanded = expandedVolumes.includes(volume.id);
                       
                       return (
-                        <div key={volume.id} className="bg-[#1e1e1e] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-xl transition-all">
+                        <div key={volume.id} className="bg-[#1e1e1e] rounded-[1.5rem] border border-white/5 overflow-hidden shadow-xl transition-all">
                           <div 
                             onClick={() => {
                               setExpandedVolumes(prev => 
@@ -1796,7 +1796,7 @@ export default function App() {
 
                       const isExpanded = expandedVolumes.includes('uncategorized');
                       return (
-                        <div className="bg-[#1e1e1e] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-xl transition-all">
+                        <div className="bg-[#1e1e1e] rounded-[1.5rem] border border-white/5 overflow-hidden shadow-xl transition-all">
                           <button 
                             onClick={() => {
                               setExpandedVolumes(prev => 
