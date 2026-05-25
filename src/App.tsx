@@ -70,7 +70,8 @@ import {
   Square,
   XCircle,
   Minus,
-  Copy
+  Copy,
+  List
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import { useInView } from 'react-intersection-observer';
@@ -404,6 +405,7 @@ export default function App() {
     fontWeight: '400'
   });
   const [showReaderSettings, setShowReaderSettings] = useState(false);
+  const [showReaderSidebar, setShowReaderSidebar] = useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const { ref: novelsEndRef, inView: novelsEndInView } = useInView();
@@ -1917,13 +1919,81 @@ export default function App() {
                   </div>
                 </div>
 
-                <button 
-                  onClick={() => setShowReaderSettings(true)}
-                  className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-[#F87171] hover:text-[#121212] transition-all border border-white/5"
-                >
-                  <Settings className="w-6 h-6" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setShowReaderSidebar(true)}
+                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all border border-white/5"
+                    title="قائمة الفصول"
+                  >
+                    <List className="w-6 h-6" />
+                  </button>
+                  <button 
+                    onClick={() => setShowReaderSettings(true)}
+                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-[#F87171] hover:text-[#121212] transition-all border border-white/5"
+                    title="إعدادات القراءة"
+                  >
+                    <Settings className="w-6 h-6" />
+                  </button>
+                </div>
               </div>
+
+              {/* Reader UI Sidebar */}
+              <AnimatePresence>
+                {showReaderSidebar && (
+                  <>
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setShowReaderSidebar(false)}
+                      className="fixed inset-0 z-[160] bg-black/60 backdrop-blur-sm"
+                    />
+                    <motion.div 
+                      initial={{ x: '-100%' }}
+                      animate={{ x: 0 }}
+                      exit={{ x: '-100%' }}
+                      className="fixed top-0 left-0 bottom-0 w-80 z-[170] bg-[#1a1a1a] border-r border-white/5 flex flex-col shadow-2xl"
+                    >
+                      <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                        <h3 className="font-black text-white uppercase tracking-widest text-sm">الفصول</h3>
+                        <button 
+                          onClick={() => setShowReaderSidebar(false)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 text-white/40"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-4 space-y-1">
+                        {[...chapters].sort((a, b) => a.order - b.order).map((chapter) => (
+                          <button
+                            key={chapter.id}
+                            onClick={() => {
+                              setReadingChapter(chapter);
+                              setShowReaderSidebar(false);
+                              window.scrollTo(0, 0);
+                            }}
+                            className={`w-full text-right px-4 py-3 rounded-xl transition-all flex items-center justify-between group ${
+                              readingChapter.id === chapter.id 
+                                ? 'bg-[#F87171] text-[#121212]' 
+                                : 'text-white/40 hover:bg-white/5 hover:text-white'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`text-[10px] font-black w-6 h-6 rounded-md flex items-center justify-center border ${
+                                readingChapter.id === chapter.id ? 'border-[#121212]/20 bg-[#121212]/10' : 'border-white/5 bg-white/5'
+                              }`}>
+                                {chapter.order}
+                              </span>
+                              <span className="font-bold text-sm truncate max-w-[180px]">{chapter.title}</span>
+                            </div>
+                            {readingChapter.id === chapter.id && <div className="w-1.5 h-1.5 rounded-full bg-[#121212]" />}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
 
               {/* Reader Content */}
               <div className="max-w-4xl mx-auto px-6 py-20">
