@@ -217,19 +217,22 @@ const ChapterRow = ({
   chapter, 
   index, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onRead
 }: { 
   chapter: Chapter, 
   index: number, 
   onEdit: (c: Chapter) => void, 
-  onDelete: (id: string) => void 
+  onDelete: (id: string) => void,
+  onRead: (c: Chapter) => void
 }) => {
   return (
     <motion.div 
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="bg-[#121212] p-6 rounded-[1.8rem] border border-white/5 flex items-center justify-between hover:border-[#F87171]/20 transition-all group shadow-sm hover:shadow-xl hover:shadow-black/20"
+      onClick={() => onRead(chapter)}
+      className="bg-[#121212] p-6 rounded-[1.8rem] border border-white/5 flex items-center justify-between hover:border-[#F87171]/20 transition-all group shadow-sm hover:shadow-xl hover:shadow-black/20 cursor-pointer"
     >
       <div className="flex items-center gap-6 flex-1">
         <div className="w-14 h-14 bg-[#0a0a0a] rounded-2xl flex items-center justify-center text-white/20 font-black text-lg group-hover:bg-[#F87171] group-hover:text-[#121212] transition-all duration-300 border border-white/5 shadow-inner">
@@ -270,7 +273,7 @@ const ChapterRow = ({
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
         <button 
           onClick={() => onEdit(chapter)}
           className="w-12 h-12 flex items-center justify-center text-white/30 bg-white/5 hover:bg-[#F87171] hover:text-[#121212] rounded-2xl border border-white/5 transition-all active:scale-90 group/btn"
@@ -375,7 +378,7 @@ export default function App() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   
   // UI State
-  const [view, setView] = useState<'novels' | 'chapters' | 'edit-novel' | 'edit-chapter'>('novels');
+  const [view, setView] = useState<'novels' | 'chapters' | 'edit-novel' | 'edit-chapter' | 'reader'>('novels');
   const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
   const [editingNovel, setEditingNovel] = useState<Partial<Novel> | null>(null);
   const [editingChapter, setEditingChapter] = useState<Partial<Chapter> | null>(null);
@@ -394,6 +397,13 @@ export default function App() {
   const [visibleNovelsCount, setVisibleNovelsCount] = useState(8);
   const [visibleChaptersCount, setVisibleChaptersCount] = useState(20);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [readingChapter, setReadingChapter] = useState<Chapter | null>(null);
+  const [readerSettings, setReaderSettings] = useState({
+    fontSize: 18,
+    lineHeight: 1.8,
+    fontWeight: '400'
+  });
+  const [showReaderSettings, setShowReaderSettings] = useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   const { ref: novelsEndRef, inView: novelsEndInView } = useInView();
@@ -410,6 +420,22 @@ export default function App() {
       setVisibleChaptersCount(prev => prev + 20);
     }
   }, [chaptersEndInView]);
+
+  const getNextChapter = (current: Chapter) => {
+    const sorted = [...chapters]
+      .filter(c => isAdmin || !c.isDraft)
+      .sort((a, b) => a.order - b.order);
+    const index = sorted.findIndex(c => c.id === current.id);
+    return index < sorted.length - 1 ? sorted[index + 1] : null;
+  };
+
+  const getPrevChapter = (current: Chapter) => {
+    const sorted = [...chapters]
+      .filter(c => isAdmin || !c.isDraft)
+      .sort((a, b) => a.order - b.order);
+    const index = sorted.findIndex(c => c.id === current.id);
+    return index > 0 ? sorted[index - 1] : null;
+  };
 
   const isAdmin = user?.email === "shadyabdowd2020@gmail.com";
 
@@ -1711,6 +1737,10 @@ export default function App() {
                                           setView('edit-chapter');
                                         }}
                                         onDelete={deleteChapter}
+                                        onRead={(c) => {
+                                          setReadingChapter(c);
+                                          setView('reader');
+                                        }}
                                       />
                                     ))
                                   )}
@@ -1782,6 +1812,10 @@ export default function App() {
                                         setView('edit-chapter');
                                       }}
                                       onDelete={deleteChapter}
+                                      onRead={(c) => {
+                                        setReadingChapter(c);
+                                        setView('reader');
+                                      }}
                                     />
                                   ))}
                                 </div>
@@ -1858,6 +1892,190 @@ export default function App() {
               )}
             </motion.div>
           )}
+
+          {/* Reader View */}
+          {view === 'reader' && readingChapter && (
+            <motion.div
+              key="reader"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[150] bg-[#0a0a0a] overflow-y-auto"
+            >
+              {/* Reader Header */}
+              <div className="sticky top-0 z-30 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => setView('chapters')}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all"
+                  >
+                    <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
+                  </button>
+                  <div className="text-right">
+                    <h3 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] mb-1">{selectedNovel?.name}</h3>
+                    <h2 className="text-lg font-black text-white line-clamp-1">{readingChapter.title}</h2>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setShowReaderSettings(true)}
+                  className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-[#F87171] hover:text-[#121212] transition-all border border-white/5"
+                >
+                  <Settings className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Reader Content */}
+              <div className="max-w-4xl mx-auto px-6 py-20">
+                <div 
+                  className="text-white/90 whitespace-pre-wrap leading-relaxed transition-all duration-300 text-right"
+                  style={{ 
+                    fontSize: `${readerSettings.fontSize}px`,
+                    lineHeight: readerSettings.lineHeight,
+                    fontWeight: readerSettings.fontWeight
+                  }}
+                >
+                  {readingChapter.content}
+                </div>
+
+                {/* Reader Footer Navigation */}
+                <div className="mt-20 pt-10 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6 pb-20">
+                  <button 
+                    disabled={!getPrevChapter(readingChapter)}
+                    onClick={() => {
+                      const prev = getPrevChapter(readingChapter);
+                      if (prev) {
+                        setReadingChapter(prev);
+                        window.scrollTo(0, 0);
+                      }
+                    }}
+                    className="w-full md:w-auto px-10 py-5 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-black flex items-center justify-center gap-3 transition-all disabled:opacity-20"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                    الفصل السابق
+                  </button>
+                  
+                  <div className="text-white/20 font-black text-sm uppercase tracking-widest">
+                    الفصل {readingChapter.order}
+                  </div>
+
+                  <button 
+                    disabled={!getNextChapter(readingChapter)}
+                    onClick={() => {
+                      const next = getNextChapter(readingChapter);
+                      if (next) {
+                        setReadingChapter(next);
+                        window.scrollTo(0, 0);
+                      }
+                    }}
+                    className="w-full md:w-auto px-10 py-5 rounded-2xl bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-black flex items-center justify-center gap-3 transition-all shadow-xl shadow-[#F87171]/20 disabled:opacity-20"
+                  >
+                    الفصل التالي
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Reader Settings Modal */}
+          <AnimatePresence>
+            {showReaderSettings && (
+              <div className="fixed inset-0 z-[160] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  className="bg-[#1e1e1e] w-full max-w-md rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden text-right"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="p-8 border-b border-white/5 flex items-center justify-between">
+                    <button 
+                      onClick={() => setShowReaderSettings(false)}
+                      className="w-10 h-10 flex items-center justify-center hover:bg-white/5 rounded-xl transition-all"
+                    >
+                      <X className="w-5 h-5 text-white/40" />
+                    </button>
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-black text-white uppercase">إعدادات القراءة</h3>
+                      <div className="w-10 h-10 bg-[#F87171]/20 rounded-xl flex items-center justify-center">
+                        <Type className="w-5 h-5 text-[#F87171]" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-10 space-y-10">
+                    {/* Font Size */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white font-black text-xs">{readerSettings.fontSize}px</span>
+                        <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">حجم الخط</label>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <button 
+                          onClick={() => setReaderSettings(p => ({ ...p, fontSize: Math.max(12, p.fontSize - 1) }))}
+                          className="w-12 h-12 rounded-xl bg-[#121212] border border-white/5 flex items-center justify-center text-white/40 hover:text-white transition-all"
+                        >
+                          <Minus className="w-5 h-5" />
+                        </button>
+                        <input 
+                          type="range"
+                          min="12"
+                          max="60"
+                          value={readerSettings.fontSize}
+                          onChange={e => setReaderSettings(p => ({ ...p, fontSize: parseInt(e.target.value) }))}
+                          className="flex-1 accent-[#F87171] h-1 bg-white/5 rounded-full appearance-none cursor-pointer"
+                        />
+                         <button 
+                          onClick={() => setReaderSettings(p => ({ ...p, fontSize: Math.min(60, p.fontSize + 1) }))}
+                          className="w-12 h-12 rounded-xl bg-[#121212] border border-white/5 flex items-center justify-center text-white/40 hover:text-white transition-all"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Line Height */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-white font-black text-xs">{readerSettings.lineHeight}</span>
+                        <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">تباعد السطور</label>
+                      </div>
+                      <input 
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="0.1"
+                        value={readerSettings.lineHeight}
+                        onChange={e => setReaderSettings(p => ({ ...p, lineHeight: parseFloat(e.target.value) }))}
+                        className="w-full accent-[#F87171] h-1 bg-white/5 rounded-full appearance-none cursor-pointer"
+                      />
+                    </div>
+
+                    {/* Font Weight */}
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">ثقل الخط</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {['400', '600', '900'].map(weight => (
+                          <button
+                            key={weight}
+                            onClick={() => setReaderSettings(p => ({ ...p, fontWeight: weight }))}
+                            className={`py-3 rounded-xl border font-black text-xs transition-all ${
+                              readerSettings.fontWeight === weight 
+                                ? 'bg-[#F87171] border-[#F87171] text-[#121212]' 
+                                : 'bg-[#121212] border-white/5 text-white/40 hover:text-white'
+                            }`}
+                          >
+                            {weight === '400' ? 'نحيف' : weight === '600' ? 'متوسط' : 'عريض'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
 
           {/* Edit Novel View */}
           {view === 'edit-novel' && editingNovel && (
