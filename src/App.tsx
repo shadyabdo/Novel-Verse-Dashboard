@@ -191,7 +191,6 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
 // --- Components ---
 
 const CoverSlider = ({ images }: { images: string[] }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const validImages = images.filter(img => img && img.trim() !== '');
 
   if (validImages.length === 0) {
@@ -204,56 +203,13 @@ const CoverSlider = ({ images }: { images: string[] }) => {
 
   return (
     <div className="relative w-full h-full group overflow-hidden rounded-[2.5rem] bg-[#121212] border border-white/5 shadow-2xl">
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full h-full"
-        >
-          <img 
-            src={validImages[currentIndex]} 
-            alt="Novel Cover" 
-            className="w-full h-full object-cover"
-            referrerPolicy="no-referrer"
-          />
-        </motion.div>
-      </AnimatePresence>
-
+      <img 
+        src={validImages[0]} 
+        alt="Novel Main Cover" 
+        className="w-full h-full object-cover"
+        referrerPolicy="no-referrer"
+      />
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
-
-      {validImages.length > 1 && (
-        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
-          {validImages.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentIndex(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                currentIndex === idx ? 'w-6 bg-[#F87171]' : 'w-1.5 bg-white/20 hover:bg-white/40'
-              }`}
-            />
-          ))}
-        </div>
-      )}
-
-      {validImages.length > 1 && (
-        <>
-          <button 
-            onClick={() => setCurrentIndex((prev) => (prev - 1 + validImages.length) % validImages.length)}
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all border border-white/5"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => setCurrentIndex((prev) => (prev + 1) % validImages.length)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all border border-white/5"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </>
-      )}
     </div>
   );
 };
@@ -1671,6 +1627,38 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
+              {/* Cover Gallery Section */}
+              {selectedNovel.coverImages && selectedNovel.coverImages.filter(img => img && img.trim() !== '').length > 0 && (
+                <div className="mb-12 mt-12 bg-[#1e1e1e] p-10 rounded-[3rem] border border-white/5 shadow-xl">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
+                      <ImageIcon className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <h3 className="text-xl font-black text-white">صور الرواية</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                    {selectedNovel.coverImages.filter(img => img && img.trim() !== '').map((img, idx) => (
+                      <motion.div 
+                        key={`gallery-img-${idx}`}
+                        whileHover={{ y: -10 }}
+                        className="aspect-[2/3] rounded-2xl bg-[#121212] border border-white/5 overflow-hidden shadow-xl group relative"
+                      >
+                        <img 
+                          src={img} 
+                          alt={`Cover ${idx + 1}`} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                          <span className="text-[8px] font-black text-white uppercase tracking-widest">غلاف #{idx + 1}</span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Section 2: Volumes & Chapters Accordion */}
               <div className="space-y-6">
