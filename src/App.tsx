@@ -48,6 +48,12 @@ import {
   SlidersHorizontal,
   LayoutDashboard,
   Settings,
+  Settings2,
+  Type,
+  Hash,
+  Calendar,
+  FolderPlus,
+  Check,
   Star,
   ExternalLink,
   MoreVertical,
@@ -61,7 +67,6 @@ import {
   CheckSquare,
   Square,
   XCircle,
-  Check,
   Minus,
   Copy
 } from 'lucide-react';
@@ -2254,146 +2259,202 @@ export default function App() {
               animate={{ opacity: 1, scale: 1 }}
               className="max-w-7xl mx-auto"
             >
-              <div className="flex items-center gap-6 mb-10">
-                <button 
-                  onClick={() => setView('chapters')}
-                  className="w-12 h-12 flex items-center justify-center bg-[#1e1e1e] border border-white/5 rounded-2xl hover:bg-white/5 transition-all shadow-sm"
-                >
-                  <ArrowLeft className="w-6 h-6 text-white/60" />
-                </button>
-                <h2 className="text-2xl font-extrabold text-white">{editingChapter.id ? 'تعديل الفصل' : 'إضافة فصل جديد'}</h2>
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex items-center gap-6">
+                  <button 
+                    onClick={() => setView('chapters')}
+                    className="w-12 h-12 flex items-center justify-center bg-[#1e1e1e] border border-white/5 rounded-2xl hover:bg-white/5 transition-all shadow-sm group"
+                  >
+                    <ArrowLeft className="w-6 h-6 text-white/40 group-hover:text-white transition-colors" />
+                  </button>
+                  <div>
+                    <h2 className="text-3xl font-black text-white">{editingChapter.id ? 'تعديل الفصل' : 'إضافة فصل جديد'}</h2>
+                    <p className="text-white/30 text-xs font-bold uppercase tracking-widest mt-1">لوحة التحكم / الفصول / {selectedNovel?.name}</p>
+                  </div>
+                </div>
               </div>
 
-              <div className="w-full">
-                {/* Main Column: Chapter Form */}
-                <div className="w-full">
-                  <form onSubmit={saveChapter} className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-bold text-white/60 mb-2">عنوان الفصل</label>
+              <form onSubmit={saveChapter} className="space-y-10 pb-20">
+                {/* Chapter Settings Card */}
+                <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[100px] -ml-32 -mt-32 pointer-events-none" />
+                  
+                  <div className="flex items-center gap-3 mb-10 relative z-10">
+                    <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
+                      <Settings2 className="w-5 h-5 text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-black text-white">إعدادات الفصل</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
+                    <div className="md:col-span-5">
+                      <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">عنوان الفصل</label>
+                      <div className="relative group">
                         <input 
                           type="text"
                           required
                           value={editingChapter.title}
                           onChange={e => setEditingChapter({...editingChapter, title: e.target.value})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all"
+                          className="w-full pl-6 pr-14 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-bold"
                           placeholder="أدخل عنوان الفصل..."
                         />
+                        <Type className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-[#F87171] transition-colors" />
                       </div>
-                      <div>
-                        <label className="block text-sm font-bold text-white/60 mb-2">الترتيب</label>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">الترتيب</label>
+                      <div className="relative group">
                         <input 
                           type="number"
                           required
                           value={editingChapter.order}
                           onChange={e => setEditingChapter({...editingChapter, order: parseInt(e.target.value)})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all"
+                          className="w-full pl-6 pr-14 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-bold"
                         />
+                        <Hash className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-[#F87171] transition-colors" />
                       </div>
-                      <div>
-                        <label className="block text-sm font-bold text-white/60 mb-2">التاريخ</label>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">التاريخ</label>
+                      <div className="relative group">
                         <input 
                           type="text"
                           value={editingChapter.date || ''}
                           onChange={e => setEditingChapter({...editingChapter, date: e.target.value})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all"
-                          placeholder="مثال: 13/3/2026"
+                          className="w-full pl-6 pr-14 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-bold"
+                          placeholder="13/3/2026"
                         />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-white/60 mb-2">المجلد</label>
-                        <CustomSelect 
-                          value={editingChapter.volumeId || ''}
-                          onChange={val => setEditingChapter({...editingChapter, volumeId: val})}
-                          placeholder="فصل عام (بدون مجلد)"
-                          options={[
-                            { value: '', label: 'فصل عام (بدون مجلد)' },
-                            ...(selectedNovel?.volumes?.map(vol => ({ value: vol.id, label: vol.name })) || [])
-                          ]}
-                        />
-                      </div>
-                      <div className="flex flex-col justify-end pb-1">
-                        <button
-                          type="button"
-                          onClick={() => setEditingChapter({...editingChapter, isEndOfVolume: !editingChapter.isEndOfVolume})}
-                          className={`flex items-center gap-3 px-5 py-4 rounded-2xl border transition-all font-bold text-sm ${
-                            editingChapter.isEndOfVolume 
-                              ? 'bg-[#F87171]/10 border-[#F87171] text-[#F87171]' 
-                              : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
-                          }`}
-                        >
-                          {editingChapter.isEndOfVolume ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
-                          نهاية المجلد
-                        </button>
-                      </div>
-                      <div className="flex flex-col justify-end pb-1">
-                        <button
-                          type="button"
-                          onClick={() => setEditingChapter({...editingChapter, isDraft: !editingChapter.isDraft})}
-                          className={`flex items-center gap-3 px-5 py-4 rounded-2xl border transition-all font-bold text-sm ${
-                            editingChapter.isDraft 
-                              ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500' 
-                              : 'bg-[#121212] border-white/5 text-white/40 hover:border-white/10'
-                          }`}
-                        >
-                          {editingChapter.isDraft ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5" />}
-                          مسودة
-                        </button>
+                        <Calendar className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-[#F87171] transition-colors" />
                       </div>
                     </div>
 
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <label className="text-sm font-bold text-white/60 flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-[#F87171]" />
-                          محتوى الفصل
-                        </label>
-                        <div className="flex items-center gap-4">
-                          <button
-                            type="button"
-                            onClick={() => setShowImagePopup(true)}
-                            className="flex items-center gap-3 px-8 py-5 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] rounded-2xl transition-all text-sm font-black shadow-lg shadow-[#F87171]/20 hover:scale-[1.02] active:scale-[0.98]"
-                          >
-                            <ImageIcon className="w-5 h-5" />
-                            إضافة صورة
-                          </button>
-                          <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">يدعم التنسيق البسيط (Markdown)</span>
-                        </div>
-                      </div>
-                      
-                      <div className="relative group">
-                        <textarea 
-                          ref={textareaRef}
-                          required
-                          rows={22}
-                          value={editingChapter.content}
-                          onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
-                          className="w-full px-10 py-10 rounded-[3rem] border border-white/5 bg-[#121212] text-white/80 focus:ring-4 focus:ring-[#F87171]/20 outline-none transition-all font-sans text-lg leading-relaxed resize-none scrollbar-hide shadow-inner"
-                          placeholder="ابدأ بكتابة أحداث الفصل هنا..."
-                        />
-                      </div>
+                    <div className="md:col-span-3">
+                      <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">المجلد</label>
+                      <CustomSelect 
+                        value={editingChapter.volumeId || ''}
+                        onChange={val => setEditingChapter({...editingChapter, volumeId: val})}
+                        placeholder="فصل عام (بدون مجلد)"
+                        options={[
+                          { value: '', label: 'فصل عام (بدون مجلد)' },
+                          ...(selectedNovel?.volumes?.map(vol => ({ value: vol.id, label: vol.name })) || [])
+                        ]}
+                      />
                     </div>
 
-                    <div className="flex gap-4 pt-6">
-                      <button 
-                        type="submit"
-                        disabled={loading}
-                        className="flex-1 flex items-center justify-center gap-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-extrabold py-5 rounded-2xl transition-all shadow-xl shadow-[#F87171]/20 disabled:opacity-50"
+                    <div className="md:col-span-12 flex flex-wrap gap-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setEditingChapter({...editingChapter, isEndOfVolume: !editingChapter.isEndOfVolume})}
+                        className={`flex items-center gap-3 px-8 py-4 rounded-2xl border transition-all font-black text-[10px] uppercase tracking-widest ${
+                          editingChapter.isEndOfVolume 
+                            ? 'bg-[#F87171]/10 border-[#F87171]/40 text-[#F87171]' 
+                            : 'bg-[#121212] border-white/5 text-white/20 hover:border-white/10 hover:text-white'
+                        }`}
                       >
-                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                        حفظ الفصل
+                        <div className={`w-4 h-4 rounded shadow-inner flex items-center justify-center border ${editingChapter.isEndOfVolume ? 'bg-[#F87171] border-transparent' : 'bg-transparent border-white/10 text-transparent'}`}>
+                          <Check className="w-3 h-3 text-[#121212]" />
+                        </div>
+                        نهاية المجلد
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditingChapter({...editingChapter, isDraft: !editingChapter.isDraft})}
+                        className={`flex items-center gap-3 px-8 py-4 rounded-2xl border transition-all font-black text-[10px] uppercase tracking-widest ${
+                          editingChapter.isDraft 
+                            ? 'bg-yellow-500/10 border-yellow-500/40 text-yellow-500' 
+                            : 'bg-[#121212] border-white/5 text-white/20 hover:border-white/10 hover:text-white'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded shadow-inner flex items-center justify-center border ${editingChapter.isDraft ? 'bg-yellow-500 border-transparent' : 'bg-transparent border-white/10 text-transparent'}`}>
+                          <Check className="w-3 h-3 text-[#121212]" />
+                        </div>
+                        مسودة
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content Area Section */}
+                <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl relative overflow-hidden">
+                  <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#F87171]/5 rounded-full blur-[100px] -mr-32 -mb-32 pointer-events-none" />
+                  
+                  <div className="flex items-center justify-between mb-8 relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-[#F87171]/10 rounded-xl flex items-center justify-center border border-[#F87171]/20">
+                        <FileText className="w-5 h-5 text-[#F87171]" />
+                      </div>
+                      <h3 className="text-lg font-black text-white">محتوى الفصل</h3>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <span className="text-[10px] text-white/20 font-black uppercase tracking-[0.2em] hidden sm:block">يدعم تنسيق Markdown لجمال أكبر</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowImagePopup(true)}
+                        className="flex items-center gap-3 px-6 py-4 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest shadow-xl shadow-[#F87171]/20 group active:scale-95"
+                      >
+                        <ImageIcon className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                        إدراج صورة
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="relative group z-10">
+                    <div className="absolute inset-0 bg-[#0a0a0a]/50 rounded-[2rem] blur-2xl -z-10 group-focus-within:bg-[#F87171]/5 transition-colors" />
+                    <textarea 
+                      ref={textareaRef}
+                      required
+                      rows={25}
+                      value={editingChapter.content}
+                      onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
+                      className="w-full px-10 py-10 rounded-[2.5rem] border border-white/5 bg-[#121212]/90 text-white/90 focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all leading-[2] resize-none font-medium text-lg scrollbar-hide shadow-inner"
+                      placeholder="ابدأ بكتابة إبداعك هنا مستخدماً Markdown..."
+                    />
+                    <div className="absolute bottom-10 left-10 text-[10px] font-black text-white/10 uppercase tracking-widest pointer-events-none">
+                      {editingChapter.content.length} حرف تقريباً
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fixed Action Bar */}
+                <div className="fixed bottom-0 left-0 right-0 z-[100] p-6 flex justify-center pointer-events-none">
+                  <motion.div 
+                    initial={{ y: 100 }}
+                    animate={{ y: 0 }}
+                    className="max-w-4xl w-full bg-[#1e1e1e]/80 backdrop-blur-2xl border border-white/10 p-4 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] flex items-center gap-4 pointer-events-auto"
+                  >
+                    <button 
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 flex items-center justify-center gap-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-black py-5 rounded-[1.8rem] transition-all shadow-xl shadow-[#F87171]/20 disabled:opacity-50 group active:scale-95"
+                    >
+                      {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
+                      حفظ الفصل
+                    </button>
+                    
+                    {editingChapter.id && (
                       <button 
                         type="button"
-                        onClick={() => setView('chapters')}
-                        className="px-10 py-5 font-bold text-white/50 hover:bg-white/5 rounded-2xl transition-all"
+                        onClick={() => deleteChapter(editingChapter.id!)}
+                        className="w-16 h-16 flex items-center justify-center bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-[1.8rem] transition-all border border-red-500/10 active:scale-90"
+                        title="حذف الفصل نهائياً"
                       >
-                        إلغاء
+                        <Trash2 className="w-6 h-6" />
                       </button>
-                    </div>
-                  </form>
+                    )}
+
+                    <button 
+                      type="button"
+                      onClick={() => setView('chapters')}
+                      className="px-8 py-5 font-black text-white/40 hover:text-white hover:bg-white/5 rounded-[1.8rem] transition-all"
+                    >
+                      إلغاء
+                    </button>
+                  </motion.div>
                 </div>
-              </div>
+              </form>
             </motion.div>
           )}
         </AnimatePresence>
@@ -2419,38 +2480,48 @@ export default function App() {
       {/* Volume Creation Popup */}
       <AnimatePresence>
         {showVolumePopup && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#1e1e1e] w-full max-w-md rounded-[2rem] border border-white/5 shadow-2xl overflow-hidden"
+              className="bg-[#1e1e1e] w-full max-w-md rounded-[2.5rem] border border-white/10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden"
             >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                <h3 className="font-bold text-lg">إضافة مجلد جديد</h3>
-                <button onClick={() => setShowVolumePopup(false)} className="p-2 hover:bg-white/5 rounded-lg transition-all">
-                  <X className="w-5 h-5 text-white/60" />
+              <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center border border-blue-500/30">
+                    <FolderPlus className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <h3 className="font-black text-white uppercase tracking-tight">إضافة مجلد جديد</h3>
+                </div>
+                <button 
+                  onClick={() => setShowVolumePopup(false)} 
+                  className="w-10 h-10 flex items-center justify-center hover:bg-white/5 rounded-xl transition-all"
+                >
+                  <X className="w-5 h-5 text-white/40" />
                 </button>
               </div>
               
-              <div className="p-8 space-y-6">
+              <div className="p-10 space-y-8">
                 <div>
-                  <label className="block text-sm font-bold text-white/60 mb-2">اسم المجلد</label>
-                  <input 
-                    type="text"
-                    placeholder="مثال: المجلد الأول: البداية..."
-                    value={newVolumeName}
-                    onChange={e => setNewVolumeName(e.target.value)}
-                    className="w-full px-5 py-4 rounded-xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all text-sm"
-                    autoFocus
-                  />
+                  <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-4">اسم المجلد</label>
+                  <div className="relative group">
+                    <input 
+                      type="text"
+                      placeholder="مثال: المجلد الأول: البداية..."
+                      value={newVolumeName}
+                      onChange={e => setNewVolumeName(e.target.value)}
+                      className="w-full px-6 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all font-bold group-hover:border-white/10"
+                      autoFocus
+                    />
+                  </div>
                 </div>
                 <button 
                   onClick={addVolume}
                   disabled={!newVolumeName.trim()}
-                  className="w-full py-4 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-bold rounded-xl transition-all shadow-lg shadow-[#F87171]/20 disabled:opacity-50"
+                  className="w-full py-5 bg-blue-500 hover:bg-blue-600 text-[#121212] font-black rounded-2xl transition-all shadow-xl shadow-blue-500/20 disabled:opacity-50 active:scale-95"
                 >
-                  إضافة المجلد
+                  تأكيد الإضافة
                 </button>
               </div>
             </motion.div>
@@ -2461,38 +2532,66 @@ export default function App() {
       {/* Image Insertion Popup */}
       <AnimatePresence>
         {showImagePopup && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#1e1e1e] w-full max-w-md rounded-[2rem] border border-white/5 shadow-2xl overflow-hidden"
+              className="bg-[#1e1e1e] w-full max-w-lg rounded-[2.5rem] border border-white/10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden"
             >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                <h3 className="font-bold text-lg">إضافة صورة</h3>
-                <button onClick={() => setShowImagePopup(false)} className="p-2 hover:bg-white/5 rounded-lg transition-all">
-                  <X className="w-5 h-5 text-white/60" />
+              <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-[#F87171]/10 to-transparent">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#F87171]/20 rounded-xl flex items-center justify-center border border-[#F87171]/30">
+                    <ImageIcon className="w-5 h-5 text-[#F87171]" />
+                  </div>
+                  <h3 className="font-black text-white uppercase tracking-tight">إدراج صورة للفصل</h3>
+                </div>
+                <button 
+                  onClick={() => setShowImagePopup(false)} 
+                  className="w-10 h-10 flex items-center justify-center hover:bg-white/5 rounded-xl transition-all"
+                >
+                  <X className="w-5 h-5 text-white/40" />
                 </button>
               </div>
               
-              <div className="p-8 space-y-6">
-                <div className="space-y-4">
-                  <div className="relative">
-                    <Link className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 w-4 h-4" />
-                    <input 
-                      type="url"
-                      placeholder="أدخل رابط الصورة هنا..."
-                      value={imageUrl}
-                      onChange={e => setImageUrl(e.target.value)}
-                      className="w-full pr-11 pl-4 py-4 rounded-xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all text-sm"
-                    />
+              <div className="p-10 space-y-8">
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-[0.2em] mb-4">رابط الصورة (URL)</label>
+                    <div className="relative group">
+                      <input 
+                        type="url"
+                        placeholder="الصق رابط الصورة هنا..."
+                        value={imageUrl}
+                        onChange={e => setImageUrl(e.target.value)}
+                        className="w-full pl-6 pr-14 py-5 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-mono text-xs group-hover:border-white/10"
+                        autoFocus
+                      />
+                      <Link className="absolute right-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#F87171] transition-colors w-4 h-4" />
+                    </div>
                   </div>
+
+                  {imageUrl && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="aspect-video bg-[#0a0a0a] rounded-2xl border border-white/5 overflow-hidden flex items-center justify-center"
+                    >
+                      <img 
+                        src={imageUrl} 
+                        alt="Preview" 
+                        className="max-w-full max-h-full object-contain"
+                        onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/400x225?text=Invalid+Image+URL')}
+                      />
+                    </motion.div>
+                  )}
+
                   <button 
                     onClick={() => imageUrl && insertImage(imageUrl)}
                     disabled={!imageUrl}
-                    className="w-full py-4 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-bold rounded-xl transition-all shadow-lg shadow-[#F87171]/20 disabled:opacity-50"
+                    className="w-full py-5 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-black rounded-2xl transition-all shadow-xl shadow-[#F87171]/20 disabled:opacity-50 active:scale-95"
                   >
-                    إدراج الصورة
+                    إدراج في المحتوى
                   </button>
                 </div>
               </div>
