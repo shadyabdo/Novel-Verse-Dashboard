@@ -49,6 +49,8 @@ import {
   Clock,
   SlidersHorizontal,
   LayoutDashboard,
+  Zap,
+  Sparkles,
   Settings,
   Settings2,
   Type,
@@ -234,7 +236,7 @@ const ChapterRow = ({
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
       onClick={() => onRead(chapter)}
-      className="bg-[#232323] p-6 rounded-[1.2rem] border border-white/5 flex items-center justify-between hover:border-[#F87171]/20 transition-all group shadow-sm hover:shadow-xl hover:shadow-black/20 cursor-pointer"
+      className="bg-[#232323] p-6 rounded-[1.2rem] border border-white/5 flex items-center justify-between hover:bg-[#2d2e2e] transition-all group shadow-sm hover:shadow-xl hover:shadow-black/20 cursor-pointer"
     >
       <div className="flex items-center gap-6 flex-1">
         <div className="w-14 h-14 bg-[#222222] rounded-2xl flex items-center justify-center text-white/20 font-black text-lg group-hover:bg-[#F87171] group-hover:text-[#121212] transition-all duration-300 border border-white/5 shadow-inner">
@@ -371,6 +373,17 @@ const CustomSelect = ({
   );
 };
 
+const GridPattern = () => (
+  <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1" />
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grid)" />
+  </svg>
+);
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -380,7 +393,7 @@ export default function App() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   
   // UI State
-  const [view, setView] = useState<'novels' | 'chapters' | 'edit-novel' | 'edit-chapter' | 'reader'>('novels');
+  const [view, setView] = useState<'home' | 'library' | 'chapters' | 'edit-novel' | 'edit-chapter' | 'reader'>('home');
   const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
   const [editingNovel, setEditingNovel] = useState<Partial<Novel> | null>(null);
   const [editingChapter, setEditingChapter] = useState<Partial<Chapter> | null>(null);
@@ -842,7 +855,7 @@ export default function App() {
           createdAt: serverTimestamp(),
         });
       }
-      setView('novels');
+      setView('library');
       setEditingNovel(null);
       Swal.fire({
         title: 'تم الحفظ!',
@@ -885,7 +898,7 @@ export default function App() {
 
     try {
       await deleteDoc(doc(db, 'novels', id));
-      setView('novels');
+      setView('library');
       setSelectedNovel(null);
       Swal.fire({
         title: 'تم الحذف!',
@@ -1175,88 +1188,35 @@ export default function App() {
         {showSidebar && (
           <>
             <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowSidebar(false)}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
             />
             <motion.div 
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
+              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed top-0 left-0 bottom-0 w-80 bg-[#1e1e1e] border-r border-white/5 z-50 flex flex-col shadow-2xl"
             >
               <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                <button 
-                  onClick={() => setShowSidebar(false)}
-                  className="p-2 hover:bg-white/5 rounded-lg transition-all"
-                >
+                <button onClick={() => setShowSidebar(false)} className="p-2 hover:bg-white/5 rounded-lg transition-all">
                   <X className="w-5 h-5 text-white/60" />
                 </button>
-                <div className="flex items-center gap-3">
-                  <h3 className="font-bold text-lg">التصنيفات</h3>
-                  <div className="w-8 h-8 bg-[#F87171]/10 rounded-lg flex items-center justify-center">
-                    <SlidersHorizontal className="w-4 h-4 text-white" />
-                  </div>
-                </div>
+                <h3 className="font-bold text-lg text-[#F87171] uppercase tracking-widest">القائمة</h3>
               </div>
-
-              <div className="flex-1 overflow-y-auto p-6 space-y-2">
-                <button 
-                  onClick={() => {
-                    setSelectedCategory('الكل');
-                    setShowSidebar(false);
-                  }}
-                  className={`w-full text-right px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-between ${
-                    selectedCategory === 'الكل' 
-                      ? 'bg-[#F87171] text-[#121212]' 
-                      : 'text-white/60 hover:bg-white/5'
-                  }`}
-                >
-                  <span>الكل</span>
-                  {selectedCategory === 'الكل' && <ChevronRight className="w-4 h-4" />}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                <button onClick={() => { setView('home'); setShowSidebar(false); }}
+                  className={`w-full text-right px-6 py-4 rounded-2xl font-bold transition-all flex items-center gap-4 ${view === 'home' ? 'bg-[#F87171] text-[#121212]' : 'text-white/60 hover:bg-white/5'}`}>
+                  <Home className="w-5 h-5" /> <span>الرئيسية</span>
                 </button>
-                {categories.map(cat => (
-                  <div key={cat.id} className="group relative">
-                    <button 
-                      onClick={() => {
-                        setSelectedCategory(cat.name);
-                        setShowSidebar(false);
-                      }}
-                      className={`w-full text-right px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-between ${
-                        selectedCategory === cat.name 
-                          ? 'bg-[#F87171] text-[#121212]' 
-                          : 'text-white/60 hover:bg-white/5'
-                      }`}
-                    >
-                      <span className="truncate">{cat.name}</span>
-                      {selectedCategory === cat.name && <ChevronRight className="w-4 h-4" />}
-                    </button>
-                    {isAdmin && (
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); deleteCategory(cat.id, cat.name); }}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 rounded-lg"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                <button onClick={() => { setView('library'); setShowSidebar(false); }}
+                  className={`w-full text-right px-6 py-4 rounded-2xl font-bold transition-all flex items-center gap-4 ${view === 'library' ? 'bg-[#F87171] text-[#121212]' : 'text-white/60 hover:bg-white/5'}`}>
+                  <Library className="w-5 h-5" /> <span>المكتبة</span>
+                </button>
+                <button onClick={() => { setView('chapters'); setShowSidebar(false); }}
+                  className={`w-full text-right px-6 py-4 rounded-2xl font-bold transition-all flex items-center gap-4 ${view === 'chapters' ? 'bg-[#F87171] text-[#121212]' : 'text-white/60 hover:bg-white/5'}`}>
+                  <BookOpen className="w-5 h-5" /> <span>الفصول</span>
+                </button>
               </div>
-
-              {isAdmin && (
-                <div className="p-6 border-t border-white/5">
-                  <button 
-                    onClick={addCategory}
-                    className="w-full flex items-center justify-center gap-2 bg-[#F87171]/10 hover:bg-[#F87171]/20 text-white py-4 rounded-2xl font-bold transition-all border border-[#F87171]/20"
-                  >
-                    <Plus className="w-4 h-4" />
-                    إضافة تصنيف جديد
-                  </button>
-                </div>
-              )}
             </motion.div>
           </>
         )}
@@ -1297,207 +1257,144 @@ export default function App() {
       </header>
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8">
-        <AnimatePresence>
-          {/* Novels List View */}
-          {view === 'novels' && (
-            <motion.div 
-              key="novels"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
-                <div>
-                  <h2 className="text-3xl font-extrabold text-white mb-2">مكتبة الروايات</h2>
-                  <p className="text-white/60 text-sm">إدارة وتعديل جميع الروايات الموجودة في مشروعك.</p>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-3 flex-1 min-w-[300px]">
-                    <div className="relative flex-1">
-                      <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 w-5 h-5" />
-                      <input 
-                        type="text"
-                        placeholder="ابحث عن رواية، كاتب..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pr-12 pl-4 py-3.5 rounded-2xl border border-white/5 bg-[#1e1e1e] text-white focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all font-medium"
-                      />
-                    </div>
-                    <button 
-                      onClick={() => setShowSidebar(true)}
-                      className={`p-3.5 rounded-2xl border border-white/5 bg-[#1e1e1e] hover:bg-white/5 transition-all relative ${selectedCategory !== 'الكل' ? 'text-[#F87171]' : 'text-white/60'}`}
-                      title="تصفية حسب التصنيف"
-                    >
-                      <SlidersHorizontal className="w-6 h-6" />
-                      {selectedCategory !== 'الكل' && (
-                        <span className="absolute -top-1 -left-1 w-3 h-3 bg-[#F87171] rounded-full border-2 border-[#121212]" />
-                      )}
-                    </button>
-                  </div>
-                  
+        <AnimatePresence mode="wait">
+          {/* Home View */}
+          {view === 'home' && (
+            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-16">
+              {/* Featured Section */}
+              <section>
+                <div className="flex items-center justify-between mb-8 px-4">
                   <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 bg-[#1e1e1e] border border-white/5 hover:bg-white/5 text-slate-300 px-6 py-3.5 rounded-2xl font-bold transition-all cursor-pointer">
-                      <FileText className="w-4 h-4 text-white" />
-                      استيراد
-                      <input type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
-                    </label>
-                    
-                    <button 
-                      onClick={() => {
-                        setEditingNovel({ 
-                          name: '', 
-                          description: '', 
-                          author: user.displayName || '', 
-                          coverImages: [''], 
-                          categories: [],
-                          status: 'مستمرة',
-                          rating: 0,
-                          isAdult: false,
-                          isDraft: false
-                        });
-                        setView('edit-novel');
-                      }}
-                      className="flex items-center gap-2 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] px-8 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-[#F87171]/20"
-                    >
-                      <Plus className="w-4 h-4" />
-                      رواية جديدة
-                    </button>
+                    <div className="w-10 h-10 bg-[#F87171]/10 rounded-xl flex items-center justify-center border border-[#F87171]/20 shadow-lg shadow-[#F87171]/5">
+                      <Sparkles className="w-5 h-5 text-[#F87171]" />
+                    </div>
+                    <h2 className="text-2xl font-black text-white">أحدث الروايات المضافة</h2>
                   </div>
+                  <button onClick={() => setView('library')} className="group flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-[#F87171] rounded-2xl transition-all duration-500">
+                    <span className="text-[10px] font-black text-white/40 group-hover:text-[#121212] uppercase tracking-widest transition-colors">مشاهدة الكل</span>
+                    <ChevronLeft className="w-4 h-4 text-white/20 group-hover:text-[#121212] transition-colors" />
+                  </button>
                 </div>
-              </div>
-
-              {filteredNovels.length === 0 ? (
-                <div className="bg-[#1e1e1e] rounded-[2.5rem] border border-white/5 p-24 text-center">
-                  <div className="w-20 h-20 bg-[#121212] rounded-3xl flex items-center justify-center mx-auto mb-8">
-                    <Search className="w-10 h-10 text-slate-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">لا توجد نتائج</h3>
-                  <p className="text-white/50">لم نجد أي روايات تطابق بحثك أو المجموعة فارغة.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                  {filteredNovels.slice(0, visibleNovelsCount).map(novel => (
-                    <motion.div 
-                      layoutId={novel.id}
-                      key={novel.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      onClick={() => {
-                        setSelectedNovel(novel);
-                        setView('chapters');
-                      }}
-                      className={`group bg-[#1e1e1e] rounded-[17px] border-2 ${novel.status === 'مستمرة' ? 'border-[#F87171] animate-border-glow' : 'border-[#C0C0C0]/20'} transition-all duration-500 flex flex-col h-full cursor-pointer relative hover:z-50`}
+                <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+                  {[...novels].reverse().slice(0, 5).map((novel, idx) => (
+                    <motion.div key={novel.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}
+                      onClick={() => { setSelectedNovel(novel); setView('chapters'); }}
+                      className="group bg-[#1e1e1e] rounded-2xl border border-white/5 transition-all flex flex-col h-full cursor-pointer relative overflow-hidden"
                     >
-                      {/* Card Image Section */}
-                      <div className="aspect-[2/3] relative overflow-hidden rounded-t-[17px]">
-                        {novel.coverImages && novel.coverImages.length > 0 ? (
-                          <img 
-                            src={novel.coverImages[0]} 
-                            alt={novel.name} 
-                            className="w-full h-full object-cover group-hover:scale-110 group-hover:grayscale transition-all duration-700 ease-out"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-[#121212] text-slate-800">
-                            <ImageIcon className="w-16 h-16 opacity-20" />
-                          </div>
-                        )}
-                        
-                        {/* Dark Overlay on Hover */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500 z-10 flex items-center justify-center">
-                          <div className="opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all duration-500 transform lg:hidden">
-                            <div className="w-16 h-16 bg-[#F87171] rounded-2xl flex items-center justify-center shadow-2xl shadow-[#F87171]/40 rotate-12 group-hover:rotate-0 transition-transform duration-500">
-                              <BookOpen className="w-8 h-8 text-[#121212]" />
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Gradient Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#1e1e1e] via-transparent to-transparent opacity-60 z-20" />
-
-                        {/* Status Badge (Top Right) */}
-                        {novel.status && (
-                          <div className="absolute top-5 right-5 z-30 flex items-center px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/5 shadow-2xl">
-                            <span className={`text-base font-black uppercase tracking-widest ${
-                              novel.status === 'مستمرة' ? 'text-blue-400' : 
-                              novel.status === 'مكتملة' ? 'text-emerald-400' : 
-                              'text-white/70'
-                            }`}>
-                              {novel.status}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Rating Badge (Top Left) */}
-                        <div className="absolute top-5 left-5 flex flex-col gap-2 z-30">
-                          <div className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/5 shadow-2xl">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span className="text-base font-black text-white">{novel.rating || '0.0'}</span>
-                          </div>
-                          
-                          {novel.isAdult && (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-red-600 rounded-full shadow-lg shadow-red-600/40 border border-red-500/30">
-                              <span className="text-[10px] font-black text-white uppercase tracking-widest">+16</span>
-                            </div>
-                          )}
-
-                          {(isRecent(novel.createdAt) || isRecent(novel.updatedAt)) && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F87171] rounded-full shadow-lg shadow-[#F87171]/20 self-start animate-pulse">
-                              <Clock className="w-3 h-3 text-[#121212]" />
-                              <span className="text-[10px] font-black text-[#121212] uppercase tracking-widest">جديد</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Draft Badge (Bottom Right of Image) */}
-                        {novel.isDraft && isAdmin && (
-                          <div className="absolute bottom-5 right-5 z-30 flex items-center px-4 py-2 bg-yellow-500/80 backdrop-blur-md rounded-full border border-yellow-500/20 shadow-2xl">
-                            <span className="text-xs font-black text-[#121212] uppercase tracking-widest">
-                              مسودة
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="p-8 flex-1 flex flex-col relative">
-                        {/* Floating Tooltip (Positioned right above the title area) */}
-                        <div className="absolute bottom-[80%] left-1/2 -translate-x-1/2 w-80 p-6 bg-[#121212]/95 backdrop-blur-3xl border border-red-500/20 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] opacity-0 group-hover:opacity-100 translate-y-10 group-hover:-translate-y-4 transition-all duration-500 pointer-events-none z-[100] hidden lg:block">
-                          <div className="relative text-center">
-                            {novel.isAdult && (
-                              <div className="inline-block px-3 py-1 bg-red-600 text-white text-[9px] font-black rounded-full mb-3 shadow-lg shadow-red-600/20">
-                                محتوى للبالغين +16
-                              </div>
-                            )}
-                            <h4 className="font-black text-white text-base mb-1 leading-tight">{novel.name}</h4>
-                            <p className="text-[10px] font-bold text-white/30 mb-3 uppercase tracking-widest">{novel.author}</p>
-                            <div className="h-px w-20 mx-auto bg-gradient-to-r from-transparent via-[#F87171]/40 to-transparent mb-3" />
-                            <p className="text-[11px] text-white/60 leading-relaxed line-clamp-4 text-center font-medium" dir="rtl">
-                              {novel.description}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-center gap-4">
-                          <h3 className="text-xl font-black text-white line-clamp-1 group-hover:text-[#F87171] transition-colors duration-300 text-center" dir="ltr">
-                            {novel.name || 'Untitled'}
-                          </h3>
-                        </div>
-                      </div>
+                       <div className="aspect-[2/3] relative">
+                         {novel.coverImages?.[0] ? <img src={novel.coverImages[0]} alt={novel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full bg-[#121212]" />}
+                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                         <h3 className="absolute bottom-4 left-4 right-4 text-white font-bold truncate">{novel.name}</h3>
+                       </div>
                     </motion.div>
                   ))}
                 </div>
-              )}
+              </section>
 
-              {filteredNovels.length > visibleNovelsCount && (
-                <div ref={novelsEndRef} className="mt-16 flex justify-center py-10">
-                  <div className="flex items-center gap-3 text-white/20">
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                    <span className="text-sm font-bold">جاري تحميل المزيد...</span>
+              {/* Latest Chapters Section */}
+              <section>
+                <div className="flex items-center gap-3 mb-8 px-4">
+                  <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20 shadow-lg shadow-blue-500/5">
+                    <Zap className="w-5 h-5 text-blue-400" />
+                  </div>
+                  <h2 className="text-2xl font-black text-white">آخر الفصول المنشورة</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[...chapters].reverse().slice(0, 10).map((chapter, idx) => {
+                    const novel = novels.find(n => n.id === chapter.novelId);
+                    return (
+                      <motion.div key={chapter.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
+                        onClick={() => { setSelectedNovel(novel || null); setReadingChapter(chapter); setView('reader'); }}
+                        className="bg-[#1e1e1e] p-6 rounded-2xl border border-white/5 flex items-center justify-between hover:bg-[#232323] transition-all cursor-pointer group shadow-xl"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-[#121212] rounded-xl flex items-center justify-center text-[#F87171] font-black group-hover:bg-[#F87171] group-hover:text-[#121212] transition-all">{chapter.order}</div>
+                          <div>
+                            <h4 className="text-sm font-bold text-white group-hover:text-[#F87171] transition-colors">{chapter.title}</h4>
+                            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{novel?.name}</p>
+                          </div>
+                        </div>
+                        <div className="text-[10px] text-white/20 font-bold">{chapter.date}</div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </section>
+            </motion.div>
+          )}
+
+          {/* Library View */}
+          {view === 'library' && (
+            <motion.div key="library" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-10">
+              <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden relative">
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none"><GridPattern /></div>
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+                  <div>
+                    <h2 className="text-4xl font-black text-white mb-2">المكتبة</h2>
+                    <p className="text-white/40 text-sm font-medium">استعرض مكتبة الروايات الكاملة.</p>
+                  </div>
+                  <div className="flex items-center gap-4 w-full lg:w-auto">
+                    <div className="relative flex-1 lg:w-96 group">
+                      <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#F87171] transition-colors w-5 h-5" />
+                      <input type="text" placeholder="ابحث..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-[#121212] pr-12 pl-4 py-4 rounded-2xl border border-white/5 text-white outline-none focus:border-[#F87171]/50 font-bold transition-all" />
+                    </div>
+                    {isAdmin && (
+                      <button onClick={() => { setEditingNovel({ name: '', description: '', author: user?.displayName || '', coverImages: [''], categories: [], status: 'مستمرة', rating: 0, isAdult: false, isDraft: false }); setView('edit-novel'); }}
+                        className="bg-[#F87171] text-[#121212] px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#F87171]/10">إضافة</button>
+                    )}
                   </div>
                 </div>
-              )}
+                <div className="h-px bg-white/5 w-full my-8" />
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  <button onClick={() => setSelectedCategory('الكل')} className={`shrink-0 px-6 py-3 rounded-xl border text-[10px] font-black transition-all ${selectedCategory === 'الكل' ? 'bg-[#F87171] text-[#121212] border-[#F87171]' : 'border-white/5 text-white/40 hover:text-white hover:bg-white/5'}`}>الكل</button>
+                  {categories.map((cat) => (
+                    <button key={cat.id} onClick={() => setSelectedCategory(cat.name)} className={`shrink-0 px-6 py-3 rounded-xl border text-[10px] font-black transition-all ${selectedCategory === cat.name ? 'bg-[#F87171] text-[#121212] border-[#F87171]' : 'border-white/5 text-white/40 hover:text-white hover:bg-white/5'}`}>{cat.name}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                {filteredNovels.map((novel) => (
+                  <motion.div key={novel.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => { setSelectedNovel(novel); setView('chapters'); }}
+                    className="group bg-[#1e1e1e] rounded-2xl border border-white/5 overflow-hidden cursor-pointer hover:shadow-xl transition-all"
+                  >
+                    <div className="aspect-[2/3] relative">
+                      {novel.coverImages?.[0] ? <img src={novel.coverImages[0]} alt={novel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full bg-[#121212]" />}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                      <h3 className="absolute bottom-4 left-4 right-4 text-white text-xs font-bold truncate text-center">{novel.name}</h3>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </motion.div>
+          )}
+
+          {/* Legacy Novels View Removed */}
+          {false && (
+            <div />
+          )}
+          {/* Fixing damaged block */}
+          {false && (
+            <div 
+              title="تصفية حسب التصنيف"
+            >
+              <SlidersHorizontal className="w-6 h-6" />
+              {selectedCategory !== 'الكل' && (
+                <span className="absolute -top-1 -left-1 w-3 h-3 bg-[#F87171] rounded-full border-2 border-[#121212]" />
+              )}
+            </div>
+          )}
+          {/* Continuing cleanup */}
+          {false && (
+            <div>
+              <div className="flex items-center gap-3">
+                <div />
+              </div>
+            </div>
+          )}
+          {/* Final Cleanup Complete */}
+          {false && (
+            <div />
           )}
 
           {/* Chapters View (Novel Details) */}
@@ -1511,11 +1408,11 @@ export default function App() {
             >
               <div className="flex items-center justify-between">
                 <button 
-                  onClick={() => setView('novels')}
+                  onClick={() => setView('library')}
                   className="flex items-center gap-3 px-6 py-3 bg-[#1e1e1e] hover:bg-[#252525] text-white/70 hover:text-white rounded-2xl border border-white/5 transition-all group shadow-xl"
                 >
                   <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                  <span className="text-sm font-bold">العودة للروايات</span>
+                  <span className="text-sm font-bold">العودة للمكتبة</span>
                 </button>
               </div>
 
@@ -2532,7 +2429,7 @@ export default function App() {
 
                     <button 
                       type="button"
-                      onClick={() => setView('novels')}
+                      onClick={() => setView('library')}
                       className="px-8 py-5 font-black text-white/40 hover:text-white hover:bg-white/5 rounded-[1.8rem] transition-all"
                     >
                       إلغاء
