@@ -51,9 +51,9 @@
       "schema": "Category",
       "description": "Collection of available novel categories."
     },
-    "/novels/{novelId}/chapters/{chapterId}": {
+    "/chapters/{chapterId}": {
       "schema": "Chapter",
-      "description": "Sub-collection of chapters for a specific novel."
+      "description": "Collection of all chapters across all novels."
     }
   }
 }

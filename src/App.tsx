@@ -597,17 +597,26 @@ export default function App() {
   };
 
   // Chapters Listener
+  // Selected Novel Chapters Listener
   useEffect(() => {
     if (!selectedNovel) {
       setChapters([]);
       return;
     }
 
-    const q = query(collection(db, `novels/${selectedNovel.id}/chapters`), orderBy('order', 'asc'));
+    // Now querying root chapters collection by novelId
+    // We sort in memory to avoid needing composite index for novelId + order
+    const q = query(
+      collection(db, 'chapters'), 
+      where('novelId', '==', selectedNovel.id)
+    );
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chapterData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Chapter));
-      setChapters(chapterData);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, `novels/${selectedNovel.id}/chapters`));
+      // Memory sort by order
+      const sorted = chapterData.sort((a, b) => (a.order || 0) - (b.order || 0));
+      setChapters(sorted);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'chapters'));
 
     return () => unsubscribe();
   }, [selectedNovel]);
@@ -616,10 +625,10 @@ export default function App() {
   useEffect(() => {
     if (!isAuthReady) return;
     
-    // Using collectionGroup to fetch chapters across all novels
-    // Note: This requires a Collection Group Index in Firestore for 'chapters'
+    // Listening to root chapters collection with simple orderBy
+    // This works out of the box in Firestore
     const q = query(
-      collectionGroup(db, 'chapters'), 
+      collection(db, 'chapters'), 
       orderBy('createdAt', 'desc'), 
       limit(10)
     );
@@ -631,8 +640,7 @@ export default function App() {
       } as Chapter));
       setLatestGlobalChapters(chapterData);
     }, (error) => {
-      // If collection group index is missing, fallback to a simpler query or handle gracefully
-      console.warn("Collection group query failed. Chapter feed might not be active yet.", error);
+      console.warn("Global chapter feed query failed:", error);
     });
 
     return () => unsubscribe();
@@ -807,7 +815,7 @@ export default function App() {
 
           if (item.chapters && Array.isArray(item.chapters)) {
             for (const ch of item.chapters) {
-              await addDoc(collection(db, `novels/${novelRef.id}/chapters`), {
+              await addDoc(collection(db, 'chapters'), {
                 novelId: novelRef.id,
                 title: ch.title || 'فصل غير معنون',
                 content: ch.content || '',
@@ -956,7 +964,7 @@ export default function App() {
 
     setLoading(true);
     try {
-      const path = `novels/${selectedNovel.id}/chapters`;
+      const path = 'chapters';
       const { id, ...dataToSave } = editingChapter;
       const data = {
         ...dataToSave,
@@ -984,7 +992,7 @@ export default function App() {
         confirmButtonColor: '#F87171'
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `novels/${selectedNovel?.id}/chapters`);
+      handleFirestoreError(error, OperationType.WRITE, 'chapters');
       Swal.fire({
         title: 'خطأ',
         text: 'فشل حفظ الفصل',
@@ -1017,7 +1025,7 @@ export default function App() {
     if (!result.isConfirmed) return;
 
     try {
-      await deleteDoc(doc(db, `novels/${selectedNovel.id}/chapters`, id));
+      await deleteDoc(doc(db, 'chapters', id));
       Swal.fire({
         title: 'تم الحذف!',
         text: 'تم حذف الفصل بنجاح',
@@ -1027,7 +1035,7 @@ export default function App() {
         confirmButtonColor: '#F87171'
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `novels/${selectedNovel.id}/chapters/${id}`);
+      handleFirestoreError(error, OperationType.DELETE, `chapters/${id}`);
       Swal.fire({
         title: 'خطأ',
         text: 'فشل حذف الفصل',
@@ -1144,7 +1152,7 @@ export default function App() {
         // 2. Update chapters to remove volumeId
         const volumeChapters = chapters.filter(c => c.volumeId === volumeId);
         for (const chapter of volumeChapters) {
-          await updateDoc(doc(db, `novels/${selectedNovel.id}/chapters`, chapter.id), {
+          await updateDoc(doc(db, 'chapters', chapter.id), {
             volumeId: null
           });
         }
@@ -1256,14 +1264,14 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div 
             onClick={() => setView('home')} 
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-3 cursor-pointer group relative z-50"
           >
             <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center shadow-md shadow-[#F87171]/20 group-hover:scale-110 transition-transform">
               <Book className="w-6 h-6 text-[#121212]" />
             </div>
-            <div>
+            <div className="flex flex-col">
               <h1 className="text-xl font-normal text-white tracking-wide group-hover:text-[#F87171] transition-colors" style={{ fontFamily: "'New Rocker', system-ui" }}>كوم روايات</h1>
-              <p className="text-[10px] text-[#F87171] font-bold uppercase tracking-widest">لوحة التحكم</p>
+              <p className="text-[10px] text-[#F87171] font-bold uppercase tracking-widest">الموقع الرسمي</p>
             </div>
           </div>
 

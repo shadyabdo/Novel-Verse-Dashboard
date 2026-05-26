@@ -79,13 +79,14 @@ service cloud.firestore {
       allow update: if isAdmin() && isValidNovel(request.resource.data) && 
                       request.resource.data.updatedAt == request.time;
       allow delete: if isAdmin();
+    }
 
-      match /chapters/{chapterId} {
-        allow read: if isAdmin() || !('isDraft' in resource.data) || resource.data.isDraft == false;
-        allow create: if isAdmin() && isValidChapter(request.resource.data, novelId);
-        allow update: if isAdmin() && isValidChapter(request.resource.data, novelId);
-        allow delete: if isAdmin();
-      }
+    match /chapters/{chapterId} {
+      allow read: if isAdmin() || !('isDraft' in resource.data) || resource.data.isDraft == false;
+      allow create: if isAdmin() && isValidChapter(request.resource.data, request.resource.data.novelId) && 
+                      exists(/databases/$(database)/documents/novels/$(request.resource.data.novelId));
+      allow update: if isAdmin() && isValidChapter(request.resource.data, resource.data.novelId);
+      allow delete: if isAdmin();
     }
   }
 }
