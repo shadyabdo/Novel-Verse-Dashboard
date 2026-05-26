@@ -9,6 +9,7 @@ import {
   collectionGroup,
   onSnapshot,
   limit, 
+  where,
   addDoc, 
   updateDoc, 
   deleteDoc, 
@@ -625,10 +626,10 @@ export default function App() {
   useEffect(() => {
     if (!isAuthReady) return;
     
-    // Listening to root chapters collection with simple orderBy
-    // This works out of the box in Firestore
+    // Global Chapters Listener for Home View
+    // Using collectionGroup catch both legacy subcollection chapters and new root chapters
     const q = query(
-      collection(db, 'chapters'), 
+      collectionGroup(db, 'chapters'), 
       orderBy('createdAt', 'desc'), 
       limit(10)
     );
@@ -641,6 +642,17 @@ export default function App() {
       setLatestGlobalChapters(chapterData);
     }, (error) => {
       console.warn("Global chapter feed query failed:", error);
+      // Fallback to in-memory sort if index is somehow still failing or missing
+      const fallbackQuery = query(collectionGroup(db, 'chapters'));
+      onSnapshot(fallbackQuery, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Chapter));
+        const sorted = data.sort((a, b) => {
+          const dateA = a.createdAt?.seconds || 0;
+          const dateB = b.createdAt?.seconds || 0;
+          return dateB - dateA;
+        }).slice(0, 10);
+        setLatestGlobalChapters(sorted);
+      });
     });
 
     return () => unsubscribe();
@@ -1263,7 +1275,11 @@ export default function App() {
       <header className="sticky top-0 z-40 bg-[#1e1e1e]/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div 
-            onClick={() => setView('home')} 
+            onClick={() => {
+              setView('home');
+              setSearchTerm('');
+              setSelectedCategory('الكل');
+            }} 
             className="flex items-center gap-3 cursor-pointer group relative z-50"
           >
             <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center shadow-md shadow-[#F87171]/20 group-hover:scale-110 transition-transform">
@@ -1310,10 +1326,24 @@ export default function App() {
                     </div>
                     <h2 className="text-2xl font-black text-white">أحدث الروايات المضافة</h2>
                   </div>
+                <div className="flex items-center gap-4">
+                  {isAdmin && (
+                    <button 
+                      onClick={() => { 
+                        setEditingNovel({ name: '', description: '', author: user?.displayName || '', coverImages: [''], categories: [], status: 'مستمرة', rating: 0, isAdult: false, isDraft: false }); 
+                        setView('edit-novel'); 
+                      }}
+                      className="group flex items-center gap-2 px-6 py-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] rounded-2xl transition-all duration-300 shadow-lg shadow-[#F87171]/10"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">رواية جديدة</span>
+                    </button>
+                  )}
                   <button onClick={() => setView('library')} className="group flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-[#F87171] rounded-2xl transition-all duration-500">
                     <span className="text-[10px] font-black text-white/40 group-hover:text-[#121212] uppercase tracking-widest transition-colors">مشاهدة الكل</span>
                     <ChevronLeft className="w-4 h-4 text-white/20 group-hover:text-[#121212] transition-colors" />
                   </button>
+                </div>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
                   {[...novels].reverse().slice(0, 5).map((novel, idx) => (
@@ -1340,24 +1370,30 @@ export default function App() {
                   <h2 className="text-2xl font-black text-white">آخر الفصول المنشورة</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {latestGlobalChapters.map((chapter, idx) => {
-                    const novel = novels.find(n => n.id === chapter.novelId);
-                    return (
-                      <motion.div key={chapter.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
-                        onClick={() => { setSelectedNovel(novel || null); setReadingChapter(chapter); setView('reader'); }}
-                        className="bg-[#1e1e1e] p-6 rounded-2xl border border-white/5 flex items-center justify-between hover:bg-[#232323] transition-all cursor-pointer group shadow-xl"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-[#121212] rounded-xl flex items-center justify-center text-[#F87171] font-black group-hover:bg-[#F87171] group-hover:text-[#121212] transition-all">{chapter.order}</div>
-                          <div>
-                            <h4 className="text-sm font-bold text-white group-hover:text-[#F87171] transition-colors">{chapter.title}</h4>
-                            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{novel?.name || 'رواية غير معروفة'}</p>
+                  {latestGlobalChapters.length === 0 ? (
+                    <div className="col-span-full py-12 text-center bg-[#1e1e1e] rounded-2xl border border-white/5">
+                      <p className="text-white/30 text-sm font-bold">لا توجد فصول منشورة حالياً.</p>
+                    </div>
+                  ) : (
+                    latestGlobalChapters.map((chapter, idx) => {
+                      const novel = novels.find(n => n.id === chapter.novelId);
+                      return (
+                        <motion.div key={chapter.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
+                          onClick={() => { setSelectedNovel(novel || null); setReadingChapter(chapter); setView('reader'); }}
+                          className="bg-[#1e1e1e] p-6 rounded-2xl border border-white/5 flex items-center justify-between hover:bg-[#232323] transition-all cursor-pointer group shadow-xl"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[#121212] rounded-xl flex items-center justify-center text-[#F87171] font-black group-hover:bg-[#F87171] group-hover:text-[#121212] transition-all">{chapter.order}</div>
+                            <div>
+                              <h4 className="text-sm font-bold text-white group-hover:text-[#F87171] transition-colors">{chapter.title}</h4>
+                              <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{novel?.name || 'رواية غير معروفة'}</p>
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-[10px] text-white/20 font-bold">{formatDate(chapter.createdAt)}</div>
-                      </motion.div>
-                    );
-                  })}
+                          <div className="text-[10px] text-white/20 font-bold">{formatDate(chapter.createdAt)}</div>
+                        </motion.div>
+                      );
+                    })
+                  )}
                 </div>
               </section>
             </motion.div>
