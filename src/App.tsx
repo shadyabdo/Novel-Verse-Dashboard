@@ -6,7 +6,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   collection, 
-  onSnapshot, 
+  collectionGroup,
+  onSnapshot,
+  limit, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
@@ -391,6 +393,7 @@ export default function App() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedNovel, setSelectedNovel] = useState<Novel | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [latestGlobalChapters, setLatestGlobalChapters] = useState<Chapter[]>([]);
   
   // UI State
   const [view, setView] = useState<'home' | 'library' | 'chapters' | 'edit-novel' | 'edit-chapter' | 'reader'>('home');
@@ -608,6 +611,32 @@ export default function App() {
 
     return () => unsubscribe();
   }, [selectedNovel]);
+
+  // Global Chapters Listener for Home View
+  useEffect(() => {
+    if (!isAuthReady) return;
+    
+    // Using collectionGroup to fetch chapters across all novels
+    // Note: This requires a Collection Group Index in Firestore for 'chapters'
+    const q = query(
+      collectionGroup(db, 'chapters'), 
+      orderBy('createdAt', 'desc'), 
+      limit(10)
+    );
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const chapterData = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      } as Chapter));
+      setLatestGlobalChapters(chapterData);
+    }, (error) => {
+      // If collection group index is missing, fallback to a simpler query or handle gracefully
+      console.warn("Collection group query failed. Chapter feed might not be active yet.", error);
+    });
+
+    return () => unsubscribe();
+  }, [isAuthReady]);
 
   // --- Actions ---
 
@@ -1225,12 +1254,15 @@ export default function App() {
       {/* Modern Dark Header */}
       <header className="sticky top-0 z-40 bg-[#1e1e1e]/80 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center shadow-md shadow-[#F87171]/20">
+          <div 
+            onClick={() => setView('home')} 
+            className="flex items-center gap-3 cursor-pointer group"
+          >
+            <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center shadow-md shadow-[#F87171]/20 group-hover:scale-110 transition-transform">
               <Book className="w-6 h-6 text-[#121212]" />
             </div>
             <div>
-              <h1 className="text-xl font-normal text-white tracking-wide" style={{ fontFamily: "'New Rocker', system-ui" }}>كوم روايات</h1>
+              <h1 className="text-xl font-normal text-white tracking-wide group-hover:text-[#F87171] transition-colors" style={{ fontFamily: "'New Rocker', system-ui" }}>كوم روايات</h1>
               <p className="text-[10px] text-[#F87171] font-bold uppercase tracking-widest">لوحة التحكم</p>
             </div>
           </div>
@@ -1300,7 +1332,7 @@ export default function App() {
                   <h2 className="text-2xl font-black text-white">آخر الفصول المنشورة</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[...chapters].reverse().slice(0, 10).map((chapter, idx) => {
+                  {latestGlobalChapters.map((chapter, idx) => {
                     const novel = novels.find(n => n.id === chapter.novelId);
                     return (
                       <motion.div key={chapter.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
@@ -1311,10 +1343,10 @@ export default function App() {
                           <div className="w-12 h-12 bg-[#121212] rounded-xl flex items-center justify-center text-[#F87171] font-black group-hover:bg-[#F87171] group-hover:text-[#121212] transition-all">{chapter.order}</div>
                           <div>
                             <h4 className="text-sm font-bold text-white group-hover:text-[#F87171] transition-colors">{chapter.title}</h4>
-                            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{novel?.name}</p>
+                            <p className="text-[10px] text-white/30 uppercase tracking-widest mt-1">{novel?.name || 'رواية غير معروفة'}</p>
                           </div>
                         </div>
-                        <div className="text-[10px] text-white/20 font-bold">{chapter.date}</div>
+                        <div className="text-[10px] text-white/20 font-bold">{formatDate(chapter.createdAt)}</div>
                       </motion.div>
                     );
                   })}
