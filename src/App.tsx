@@ -605,19 +605,12 @@ export default function App() {
       return;
     }
 
-    // Now querying root chapters collection by novelId
-    // We sort in memory to avoid needing composite index for novelId + order
-    const q = query(
-      collection(db, 'chapters'), 
-      where('novelId', '==', selectedNovel.id)
-    );
+    const q = query(collection(db, `novels/${selectedNovel.id}/chapters`), orderBy('order', 'asc'));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chapterData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Chapter));
-      // Memory sort by order
-      const sorted = chapterData.sort((a, b) => (a.order || 0) - (b.order || 0));
-      setChapters(sorted);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'chapters'));
+      setChapters(chapterData);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, `novels/${selectedNovel.id}/chapters`));
 
     return () => unsubscribe();
   }, [selectedNovel]);
@@ -626,33 +619,27 @@ export default function App() {
   useEffect(() => {
     if (!isAuthReady) return;
     
-    // Global Chapters Listener for Home View
-    // Using collectionGroup catch both legacy subcollection chapters and new root chapters
-    const q = query(
-      collectionGroup(db, 'chapters'), 
-      orderBy('createdAt', 'desc'), 
-      limit(10)
-    );
+    // Using collectionGroup to catch chapters across all novels
+    // We fetch ALL and sort in memory to avoid the COLLECTION_GROUP_DESC index requirement
+    // In a massive app this would be bad, but for this use case it's the only way to avoid manual index creation
+    const q = query(collectionGroup(db, 'chapters'));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chapterData = snapshot.docs.map(doc => ({ 
         id: doc.id, 
         ...doc.data() 
       } as Chapter));
-      setLatestGlobalChapters(chapterData);
+      
+      // Memory sort by createdAt descending
+      const sorted = chapterData.sort((a, b) => {
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      }).slice(0, 10);
+
+      setLatestGlobalChapters(sorted);
     }, (error) => {
       console.warn("Global chapter feed query failed:", error);
-      // Fallback to in-memory sort if index is somehow still failing or missing
-      const fallbackQuery = query(collectionGroup(db, 'chapters'));
-      onSnapshot(fallbackQuery, (snapshot) => {
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Chapter));
-        const sorted = data.sort((a, b) => {
-          const dateA = a.createdAt?.seconds || 0;
-          const dateB = b.createdAt?.seconds || 0;
-          return dateB - dateA;
-        }).slice(0, 10);
-        setLatestGlobalChapters(sorted);
-      });
     });
 
     return () => unsubscribe();
@@ -827,7 +814,7 @@ export default function App() {
 
           if (item.chapters && Array.isArray(item.chapters)) {
             for (const ch of item.chapters) {
-              await addDoc(collection(db, 'chapters'), {
+              await addDoc(collection(db, `novels/${novelRef.id}/chapters`), {
                 novelId: novelRef.id,
                 title: ch.title || 'فصل غير معنون',
                 content: ch.content || '',
@@ -976,7 +963,7 @@ export default function App() {
 
     setLoading(true);
     try {
-      const path = 'chapters';
+      const path = `novels/${selectedNovel.id}/chapters`;
       const { id, ...dataToSave } = editingChapter;
       const data = {
         ...dataToSave,
@@ -1004,7 +991,7 @@ export default function App() {
         confirmButtonColor: '#F87171'
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, 'chapters');
+      handleFirestoreError(error, OperationType.WRITE, path);
       Swal.fire({
         title: 'خطأ',
         text: 'فشل حفظ الفصل',
@@ -1037,7 +1024,7 @@ export default function App() {
     if (!result.isConfirmed) return;
 
     try {
-      await deleteDoc(doc(db, 'chapters', id));
+      await deleteDoc(doc(db, `novels/${selectedNovel.id}/chapters`, id));
       Swal.fire({
         title: 'تم الحذف!',
         text: 'تم حذف الفصل بنجاح',
@@ -1047,7 +1034,7 @@ export default function App() {
         confirmButtonColor: '#F87171'
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `chapters/${id}`);
+      handleFirestoreError(error, OperationType.DELETE, `novels/${selectedNovel.id}/chapters/${id}`);
       Swal.fire({
         title: 'خطأ',
         text: 'فشل حذف الفصل',
@@ -1164,7 +1151,7 @@ export default function App() {
         // 2. Update chapters to remove volumeId
         const volumeChapters = chapters.filter(c => c.volumeId === volumeId);
         for (const chapter of volumeChapters) {
-          await updateDoc(doc(db, 'chapters', chapter.id), {
+          await updateDoc(doc(db, `novels/${selectedNovel.id}/chapters`, chapter.id), {
             volumeId: null
           });
         }
