@@ -399,6 +399,7 @@ export default function App() {
   // UI State
   const [view, setView] = useState<'home' | 'library' | 'chapters' | 'edit-novel' | 'edit-chapter' | 'reader'>('home');
   const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
+  const [selectedStatus, setSelectedStatus] = useState<string>('الكل');
   const [editingNovel, setEditingNovel] = useState<Partial<Novel> | null>(null);
   const [editingChapter, setEditingChapter] = useState<Partial<Chapter> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -862,7 +863,8 @@ export default function App() {
     const matchesSearch = name.toLowerCase().includes(search.toLowerCase()) || 
                          author.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategory === 'الكل' || (n.categories && n.categories.includes(selectedCategory));
-    return matchesSearch && matchesCategory;
+    const matchesStatus = selectedStatus === 'الكل' || n.status === selectedStatus;
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   const saveNovel = async (e: React.FormEvent) => {
@@ -1266,8 +1268,8 @@ export default function App() {
               setView('home');
               setSearchTerm('');
               setSelectedCategory('الكل');
-            }} 
-            className="flex items-center gap-3 cursor-pointer group relative z-50"
+              setSelectedStatus('الكل');
+            }}             className="flex items-center gap-3 cursor-pointer group relative z-50"
           >
             <div className="w-10 h-10 bg-[#F87171] rounded-xl flex items-center justify-center shadow-md shadow-[#F87171]/20 group-hover:scale-110 transition-transform">
               <Book className="w-6 h-6 text-[#121212]" />
@@ -1341,6 +1343,15 @@ export default function App() {
                        <div className="aspect-[2/3] relative">
                          {novel.coverImages?.[0] ? <img src={novel.coverImages[0]} alt={novel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full bg-[#121212]" />}
                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                         <div className="absolute top-3 left-3 flex flex-col gap-2">
+                           <div className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border backdrop-blur-md shadow-lg ${
+                             novel.status === 'مكتملة' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
+                             novel.status === 'متوقفة' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                             'bg-[#F87171]/10 border-[#F87171]/20 text-[#F87171]'
+                           }`}>
+                             {novel.status || 'مستمرة'}
+                           </div>
+                         </div>
                          <h3 className="absolute bottom-4 left-4 right-4 text-white font-bold truncate">{novel.name}</h3>
                        </div>
                     </motion.div>
@@ -1409,11 +1420,29 @@ export default function App() {
                   </div>
                 </div>
                 <div className="h-px bg-white/5 w-full my-8" />
-                <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                  <button onClick={() => setSelectedCategory('الكل')} className={`shrink-0 px-6 py-3 rounded-xl border text-[10px] font-black transition-all ${selectedCategory === 'الكل' ? 'bg-[#F87171] text-[#121212] border-[#F87171]' : 'border-white/5 text-white/40 hover:text-white hover:bg-white/5'}`}>الكل</button>
-                  {categories.map((cat) => (
-                    <button key={cat.id} onClick={() => setSelectedCategory(cat.name)} className={`shrink-0 px-6 py-3 rounded-xl border text-[10px] font-black transition-all ${selectedCategory === cat.name ? 'bg-[#F87171] text-[#121212] border-[#F87171]' : 'border-white/5 text-white/40 hover:text-white hover:bg-white/5'}`}>{cat.name}</button>
-                  ))}
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                    <button onClick={() => setSelectedCategory('الكل')} className={`shrink-0 px-6 py-3 rounded-xl border text-[10px] font-black transition-all ${selectedCategory === 'الكل' ? 'bg-[#F87171] text-[#121212] border-[#F87171]' : 'border-white/5 text-white/40 hover:text-white hover:bg-white/5'}`}>الكل</button>
+                    {categories.map((cat) => (
+                      <button key={cat.id} onClick={() => setSelectedCategory(cat.name)} className={`shrink-0 px-6 py-3 rounded-xl border text-[10px] font-black transition-all ${selectedCategory === cat.name ? 'bg-[#F87171] text-[#121212] border-[#F87171]' : 'border-white/5 text-white/40 hover:text-white hover:bg-white/5'}`}>{cat.name}</button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/5">
+                      <SlidersHorizontal className="w-4 h-4 text-[#F87171]" />
+                      <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">تصفية حسب الحالة:</span>
+                    </div>
+                    {['الكل', 'مستمرة', 'مكتملة', 'متوقفة'].map((status) => (
+                      <button 
+                        key={status} 
+                        onClick={() => setSelectedStatus(status)} 
+                        className={`shrink-0 px-6 py-3 rounded-xl border text-[10px] font-black transition-all ${selectedStatus === status ? 'bg-[#F87171] text-[#121212] border-[#F87171]' : 'border-white/5 text-white/40 hover:text-white hover:bg-white/5'}`}
+                      >
+                        {status}
+                       </button>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
@@ -1424,6 +1453,15 @@ export default function App() {
                     <div className="aspect-[2/3] relative">
                       {novel.coverImages?.[0] ? <img src={novel.coverImages[0]} alt={novel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full bg-[#121212]" />}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                      <div className="absolute top-3 left-3 flex flex-col gap-2">
+                        <div className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border backdrop-blur-md shadow-lg ${
+                          novel.status === 'مكتملة' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
+                          novel.status === 'متوقفة' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                          'bg-[#F87171]/10 border-[#F87171]/20 text-[#F87171]'
+                        }`}>
+                          {novel.status || 'مستمرة'}
+                        </div>
+                      </div>
                       <h3 className="absolute bottom-4 left-4 right-4 text-white text-xs font-bold truncate text-center">{novel.name}</h3>
                     </div>
                   </motion.div>
