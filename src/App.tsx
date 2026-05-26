@@ -404,6 +404,7 @@ export default function App() {
   const [editingChapter, setEditingChapter] = useState<Partial<Chapter> | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [showSidebar, setShowSidebar] = useState(false);
   
   // Volume Management State
@@ -436,6 +437,15 @@ export default function App() {
       setVisibleNovelsCount(prev => prev + 8);
     }
   }, [novelsEndInView]);
+
+  // Debounced Search Handler
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   useEffect(() => {
     if (chaptersEndInView) {
@@ -596,6 +606,24 @@ export default function App() {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     return diff < 24 * 60 * 60 * 1000; // 24 hours
+  };
+
+  // Highlight Text Utility
+  const HighlightText = ({ text, highlight }: { text: string; highlight: string }) => {
+    if (!highlight.trim()) return <>{text}</>;
+    const regex = new RegExp(`(${highlight})`, 'gi');
+    const parts = text.split(regex);
+    return (
+      <>
+        {parts.map((part, i) => 
+          regex.test(part) ? (
+            <span key={i} className="text-[#F87171] underline decoration-wavy decoration-[#F87171]/30 underline-offset-4">{part}</span>
+          ) : (
+            part
+          )
+        )}
+      </>
+    );
   };
 
   // Chapters Listener
@@ -855,13 +883,13 @@ export default function App() {
   const filteredNovels = novels.filter(n => {
     const name = n.name || '';
     const author = n.author || '';
-    const search = searchTerm || '';
+    const search = debouncedSearchTerm.toLowerCase();
     
     // Hide drafts from non-admins
     if (!isAdmin && n.isDraft) return false;
 
-    const matchesSearch = name.toLowerCase().includes(search.toLowerCase()) || 
-                         author.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = name.toLowerCase().includes(search) || 
+                         author.toLowerCase().includes(search);
     const matchesCategory = selectedCategory === 'الكل' || (n.categories && n.categories.includes(selectedCategory));
     const matchesStatus = selectedStatus === 'الكل' || n.status === selectedStatus;
     return matchesSearch && matchesCategory && matchesStatus;
@@ -1411,7 +1439,12 @@ export default function App() {
                     <div className="relative flex-1 lg:w-96 group">
                       <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#F87171] transition-colors w-5 h-5" />
                       <input type="text" placeholder="ابحث..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-[#121212] pr-12 pl-4 py-4 rounded-2xl border border-white/5 text-white outline-none focus:border-[#F87171]/50 font-bold transition-all" />
+                        className="w-full bg-[#121212] pr-12 pl-12 py-4 rounded-2xl border border-white/5 text-white outline-none focus:border-[#F87171]/50 font-bold transition-all" />
+                      {(searchTerm !== debouncedSearchTerm) && (
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                          <Loader2 className="w-4 h-4 text-[#F87171] animate-spin" />
+                        </div>
+                      )}
                     </div>
                     {isAdmin && (
                       <button onClick={() => { setEditingNovel({ name: '', description: '', author: user?.displayName || '', coverImages: [''], categories: [], status: 'مستمرة', rating: 0, isAdult: false, isDraft: false }); setView('edit-novel'); }}
@@ -1462,7 +1495,9 @@ export default function App() {
                           {novel.status || 'مستمرة'}
                         </div>
                       </div>
-                      <h3 className="absolute bottom-4 left-4 right-4 text-white text-xs font-bold truncate text-center">{novel.name}</h3>
+                      <h3 className="absolute bottom-4 left-4 right-4 text-white text-xs font-bold truncate text-center">
+                        <HighlightText text={novel.name} highlight={debouncedSearchTerm} />
+                      </h3>
                     </div>
                   </motion.div>
                 ))}
