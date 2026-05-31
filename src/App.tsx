@@ -77,7 +77,11 @@ import {
   AlertTriangle,
   Minus,
   Copy,
-  List
+  List,
+  Activity,
+  CheckCircle2,
+  PauseCircle,
+  Tags
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import { useInView } from 'react-intersection-observer';
@@ -400,6 +404,7 @@ export default function App() {
   const [view, setView] = useState<'home' | 'library' | 'chapters' | 'edit-novel' | 'edit-chapter' | 'reader'>('home');
   const [selectedCategory, setSelectedCategory] = useState<string>('الكل');
   const [selectedStatus, setSelectedStatus] = useState<string>('الكل');
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [editingNovel, setEditingNovel] = useState<Partial<Novel> | null>(null);
   const [editingChapter, setEditingChapter] = useState<Partial<Chapter> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1486,37 +1491,155 @@ export default function App() {
                         </div>
                       )}
                     </div>
+                    
+                    <button 
+                      onClick={() => setIsFilterModalOpen(true)}
+                      className={`relative flex items-center gap-3 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border ${
+                        selectedCategory !== 'الكل' || selectedStatus !== 'الكل'
+                        ? 'bg-[#F87171] text-[#121212] border-[#F87171] shadow-lg shadow-[#F87171]/20'
+                        : 'bg-white/5 text-white/60 border-white/5 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <SlidersHorizontal className="w-4 h-4" />
+                      تصفية
+                      {(selectedCategory !== 'الكل' || selectedStatus !== 'الكل') && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-white text-[#121212] rounded-full flex items-center justify-center text-[8px] font-black border-2 border-[#1e1e1e]">
+                          !
+                        </span>
+                      )}
+                    </button>
+
                     {isAdmin && (
                       <button onClick={() => { setEditingNovel({ name: '', description: '', author: user?.displayName || '', coverImages: [''], categories: [], status: 'مستمرة', rating: 0, isAdult: false, isDraft: false }); setView('edit-novel'); }}
                         className="bg-[#F87171] text-[#121212] px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#F87171]/10">إضافة</button>
                     )}
                   </div>
                 </div>
-                <div className="h-px bg-white/5 w-full my-8" />
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                    <button onClick={() => setSelectedCategory('الكل')} className={`shrink-0 px-6 py-3 rounded-xl border text-[10px] font-black transition-all ${selectedCategory === 'الكل' ? 'bg-[#F87171] text-[#121212] border-[#F87171]' : 'border-white/5 text-white/40 hover:text-white hover:bg-white/5'}`}>الكل</button>
-                    {categories.map((cat) => (
-                      <button key={cat.id} onClick={() => setSelectedCategory(cat.name)} className={`shrink-0 px-6 py-3 rounded-xl border text-[10px] font-black transition-all ${selectedCategory === cat.name ? 'bg-[#F87171] text-[#121212] border-[#F87171]' : 'border-white/5 text-white/40 hover:text-white hover:bg-white/5'}`}>{cat.name}</button>
-                    ))}
-                  </div>
 
-                  <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/5">
-                      <SlidersHorizontal className="w-4 h-4 text-[#F87171]" />
-                      <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">تصفية حسب الحالة:</span>
-                    </div>
-                    {['الكل', 'مستمرة', 'مكتملة', 'متوقفة'].map((status) => (
-                      <button 
-                        key={status} 
-                        onClick={() => setSelectedStatus(status)} 
-                        className={`shrink-0 px-6 py-3 rounded-xl border text-[10px] font-black transition-all ${selectedStatus === status ? 'bg-[#F87171] text-[#121212] border-[#F87171]' : 'border-white/5 text-white/40 hover:text-white hover:bg-white/5'}`}
+                <AnimatePresence>
+                  {isFilterModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsFilterModalOpen(false)}
+                        className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+                      />
+                      
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        className="relative w-full max-w-2xl bg-[#1e1e1e] rounded-[2.5rem] border border-white/10 shadow-[0_32px_64px_rgba(0,0,0,0.5)] overflow-hidden"
                       >
-                        {status}
-                       </button>
-                    ))}
-                  </div>
-                </div>
+                        {/* Header */}
+                        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[#F87171]/10 rounded-2xl flex items-center justify-center border border-[#F87171]/20">
+                              <SlidersHorizontal className="w-6 h-6 text-[#F87171]" />
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-black text-white">خيارات التصفية</h3>
+                              <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-0.5">تخصيص نتائج البحث</p>
+                            </div>
+                          </div>
+                          <button onClick={() => setIsFilterModalOpen(false)} className="p-3 bg-white/5 hover:bg-red-500/20 text-white/20 hover:text-red-500 rounded-xl transition-all">
+                            <X className="w-6 h-6" />
+                          </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-8 space-y-10 max-h-[60vh] overflow-y-auto scrollbar-hide">
+                          {/* Status Section */}
+                          <section>
+                            <div className="flex items-center gap-3 mb-6">
+                              <Activity className="w-4 h-4 text-[#F87171]" />
+                              <h4 className="text-sm font-black text-white/50 uppercase tracking-[0.2em]">حالة الرواية</h4>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-right" dir="rtl">
+                              {[
+                                { id: 'الكل', label: 'الكل', icon: SlidersHorizontal, color: 'text-white' },
+                                { id: 'مستمرة', label: 'مستمرة', icon: Loader2, color: 'text-blue-400' },
+                                { id: 'مكتملة', label: 'مكتملة', icon: CheckCircle2, color: 'text-green-400' },
+                                { id: 'متوقفة', label: 'متوقفة', icon: PauseCircle, color: 'text-red-400' }
+                              ].map((status) => (
+                                <button
+                                  key={status.id}
+                                  onClick={() => setSelectedStatus(status.id)}
+                                  className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${
+                                    selectedStatus === status.id 
+                                    ? 'bg-[#F87171]/10 border-[#F87171] shadow-lg shadow-[#F87171]/5' 
+                                    : 'bg-white/5 border-white/5 hover:bg-white/10'
+                                  }`}
+                                >
+                                  <status.icon className={`w-5 h-5 ${selectedStatus === status.id ? 'text-[#F87171]' : status.color}`} />
+                                  <span className={`text-[10px] font-black uppercase tracking-widest ${selectedStatus === status.id ? 'text-white' : 'text-white/40'}`}>
+                                    {status.label}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </section>
+
+                          {/* Categories Section */}
+                          <section>
+                            <div className="flex items-center gap-3 mb-6">
+                              <Tags className="w-4 h-4 text-[#F87171]" />
+                              <h4 className="text-sm font-black text-white/50 uppercase tracking-[0.2em]">التصنيف / النوع</h4>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-right" dir="rtl">
+                              <button
+                                onClick={() => setSelectedCategory('الكل')}
+                                className={`flex items-center justify-center p-4 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                                  selectedCategory === 'الكل' 
+                                  ? 'bg-[#F87171] text-[#121212] border-[#F87171]' 
+                                  : 'bg-white/5 border-white/5 text-white/30 hover:text-white'
+                                }`}
+                              >
+                                الكل
+                              </button>
+                              {categories.map((cat) => (
+                                <button
+                                  key={cat.id}
+                                  onClick={() => setSelectedCategory(cat.name)}
+                                  className={`flex items-center justify-center p-4 rounded-xl border text-[10px] font-black transition-all ${
+                                    selectedCategory === cat.name 
+                                    ? 'bg-[#F87171] text-[#121212] border-[#F87171]' 
+                                    : 'bg-white/5 border-white/5 text-white/30 hover:text-white'
+                                  }`}
+                                >
+                                  {cat.name}
+                                </button>
+                              ))}
+                            </div>
+                          </section>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-8 border-t border-white/5 flex gap-4 bg-white/[0.01]">
+                          <button 
+                            onClick={() => {
+                              setSelectedCategory('الكل');
+                              setSelectedStatus('الكل');
+                              setIsFilterModalOpen(false);
+                            }}
+                            className="flex-1 px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all"
+                          >
+                            تفريغ
+                          </button>
+                          <button 
+                            onClick={() => setIsFilterModalOpen(false)}
+                            className="flex-1 px-8 py-4 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-black text-xs uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-[#F87171]/20"
+                          >
+                            تطبيق
+                          </button>
+                        </div>
+                      </motion.div>
+                    </div>
+                  )}
+                </AnimatePresence>
+
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 {filteredNovels.map((novel) => (
