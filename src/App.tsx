@@ -1395,7 +1395,7 @@ export default function App() {
                           <div className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest backdrop-blur-xl border shadow-2xl transition-colors duration-300 ${
                             novel.status === 'مكتملة' ? 'bg-green-500/20 border-green-500/30 text-green-400' :
                             novel.status === 'متوقفة' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
-                            'bg-[#F87171]/20 border-[#F87171]/30 text-[#F87171]'
+                            'bg-white/10 border-white/20 text-white'
                           }`}>
                             {novel.status || 'مستمرة'}
                           </div>
@@ -1409,11 +1409,13 @@ export default function App() {
                           <div className="space-y-2">
                              <div className="flex items-center gap-2 mb-1">
                                {novel.categories?.slice(0, 1).map(cat => (
-                                 <span key={cat} className="text-[8px] font-bold text-[#F87171] uppercase tracking-[0.2em]">{cat}</span>
+                                 <span key={cat} className="text-[8px] font-bold text-amber-400 uppercase tracking-[0.2em]">{cat}</span>
                                ))}
                              </div>
-                             <h3 className="text-lg font-black text-white leading-tight group-hover:text-[#F87171] transition-colors line-clamp-2">{novel.name}</h3>
-                             <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest line-clamp-1">{novel.author || 'مؤلف غير معروف'}</p>
+                             <h3 className="text-lg font-black text-white leading-tight group-hover:text-white transition-colors line-clamp-2 text-right [direction:ltr]">
+                                {novel.name}
+                             </h3>
+                             <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest line-clamp-1 truncate text-right [direction:ltr]">{novel.author || 'مؤلف غير معروف'}</p>
                              
                              {/* Stats on Hover */}
                              <div className="pt-2 flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
@@ -1560,7 +1562,7 @@ export default function App() {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-right" dir="rtl">
                               {[
                                 { id: 'الكل', label: 'الكل', icon: SlidersHorizontal, color: 'text-white' },
-                                { id: 'مستمرة', label: 'مستمرة', icon: Loader2, color: 'text-blue-400' },
+                                { id: 'مستمرة', label: 'مستمرة', icon: Loader2, color: 'text-white' },
                                 { id: 'مكتملة', label: 'مكتملة', icon: CheckCircle2, color: 'text-green-400' },
                                 { id: 'متوقفة', label: 'متوقفة', icon: PauseCircle, color: 'text-red-400' }
                               ].map((status) => (
@@ -1669,7 +1671,7 @@ export default function App() {
                         <div className={`px-2 py-1 rounded-lg text-[7px] font-black uppercase tracking-widest backdrop-blur-md border shadow-lg ${
                           novel.status === 'مكتملة' ? 'bg-green-500/20 border-green-500/20 text-green-400' :
                           novel.status === 'متوقفة' ? 'bg-red-500/20 border-red-500/20 text-red-400' :
-                          'bg-[#F87171]/20 border-[#F87171]/20 text-[#F87171]'
+                          'bg-white/10 border-white/20 text-white'
                         }`}>
                           {novel.status || 'مستمرة'}
                         </div>
@@ -1680,11 +1682,11 @@ export default function App() {
                       
                       {/* Content */}
                       <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="text-white text-xs font-bold leading-tight line-clamp-1 group-hover:text-[#F87171] transition-colors mb-1">
+                        <h3 className="text-white text-xs font-bold leading-tight line-clamp-1 group-hover:text-white transition-colors mb-1 text-right [direction:ltr]">
                           <HighlightText text={novel.name} highlight={debouncedSearchTerm} />
                         </h3>
                         <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                          <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest">{novel.author || 'مؤلف غير معروف'}</p>
+                          <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest line-clamp-1 truncate text-right [direction:ltr]">{novel.author || 'مؤلف غير معروف'}</p>
                           <div className="flex items-center gap-1">
                             <Star className="w-2 h-2 text-yellow-500 fill-yellow-500" />
                             <span className="text-[8px] font-bold text-white">{novel.rating || '0.0'}</span>
