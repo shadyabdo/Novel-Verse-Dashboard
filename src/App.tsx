@@ -1364,24 +1364,64 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
                   {[...novels].reverse().slice(0, 5).map((novel, idx) => (
-                    <motion.div key={novel.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}
+                    <motion.div 
+                      key={novel.id} 
+                      initial={{ opacity: 0, y: 20 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                      transition={{ delay: idx * 0.1, duration: 0.5, ease: "easeOut" }}
                       onClick={() => { setSelectedNovel(novel); setView('chapters'); }}
-                      className="group bg-[#1e1e1e] rounded-2xl border border-white/5 transition-all flex flex-col h-full cursor-pointer relative overflow-hidden"
+                      className="group relative bg-[#1e1e1e] rounded-[2rem] transition-all duration-500 cursor-pointer overflow-hidden border border-white/5 hover:border-[#F87171]/30 hover:shadow-2xl hover:shadow-[#F87171]/10"
                     >
-                       <div className="aspect-[2/3] relative">
-                         {novel.coverImages?.[0] ? <img src={novel.coverImages[0]} alt={novel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full bg-[#121212]" />}
-                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                         <div className="absolute top-3 left-3 flex flex-col gap-2">
-                           <div className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border backdrop-blur-md shadow-lg ${
-                             novel.status === 'مكتملة' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
-                             novel.status === 'متوقفة' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                             'bg-[#F87171]/10 border-[#F87171]/20 text-[#F87171]'
-                           }`}>
-                             {novel.status || 'مستمرة'}
-                           </div>
-                         </div>
-                         <h3 className="absolute bottom-4 left-4 right-4 text-white font-bold truncate">{novel.name}</h3>
-                       </div>
+                      <div className="aspect-[3/4] relative overflow-hidden">
+                        {novel.coverImages?.[0] ? (
+                          <img 
+                            src={novel.coverImages[0]} 
+                            alt={novel.name} 
+                            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 group-hover:rotate-1" 
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-[#121212] flex items-center justify-center">
+                            <Book className="w-12 h-12 text-white/5" />
+                          </div>
+                        )}
+                        
+                        {/* Status Badge */}
+                        <div className="absolute top-4 right-4 z-20">
+                          <div className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest backdrop-blur-xl border shadow-2xl transition-colors duration-300 ${
+                            novel.status === 'مكتملة' ? 'bg-green-500/20 border-green-500/30 text-green-400' :
+                            novel.status === 'متوقفة' ? 'bg-red-500/20 border-red-500/30 text-red-400' :
+                            'bg-[#F87171]/20 border-[#F87171]/30 text-[#F87171]'
+                          }`}>
+                            {novel.status || 'مستمرة'}
+                          </div>
+                        </div>
+
+                        {/* Hover Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/40 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
+                        
+                        {/* Card Content */}
+                        <div className="absolute inset-0 p-5 flex flex-col justify-end transform transition-transform duration-500">
+                          <div className="space-y-2">
+                             <div className="flex items-center gap-2 mb-1">
+                               {novel.categories?.slice(0, 1).map(cat => (
+                                 <span key={cat} className="text-[8px] font-bold text-[#F87171] uppercase tracking-[0.2em]">{cat}</span>
+                               ))}
+                             </div>
+                             <h3 className="text-lg font-black text-white leading-tight group-hover:text-[#F87171] transition-colors line-clamp-2">{novel.name}</h3>
+                             <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest line-clamp-1">{novel.author || 'مؤلف غير معروف'}</p>
+                             
+                             {/* Stats on Hover */}
+                             <div className="pt-2 flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
+                               <div className="flex items-center gap-1.5">
+                                 <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                 <span className="text-[10px] font-bold text-white">{novel.rating || '0.0'}</span>
+                               </div>
+                               <div className="h-1 w-1 rounded-full bg-white/20" />
+                               <button className="text-[10px] font-black text-[#F87171] uppercase tracking-widest hover:underline">اقرأ الآن</button>
+                             </div>
+                          </div>
+                        </div>
+                      </div>
                     </motion.div>
                   ))}
                 </div>
@@ -1480,24 +1520,54 @@ export default function App() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                 {filteredNovels.map((novel) => (
-                  <motion.div key={novel.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => { setSelectedNovel(novel); setView('chapters'); }}
-                    className="group bg-[#1e1e1e] rounded-2xl border border-white/5 overflow-hidden cursor-pointer hover:shadow-xl transition-all"
+                  <motion.div 
+                    key={novel.id} 
+                    initial={{ opacity: 0, scale: 0.95 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    whileHover={{ y: -5 }}
+                    onClick={() => { setSelectedNovel(novel); setView('chapters'); }}
+                    className="group relative bg-[#1e1e1e] rounded-3xl transition-all duration-500 cursor-pointer overflow-hidden border border-white/5 hover:border-[#F87171]/20 hover:shadow-2xl shadow-black/50"
                   >
-                    <div className="aspect-[2/3] relative">
-                      {novel.coverImages?.[0] ? <img src={novel.coverImages[0]} alt={novel.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full bg-[#121212]" />}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                      <div className="absolute top-3 left-3 flex flex-col gap-2">
-                        <div className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border backdrop-blur-md shadow-lg ${
-                          novel.status === 'مكتملة' ? 'bg-green-500/10 border-green-500/20 text-green-500' :
-                          novel.status === 'متوقفة' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
-                          'bg-[#F87171]/10 border-[#F87171]/20 text-[#F87171]'
+                    <div className="aspect-[3/4] relative overflow-hidden">
+                      {novel.coverImages?.[0] ? (
+                        <img 
+                          src={novel.coverImages[0]} 
+                          alt={novel.name} 
+                          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" 
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#121212] flex items-center justify-center">
+                          <Book className="w-10 h-10 text-white/5" />
+                        </div>
+                      )}
+                      
+                      {/* Status Badge */}
+                      <div className="absolute top-3 left-3 z-20">
+                        <div className={`px-2 py-1 rounded-lg text-[7px] font-black uppercase tracking-widest backdrop-blur-md border shadow-lg ${
+                          novel.status === 'مكتملة' ? 'bg-green-500/20 border-green-500/20 text-green-400' :
+                          novel.status === 'متوقفة' ? 'bg-red-500/20 border-red-500/20 text-red-400' :
+                          'bg-[#F87171]/20 border-[#F87171]/20 text-[#F87171]'
                         }`}>
                           {novel.status || 'مستمرة'}
                         </div>
                       </div>
-                      <h3 className="absolute bottom-4 left-4 right-4 text-white text-xs font-bold truncate text-center">
-                        <HighlightText text={novel.name} highlight={debouncedSearchTerm} />
-                      </h3>
+
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+                      
+                      {/* Content */}
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <h3 className="text-white text-xs font-bold leading-tight line-clamp-1 group-hover:text-[#F87171] transition-colors mb-1">
+                          <HighlightText text={novel.name} highlight={debouncedSearchTerm} />
+                        </h3>
+                        <div className="flex items-center justify-between opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                          <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest">{novel.author || 'مؤلف غير معروف'}</p>
+                          <div className="flex items-center gap-1">
+                            <Star className="w-2 h-2 text-yellow-500 fill-yellow-500" />
+                            <span className="text-[8px] font-bold text-white">{novel.rating || '0.0'}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
