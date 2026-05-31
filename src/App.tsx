@@ -2662,28 +2662,78 @@ export default function App() {
                               </button>
                             )}
                           </div>
-                          <div className="flex flex-wrap gap-2 p-1">
+                          <div className="flex flex-wrap gap-3 p-1">
                             {categories.map(cat => {
                               const isSelected = editingNovel.categories?.includes(cat.name);
                               return (
-                                <button
-                                  key={cat.id}
-                                  type="button"
-                                  onClick={() => {
-                                    const currentCats = editingNovel.categories || [];
-                                    const newCats = isSelected 
-                                      ? currentCats.filter(c => c !== cat.name)
-                                      : [...currentCats, cat.name];
-                                    setEditingNovel({...editingNovel, categories: newCats});
-                                  }}
-                                  className={`px-4 py-2.5 rounded-xl text-[10px] font-black transition-all border shadow-sm ${
-                                    isSelected 
-                                      ? 'bg-[#F87171] text-[#121212] border-[#F87171] scale-110' 
-                                      : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
-                                  }`}
-                                >
-                                  {cat.name}
-                                </button>
+                                <div key={cat.id} className="relative group/cat">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const currentCats = editingNovel.categories || [];
+                                      const newCats = isSelected 
+                                        ? currentCats.filter(c => c !== cat.name)
+                                        : [...currentCats, cat.name];
+                                      setEditingNovel({...editingNovel, categories: newCats});
+                                    }}
+                                    className={`px-4 py-2.5 rounded-xl text-[10px] font-black transition-all border shadow-sm ${
+                                      isSelected 
+                                        ? 'bg-[#F87171] text-[#121212] border-[#F87171] scale-110' 
+                                        : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10'
+                                    }`}
+                                  >
+                                    {cat.name}
+                                  </button>
+                                  {isAdmin && (
+                                    <button
+                                      type="button"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        const result = await Swal.fire({
+                                          title: 'هل أنت متأكد؟',
+                                          text: `سيتم حذف تصنيف "${cat.name}" نهائياً!`,
+                                          icon: 'warning',
+                                          showCancelButton: true,
+                                          confirmButtonColor: '#ef4444',
+                                          cancelButtonColor: '#675b5b',
+                                          confirmButtonText: 'نعم، احذف',
+                                          cancelButtonText: 'إلغاء',
+                                          background: '#1e1e1e',
+                                          color: '#fff'
+                                        });
+
+                                        if (result.isConfirmed) {
+                                          try {
+                                            await deleteDoc(doc(db, 'categories', cat.id));
+                                            Swal.fire({
+                                              title: 'تم الحذف',
+                                              icon: 'success',
+                                              toast: true,
+                                              position: 'top-end',
+                                              showConfirmButton: false,
+                                              timer: 3000,
+                                              background: '#1e1e1e',
+                                              color: '#fff'
+                                            });
+                                          } catch (error) {
+                                            console.error("Error deleting category:", error);
+                                            Swal.fire({
+                                              title: 'خطأ',
+                                              text: 'فشل حذف التصنيف',
+                                              icon: 'error',
+                                              background: '#1e1e1e',
+                                              color: '#fff'
+                                            });
+                                          }
+                                        }
+                                      }}
+                                      className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-[#121212] border border-white/10 text-white/20 hover:text-red-500 hover:border-red-500/50 rounded-full flex items-center justify-center opacity-0 group-hover/cat:opacity-100 transition-all shadow-xl hover:scale-110 z-10"
+                                      title="حذف التصنيف"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
                               );
                             })}
                           </div>
