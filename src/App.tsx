@@ -2649,7 +2649,19 @@ export default function App() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-4">التصنيفات</label>
+                          <div className="flex items-center justify-between mb-4">
+                            <label className="block text-xs font-black text-white/40 uppercase tracking-widest">التصنيفات</label>
+                            {isAdmin && (
+                              <button 
+                                type="button"
+                                onClick={addCategory}
+                                className="w-8 h-8 bg-[#F87171]/10 text-[#F87171] hover:bg-[#F87171] hover:text-[#121212] rounded-lg flex items-center justify-center transition-all border border-[#F87171]/20 shadow-sm"
+                                title="إضافة تصنيف جديد"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                           <div className="flex flex-wrap gap-2 p-1">
                             {categories.map(cat => {
                               const isSelected = editingNovel.categories?.includes(cat.name);
