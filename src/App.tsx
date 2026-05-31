@@ -1410,7 +1410,7 @@ export default function App() {
                         <div className="absolute inset-0 p-5 flex flex-col justify-end transform transition-transform duration-500">
                           <div className="space-y-2">
                              <div className="flex items-center gap-2 mb-1">
-                               {novel.categories?.slice(0, 1).map(cat => (
+                               {novel.categories?.filter(c => categories.some(ac => ac.name === c)).slice(0, 1).map(cat => (
                                  <span key={cat} className="text-[8px] font-bold text-amber-400 uppercase tracking-[0.2em]">{cat}</span>
                                ))}
                              </div>
@@ -1798,7 +1798,7 @@ export default function App() {
                       <div>
                         <h4 className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">التصنيفات</h4>
                         <div className="flex flex-wrap gap-2">
-                          {selectedNovel.categories?.slice(0, 4).map((cat, i) => (
+                          {selectedNovel.categories?.filter(c => categories.some(ac => ac.name === c)).slice(0, 4).map((cat, i) => (
                             <span key={`selected-cat-${i}`} className="px-4 py-1.5 rounded-xl bg-[#121212] text-white/50 text-[10px] font-black border border-white/5">
                               {cat}
                             </span>
@@ -2704,9 +2704,25 @@ export default function App() {
 
                                         if (result.isConfirmed) {
                                           try {
+                                            // 1. Delete the category from the categories collection
                                             await deleteDoc(doc(db, 'categories', cat.id));
+                                            
+                                            // Reset selected category if it was the deleted one
+                                            if (selectedCategory === cat.name) {
+                                              setSelectedCategory('الكل');
+                                            }
+                                            
+                                            // 2. Dynamic cleanup: Remove this category name from all novels' categories array
+                                            const novelsWithCat = novels.filter(n => n.categories?.includes(cat.name));
+                                            for (const novel of novelsWithCat) {
+                                              const updatedCategories = novel.categories?.filter(c => c !== cat.name) || [];
+                                              await updateDoc(doc(db, 'novels', novel.id), {
+                                                categories: updatedCategories
+                                              });
+                                            }
+
                                             Swal.fire({
-                                              title: 'تم الحذف',
+                                              title: 'تم الحذف والتحديث بنجاح',
                                               icon: 'success',
                                               toast: true,
                                               position: 'top-end',
