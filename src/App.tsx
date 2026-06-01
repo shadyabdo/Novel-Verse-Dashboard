@@ -368,7 +368,7 @@ const NovelCard = React.memo(({
       layoutId={novel.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="group bg-[#1e1e1e] rounded-[2rem] border border-white/5 overflow-hidden hover:shadow-2xl hover:shadow-[#f86e7e]/5 transition-all duration-300 flex flex-col h-full"
+      className="group bg-[#1e1e1e] rounded-[2rem] border border-[#383636] overflow-hidden hover:shadow-2xl hover:shadow-[#f86e7e]/5 transition-all duration-300 flex flex-col h-full"
     >
       <div className="aspect-[3/4] relative overflow-hidden">
         {novel.coverImages && novel.coverImages.length > 0 ? (
@@ -464,6 +464,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSidebar, setShowSidebar] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string>('الكل');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const groupedChapters = useMemo(() => {
@@ -885,9 +886,10 @@ export default function App() {
       const matchesSearch = name.toLowerCase().includes(search.toLowerCase()) || 
                            author.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = selectedCategory === 'الكل' || (n.categories && n.categories.includes(selectedCategory));
-      return matchesSearch && matchesCategory;
+      const matchesStatus = selectedStatus === 'الكل' || n.status === selectedStatus;
+      return matchesSearch && matchesCategory && matchesStatus;
     });
-  }, [novels, searchTerm, selectedCategory]);
+  }, [novels, searchTerm, selectedCategory, selectedStatus]);
 
   const saveNovel = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1252,10 +1254,156 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
+              {/* قسم الإحصائيات وبانر الترحيب المطور */}
+              <div className="mb-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* بطاقة الترحيب التفاعلية */}
+                <div className="sm:col-span-2 lg:col-span-4 bg-gradient-to-r from-[#1e1e1e] to-[#241c1d] p-8 rounded-[2rem] border border-[#383636] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden shadow-xl">
+                  {/* خلفيات جمالية مرشحة */}
+                  <div className="absolute -right-24 -bottom-24 w-72 h-72 rounded-full bg-[#f86e7e]/5 blur-3xl pointer-events-none" />
+                  <div className="absolute -left-24 -top-24 w-72 h-72 rounded-full bg-[#f86e7e]/5 blur-3xl pointer-events-none" />
+                  
+                  <div className="flex items-center gap-5 z-10">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#f86e7e] to-[#ff8ca3] flex items-center justify-center shadow-lg shadow-[#f86e7e]/20">
+                      <LayoutDashboard className="w-8 h-8 text-[#121212]" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-extrabold text-white mb-2 flex items-center gap-2">
+                        مرحباً بك مجدداً، <span className="text-[#f86e7e]">{user?.displayName?.split(' ')[0]}</span>
+                        <span className="text-xl animate-bounce">👋</span>
+                      </h2>
+                      <p className="text-slate-400 text-sm font-medium">إليك نظرة سريعة على مؤشرات مكتبتك الأدبية وإحصائيات الروايات اليوم.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-[#121212]/50 border border-white/5 py-3 px-5 rounded-2xl md:ml-2 z-10">
+                    <Clock className="w-5 h-5 text-[#f86e7e] animate-pulse" />
+                    <div className="text-right">
+                      <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">توقيت النظام</div>
+                      <div className="text-xs font-extrabold text-slate-200" dir="ltr">
+                        {new Date().toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* كارت 1: إجمالي الروايات */}
+                <motion.div 
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  onClick={() => {
+                    setSelectedStatus('الكل');
+                    setSelectedCategory('الكل');
+                    setSearchTerm('');
+                  }}
+                  className={`p-6 rounded-[2rem] border cursor-pointer transition-all duration-300 flex items-center justify-between shadow-lg ${
+                    selectedStatus === 'الكل' && selectedCategory === 'الكل'
+                      ? 'bg-gradient-to-b from-[#1e1e1e] to-[#251e20] border-[#f86e7e]/50 shadow-[#f86e7e]/5' 
+                      : 'bg-[#1e1e1e] border-[#383636] hover:border-[#f86e7e]/30'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold text-slate-400">إجمالي الروايات</span>
+                    <h3 className="text-3xl font-black text-white">{novels.length}</h3>
+                    <p className="text-[10px] text-slate-500 font-bold">انقر لعرض جميع الأعمال</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-[#f86e7e]/10 flex items-center justify-center text-[#f86e7e]">
+                    <Book className="w-6 h-6" />
+                  </div>
+                </motion.div>
+
+                {/* كارت 2: روايات مستمرة */}
+                <motion.div 
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  onClick={() => setSelectedStatus(selectedStatus === 'مستمرة' ? 'الكل' : 'مستمرة')}
+                  className={`p-6 rounded-[2rem] border cursor-pointer transition-all duration-300 flex items-center justify-between shadow-lg ${
+                    selectedStatus === 'مستمرة'
+                      ? 'bg-gradient-to-b from-[#1e1e1e] to-[#24231b] border-amber-500/50 shadow-amber-500/5' 
+                      : 'bg-[#1e1e1e] border-[#383636] hover:border-amber-500/30'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold text-slate-400">روايات مستمرة</span>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-3xl font-black text-white">{novels.filter(n => n.status === 'مستمرة').length}</h3>
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold">انقر لتصفية المستمرة فقط</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                </motion.div>
+
+                {/* كارت 3: روايات مكتملة */}
+                <motion.div 
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  onClick={() => setSelectedStatus(selectedStatus === 'مكتملة' ? 'الكل' : 'مكتملة')}
+                  className={`p-6 rounded-[2rem] border cursor-pointer transition-all duration-300 flex items-center justify-between shadow-lg ${
+                    selectedStatus === 'مكتملة'
+                      ? 'bg-gradient-to-b from-[#1e1e1e] to-[#1a241f] border-emerald-500/50 shadow-emerald-500/5' 
+                      : 'bg-[#1e1e1e] border-[#383636] hover:border-emerald-500/30'
+                  }`}
+                >
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold text-slate-400">روايات مكتملة</span>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-3xl font-black text-white">{novels.filter(n => n.status === 'مكتملة').length}</h3>
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-bold">انقر لتصفية المكتملة فقط</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                    <Layers className="w-6 h-6" />
+                  </div>
+                </motion.div>
+
+                {/* كارت 4: عدد التصنيفات */}
+                <motion.div 
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  onClick={() => setShowSidebar(true)}
+                  className="p-6 rounded-[2rem] border border-[#383636] bg-[#1e1e1e] cursor-pointer transition-all duration-300 flex items-center justify-between hover:border-[#f86e7e]/30 shadow-lg"
+                >
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold text-slate-400">تصنيفات متوفرة</span>
+                    <h3 className="text-3xl font-black text-white">{categories.length}</h3>
+                    <p className="text-[10px] text-slate-500 font-bold">انقر لإدارة وتصفح التصنيفات</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-[#f86e7e]/10 flex items-center justify-center text-[#f86e7e]">
+                    <Compass className="w-6 h-6" />
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* شريط التصنيفات السريع المطور */}
+              <div className="mb-10 overflow-x-auto pb-3 flex items-center gap-3" style={{ scrollbarWidth: 'thin' }}>
+                <button
+                  onClick={() => setSelectedCategory('الكل')}
+                  className={`px-6 py-3 rounded-full font-bold text-xs whitespace-nowrap transition-all border ${
+                    selectedCategory === 'الكل'
+                      ? 'bg-[#f86e7e] text-[#121212] border-[#f86e7e] shadow-lg shadow-[#f86e7e]/10'
+                      : 'bg-[#1e1e1e] text-slate-400 border-[#383636] hover:text-white hover:border-slate-500'
+                  }`}
+                >
+                  الكل
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.name)}
+                    className={`px-6 py-3 rounded-full font-bold text-xs whitespace-nowrap transition-all border ${
+                      selectedCategory === cat.name
+                        ? 'bg-[#f86e7e] text-[#121212] border-[#f86e7e] shadow-lg shadow-[#f86e7e]/10'
+                        : 'bg-[#1e1e1e] text-slate-400 border-[#383636] hover:text-white hover:border-slate-500'
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
                 <div>
                   <h2 className="text-3xl font-extrabold text-white mb-2">مكتبة الروايات</h2>
-                  <p className="text-slate-400 text-sm">إدارة وتعديل جميع الروايات الموجودة في مشروعك.</p>
+                  <p className="text-slate-400 text-sm font-medium">إدارة وتعديل جميع الروايات الموجودة في مشروعك.</p>
                 </div>
                 
                 <div className="flex flex-wrap items-center gap-4">
