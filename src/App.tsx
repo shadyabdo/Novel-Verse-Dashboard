@@ -840,6 +840,48 @@ export default function App() {
     }
   };
 
+  const editVolume = async (id: string, currentName: string) => {
+    if (!selectedNovel) return;
+    const { value: newName } = await Swal.fire({
+      title: 'تعديل اسم المجلد',
+      input: 'text',
+      inputLabel: 'الاسم الجديد للمجلد',
+      inputValue: currentName,
+      inputPlaceholder: 'أدخل الاسم الجديد للمجلد...',
+      showCancelButton: true,
+      confirmButtonText: 'حفظ التعديل',
+      cancelButtonText: 'إلغاء',
+      background: '#1e1e1e',
+      color: '#fff',
+      confirmButtonColor: '#f86e7e',
+      inputValidator: (value) => {
+        if (!value || !value.trim()) {
+          return 'يجب كتابة اسم للمجلد!';
+        }
+        return null;
+      }
+    });
+
+    if (newName && newName.trim() !== currentName) {
+      try {
+        await updateDoc(doc(db, `novels/${selectedNovel.id}/volumes`, id), {
+          name: newName.trim(),
+          updatedAt: serverTimestamp()
+        });
+        Swal.fire({
+          title: 'تم التعديل!',
+          text: 'تم تعديل اسم المجلد بنجاح',
+          icon: 'success',
+          background: '#1e1e1e',
+          color: '#fff',
+          confirmButtonColor: '#f86e7e'
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, `novels/${selectedNovel.id}/volumes/${id}`);
+      }
+    }
+  };
+
   const addImageToContent = async () => {
     const { value: url } = await Swal.fire({
       title: 'إضافة صورة',
@@ -1806,12 +1848,24 @@ export default function App() {
                               volumes.map(vol => (
                                 <div key={vol.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group">
                                   <span className="text-sm font-bold text-slate-300">{vol.name}</span>
-                                  <button 
-                                    onClick={() => deleteVolume(vol.id, vol.name)}
-                                    className="p-1 text-slate-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
+                                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                                    <button 
+                                      type="button"
+                                      onClick={() => editVolume(vol.id, vol.name)}
+                                      className="p-1 text-slate-500 hover:text-[#f86e7e] transition-colors"
+                                      title="تعديل اسم المجلد"
+                                    >
+                                      <Edit className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button 
+                                      type="button"
+                                      onClick={() => deleteVolume(vol.id, vol.name)}
+                                      className="p-1 text-slate-500 hover:text-red-500 transition-colors"
+                                      title="حذف المجلد"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
                                 </div>
                               ))
                             )}
@@ -1847,12 +1901,22 @@ export default function App() {
                               </div>
                               <div className="h-px bg-white/5 flex-1" />
                               {isAdmin && (
-                                <button 
-                                  onClick={() => deleteVolume(vol.id, vol.name)}
-                                  className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                  <button 
+                                    onClick={() => editVolume(vol.id, vol.name)}
+                                    className="p-2 text-slate-500 hover:text-[#f86e7e] hover:bg-[#f86e7e]/10 rounded-xl transition-all"
+                                    title="تعديل اسم المجلد"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => deleteVolume(vol.id, vol.name)}
+                                    className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                    title="حذف المجلد"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
                               )}
                             </div>
                             
