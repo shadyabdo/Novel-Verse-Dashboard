@@ -368,7 +368,7 @@ const NovelCard = React.memo(({
       layoutId={novel.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="group bg-[#1e1e1e] rounded-[2rem] border border-[#383636] overflow-hidden hover:shadow-2xl hover:shadow-[#f86e7e]/5 transition-all duration-300 flex flex-col h-full"
+      className="group bg-[#1e1e1e] rounded-[2rem] border border-[#383636] overflow-hidden hover:border-[#f86e7e]/40 hover:shadow-2xl hover:shadow-[#f86e7e]/5 transition-all duration-300 flex flex-col h-full relative"
     >
       <div className="aspect-[3/4] relative overflow-hidden">
         {novel.coverImages && novel.coverImages.length > 0 ? (
@@ -383,7 +383,7 @@ const NovelCard = React.memo(({
             <ImageIcon className="w-16 h-16" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 gap-3">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 gap-3 z-10">
           <button 
             onClick={() => onViewChapters(novel)}
             className="w-full bg-[#f86e7e] text-[#121212] py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]"
@@ -399,30 +399,49 @@ const NovelCard = React.memo(({
         </div>
         
         {novel.status && (
-          <div className="absolute top-4 left-4">
-            <span className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg ${
-              novel.status === 'مستمرة' ? 'bg-yellow-500 text-white' : 
-              novel.status === 'مكتملة' ? 'bg-green-500 text-white' : 
-              'bg-slate-700 text-white'
+          <div className="absolute top-4 left-4 z-20">
+            <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-md ${
+              novel.status === 'مستمرة' ? 'bg-amber-500/90 text-white' : 
+              novel.status === 'مكتملة' ? 'bg-emerald-500/90 text-white' : 
+              'bg-slate-700/90 text-white'
             }`}>
               {novel.status}
             </span>
           </div>
         )}
+
+        {/* Star Rating Floating Badge */}
+        <div className="absolute bottom-4 right-4 z-20 bg-[#121212]/80 backdrop-blur-md border border-white/5 py-1 px-2.5 rounded-lg text-yellow-500 flex items-center gap-1 text-[10px] font-bold shadow-lg">
+          <Star className="w-3 text-yellow-500 fill-current" />
+          <span>{novel.rating || '0.0'}</span>
+        </div>
+
+        {/* Dynamic Hover Status Tooltip */}
+        {novel.status && (
+          <div className="absolute top-4 right-4 z-20 pointer-events-none opacity-0 scale-90 translate-x-2 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-x-0 transition-all duration-300 ease-out">
+            <div className="bg-[#121212]/95 border border-[#383636] backdrop-blur-md text-white/90 text-[10px] font-semibold px-3 py-1.5 rounded-xl shadow-2xl flex items-center gap-1.5" dir="rtl">
+              <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  novel.status === 'مستمرة' ? 'bg-amber-500' : 'bg-emerald-500'
+                }`} />
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                  novel.status === 'مستمرة' ? 'bg-amber-500' : 'bg-emerald-500'
+                }`} />
+              </span>
+              <span>حالة الرواية: {novel.status}</span>
+            </div>
+          </div>
+        )}
       </div>
       
       <div className="p-6 flex-1 flex flex-col">
-        <div className="flex items-center gap-1 text-yellow-500 mb-2">
-          <Star className="w-4 h-4 fill-current" />
-          <span className="text-xs font-bold">{novel.rating || '0.0'}</span>
-        </div>
         <h3 className="text-lg font-bold text-white mb-2 line-clamp-1 group-hover:text-[#f86e7e] transition-colors">{novel.name || 'Untitled'}</h3>
         <p className="text-xs text-slate-400 mb-3 line-clamp-2 leading-relaxed">{novel.description || 'No description available.'}</p>
         
         {novel.categories && novel.categories.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-4">
             {novel.categories.slice(0, 3).map((cat, i) => (
-              <span key={i} className="px-2 py-0.5 rounded-md bg-white/5 text-slate-500 text-[9px] font-bold border border-white/5">
+              <span key={i} className="px-2.5 py-0.5 rounded-md bg-[#121212]/50 text-slate-400 text-[9px] font-bold border border-[#383636]">
                 {cat}
               </span>
             ))}
@@ -432,8 +451,8 @@ const NovelCard = React.memo(({
           </div>
         )}
         
-        <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{novel.author}</span>
+        <div className="mt-auto pt-4 border-t border-[#383636] flex items-center justify-between">
+          <span className="text-[10px] font-bold text-[#f86e7e] uppercase tracking-wider">{novel.author}</span>
           <button 
             onClick={() => onDeleteNovel(novel.id)}
             className="p-2 text-slate-600 hover:text-red-500 transition-colors"
@@ -1118,84 +1137,95 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white flex flex-col font-sans relative overflow-hidden" dir="rtl">
-      {/* Offcanvas Sidebar */}
+      {/* Lightbox Filter Dialog */}
       <AnimatePresence>
         {showSidebar && (
-          <>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop with blur */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowSidebar(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
+            {/* Centered Lightbox Card wrapper */}
             <motion.div 
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-80 bg-[#1e1e1e] border-l border-white/5 z-50 flex flex-col shadow-2xl"
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              className="relative w-full max-w-2xl bg-[#1e1e1e] border border-[#383636] rounded-[2.5rem] flex flex-col shadow-3xl overflow-hidden max-h-[85vh] z-10"
             >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <div className="p-8 border-b border-[#383636] flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-[#f86e7e]/10 rounded-lg flex items-center justify-center">
-                    <Compass className="w-4 h-4 text-[#f86e7e]" />
+                  <div className="w-10 h-10 bg-[#f86e7e]/10 rounded-xl flex items-center justify-center">
+                    <Compass className="w-5 h-5 text-[#f86e7e]" />
                   </div>
-                  <h3 className="font-bold text-lg">التصنيفات</h3>
+                  <div>
+                    <h3 className="font-extrabold text-xl text-white">تصفية الروايات</h3>
+                    <p className="text-xs text-slate-400 mt-0.5 font-medium">اختر تصنيفًا لعرض الروايات الخاصة به</p>
+                  </div>
                 </div>
                 <button 
                   onClick={() => setShowSidebar(false)}
-                  className="p-2 hover:bg-white/5 rounded-lg transition-all"
+                  className="p-2.5 hover:bg-white/5 rounded-xl transition-all border border-transparent hover:border-[#383636]"
                 >
-                  <X className="w-5 h-5 text-slate-400" />
+                  <X className="w-5 h-5 text-slate-400 hover:text-white" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-6 space-y-2">
-                <button 
-                  onClick={() => {
-                    setSelectedCategory('الكل');
-                    setShowSidebar(false);
-                  }}
-                  className={`w-full text-right px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-between ${
-                    selectedCategory === 'الكل' 
-                      ? 'bg-[#f86e7e] text-[#121212]' 
-                      : 'text-slate-400 hover:bg-white/5'
-                  }`}
-                >
-                  <span>الكل</span>
-                  {selectedCategory === 'الكل' && <ChevronLeft className="w-4 h-4" />}
-                </button>
-                {categories.map(cat => (
-                  <div key={cat.id} className="group relative">
-                    <button 
-                      onClick={() => {
-                        setSelectedCategory(cat.name);
-                        setShowSidebar(false);
-                      }}
-                      className={`w-full text-right px-4 py-3 rounded-xl font-bold transition-all flex items-center justify-between ${
-                        selectedCategory === cat.name 
-                          ? 'bg-[#f86e7e] text-[#121212]' 
-                          : 'text-slate-400 hover:bg-white/5'
-                      }`}
-                    >
-                      <span className="truncate">{cat.name}</span>
-                      {selectedCategory === cat.name && <ChevronLeft className="w-4 h-4" />}
-                    </button>
-                    {isAdmin && (
+              {/* Lightbox Body with Grid of categories */}
+              <div className="flex-1 overflow-y-auto p-8" style={{ scrollbarWidth: 'thin' }}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <button 
+                    onClick={() => {
+                      setSelectedCategory('الكل');
+                      setShowSidebar(false);
+                    }}
+                    className={`text-center px-5 py-4 rounded-2xl font-bold transition-all border text-sm flex items-center justify-center gap-2 ${
+                      selectedCategory === 'الكل' 
+                        ? 'bg-[#f86e7e] text-[#121212] border-[#f86e7e] shadow-xl shadow-[#f86e7e]/10 font-black' 
+                        : 'bg-[#121212]/50 text-slate-300 border-[#383636] hover:bg-[#121212] hover:text-white hover:border-slate-500'
+                    }`}
+                  >
+                    <span>الكل</span>
+                    {selectedCategory === 'الكل' && <span className="w-2 h-2 rounded-full bg-[#121212]" />}
+                  </button>
+
+                  {categories.map(cat => (
+                    <div key={cat.id} className="group relative">
                       <button 
-                        onClick={(e) => { e.stopPropagation(); deleteCategory(cat.id, cat.name); }}
-                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 rounded-lg"
+                        onClick={() => {
+                          setSelectedCategory(cat.name);
+                          setShowSidebar(false);
+                        }}
+                        className={`w-full text-center px-5 py-4 rounded-2xl font-bold transition-all border text-sm flex items-center justify-center gap-2 ${
+                          selectedCategory === cat.name 
+                            ? 'bg-[#f86e7e] text-[#121212] border-[#f86e7e] shadow-xl shadow-[#f86e7e]/10 font-black' 
+                            : 'bg-[#121212]/50 text-slate-300 border-[#383636] hover:bg-[#121212] hover:text-white hover:border-slate-500'
+                        }`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <span className="truncate">{cat.name}</span>
+                        {selectedCategory === cat.name && <span className="w-2 h-2 rounded-full bg-[#121212]" />}
                       </button>
-                    )}
-                  </div>
-                ))}
+                      
+                      {isAdmin && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); deleteCategory(cat.id, cat.name); }}
+                          className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1.5 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 rounded-lg z-20 animate-pulse"
+                          title="حذف تصنيف"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {isAdmin && (
-                <div className="p-6 border-t border-white/5">
+                <div className="p-8 border-t border-[#383636] bg-[#121212]/30">
                   <button 
                     onClick={addCategory}
                     className="w-full flex items-center justify-center gap-2 bg-[#f86e7e]/10 hover:bg-[#f86e7e]/20 text-[#f86e7e] py-4 rounded-2xl font-bold transition-all border border-[#f86e7e]/20"
@@ -1206,7 +1236,7 @@ export default function App() {
                 </div>
               )}
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
 
@@ -1373,31 +1403,42 @@ export default function App() {
                 </motion.div>
               </div>
 
-              {/* شريط التصنيفات السريع المطور */}
-              <div className="mb-10 overflow-x-auto pb-3 flex items-center gap-3" style={{ scrollbarWidth: 'thin' }}>
-                <button
-                  onClick={() => setSelectedCategory('الكل')}
-                  className={`px-6 py-3 rounded-full font-bold text-xs whitespace-nowrap transition-all border ${
-                    selectedCategory === 'الكل'
-                      ? 'bg-[#f86e7e] text-[#121212] border-[#f86e7e] shadow-lg shadow-[#f86e7e]/10'
-                      : 'bg-[#1e1e1e] text-slate-400 border-[#383636] hover:text-white hover:border-slate-500'
-                  }`}
-                >
-                  الكل
-                </button>
-                {categories.map((cat) => (
+              {/* شريط التحكم والتصفية الذكي المستند إلى Lightbox */}
+              <div className="mb-10 bg-[#1e1e1e] border border-[#383636] rounded-[2rem] p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl relative overflow-hidden">
+                <div className="flex items-center gap-4 z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-[#f86e7e]/10 flex items-center justify-center text-[#f86e7e]">
+                    <SlidersHorizontal className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-400">تصفية حسب التصنيف</h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs font-semibold text-slate-500">التصنيف النشط:</span>
+                      <span className="px-3 py-1 text-xs font-extrabold rounded-lg bg-[#f86e7e]/10 text-[#f86e7e] border border-[#f86e7e]/20">
+                        {selectedCategory}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 z-10">
                   <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.name)}
-                    className={`px-6 py-3 rounded-full font-bold text-xs whitespace-nowrap transition-all border ${
-                      selectedCategory === cat.name
-                        ? 'bg-[#f86e7e] text-[#121212] border-[#f86e7e] shadow-lg shadow-[#f86e7e]/10'
-                        : 'bg-[#1e1e1e] text-slate-400 border-[#383636] hover:text-white hover:border-slate-500'
-                    }`}
+                    onClick={() => setShowSidebar(true)}
+                    className="flex-grow sm:flex-initial flex items-center justify-center gap-2 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] px-6 py-3.5 rounded-xl font-bold text-xs transition-all shadow-lg shadow-[#f86e7e]/10 hover:scale-[1.02]"
                   >
-                    {cat.name}
+                    <Compass className="w-4 h-4" />
+                    تصفية بالتصنيفات
                   </button>
-                ))}
+                  {selectedCategory !== 'الكل' && (
+                    <button
+                      onClick={() => setSelectedCategory('الكل')}
+                      className="flex items-center justify-center gap-1 bg-[#121212] hover:bg-black/40 border border-[#383636] text-[#f86e7e] hover:text-white px-4 py-3.5 rounded-xl font-bold text-xs transition-all"
+                      title="إعادة تعيين التصفية"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>إلغاء التصفية</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
@@ -1415,12 +1456,12 @@ export default function App() {
                         placeholder="ابحث عن رواية، كاتب..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pr-12 pl-4 py-3.5 rounded-2xl border border-white/5 bg-[#1e1e1e] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all font-medium"
+                        className="w-full pr-12 pl-4 py-3.5 rounded-2xl border border-[#383636] bg-[#1e1e1e] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all font-medium"
                       />
                     </div>
                     <button 
                       onClick={() => setShowSidebar(true)}
-                      className={`p-3.5 rounded-2xl border border-white/5 bg-[#1e1e1e] hover:bg-white/5 transition-all relative ${selectedCategory !== 'الكل' ? 'text-[#f86e7e]' : 'text-slate-400'}`}
+                      className={`p-3.5 rounded-2xl border border-[#383636] bg-[#1e1e1e] hover:bg-white/5 transition-all relative ${selectedCategory !== 'الكل' ? 'text-[#f86e7e]' : 'text-slate-400'}`}
                       title="تصفية حسب التصنيف"
                     >
                       <Compass className="w-6 h-6" />
@@ -1431,7 +1472,7 @@ export default function App() {
                   </div>
                   
                   <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 bg-[#1e1e1e] border border-white/5 hover:bg-white/5 text-slate-300 px-6 py-3.5 rounded-2xl font-bold transition-all cursor-pointer">
+                    <label className="flex items-center gap-2 bg-[#1e1e1e] border border-[#383636] hover:bg-white/5 text-slate-300 px-6 py-3.5 rounded-2xl font-bold transition-all cursor-pointer">
                       <FileText className="w-4 h-4 text-[#f86e7e]" />
                       استيراد
                       <input type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
