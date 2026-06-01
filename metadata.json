@@ -1,6 +1,5 @@
 {
-  "name": "كوم روايات",
-  "description": "منصة متكاملة لإدارة وقراءة الروايات مع لوحة تحكم احترافية وتطبيق قارئ للهاتف.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "name": "Novel Dashboard",
+  "description": "A dashboard for managing novels and chapters, connected to Firebase Firestore.",
+  "requestFramePermissions": []
 }
