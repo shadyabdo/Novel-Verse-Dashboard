@@ -58,6 +58,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Swal from 'sweetalert2';
+import { AddVolumeModal } from './components/AddVolumeModal';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -617,6 +618,7 @@ export default function App() {
   const [selectedStatus, setSelectedStatus] = useState<string>('الكل');
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [showAddVolumeModal, setShowAddVolumeModal] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const groupedChapters = useMemo(() => {
@@ -747,39 +749,42 @@ export default function App() {
   // --- Actions ---
 
   const addVolume = async () => {
-    if (!selectedNovel) return;
-    const { value: name } = await Swal.fire({
-      title: 'إضافة مجلد جديد',
-      input: 'text',
-      inputLabel: 'اسم المجلد',
-      inputPlaceholder: 'مثال: المجلد الأول، الجزء الثاني...',
-      showCancelButton: true,
-      confirmButtonText: 'إضافة',
-      cancelButtonText: 'إلغاء',
-      background: '#1e1e1e',
-      color: '#fff',
-      confirmButtonColor: '#f86e7e'
-    });
+    setShowAddVolumeModal(true);
+  };
 
-    if (name) {
-      try {
-        await addDoc(collection(db, `novels/${selectedNovel.id}/volumes`), { 
-          name, 
-          novelId: selectedNovel.id,
-          order: volumes.length + 1,
-          createdAt: serverTimestamp() 
-        });
-        Swal.fire({
-          title: 'تم!',
-          text: 'تم إضافة المجلد بنجاح',
-          icon: 'success',
-          background: '#1e1e1e',
-          color: '#fff',
-          confirmButtonColor: '#f86e7e'
-        });
-      } catch (error) {
-        handleFirestoreError(error, OperationType.CREATE, `novels/${selectedNovel.id}/volumes`);
+  const handleAddVolume = async (name: string, selectedChapterIds: string[]) => {
+    if (!selectedNovel) return;
+    try {
+      const volumeRef = await addDoc(collection(db, `novels/${selectedNovel.id}/volumes`), { 
+        name, 
+        novelId: selectedNovel.id,
+        order: volumes.length + 1,
+        createdAt: serverTimestamp() 
+      });
+
+      const newVolumeId = volumeRef.id;
+
+      if (selectedChapterIds.length > 0) {
+        const updatePromises = selectedChapterIds.map(chapterId => 
+          updateDoc(doc(db, `novels/${selectedNovel.id}/chapters`, chapterId), {
+            volumeId: newVolumeId,
+            updatedAt: serverTimestamp()
+          })
+        );
+        await Promise.all(updatePromises);
       }
+
+      Swal.fire({
+        title: 'تم بنجاح!',
+        text: `تم إضافة المجلد "${name}" وتعيين ${selectedChapterIds.length} فصول إليه.`,
+        icon: 'success',
+        background: '#1e1e1e',
+        color: '#fff',
+        confirmButtonColor: '#f86e7e'
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, `novels/${selectedNovel.id}/volumes`);
+      throw error;
     }
   };
 
@@ -2241,6 +2246,15 @@ export default function App() {
             images={lightboxImages} 
             initialIndex={lightboxIndex} 
             onClose={() => setLightboxIndex(null)} 
+          />
+        )}
+        {showAddVolumeModal && (
+          <AddVolumeModal 
+            isOpen={showAddVolumeModal} 
+            onClose={() => setShowAddVolumeModal(false)}
+            chapters={chapters}
+            volumes={volumes}
+            onAddVolume={handleAddVolume}
           />
         )}
       </AnimatePresence>
