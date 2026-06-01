@@ -413,38 +413,41 @@ const ChapterItem = ({ chapter, index, onPreview, onEdit, onDelete }: {
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: index * 0.05 }}
-    className="bg-[#1e1e1e] p-5 rounded-2xl border border-white/5 flex items-center justify-between hover:border-[#f86e7e]/30 transition-all group shadow-sm"
+    onClick={() => onPreview(chapter)}
+    className="bg-[#1c1c1e] p-5 rounded-2xl border border-white/5 flex items-center justify-between hover:border-[#f86e7e]/40 hover:bg-[#222224] transition-all duration-300 group shadow-lg cursor-pointer transform hover:-translate-y-0.5"
   >
-    <div className="flex items-center gap-5 cursor-pointer flex-1" onClick={() => onPreview(chapter)}>
-      <div className="w-12 h-12 bg-[#121212] rounded-xl flex items-center justify-center text-slate-500 font-bold group-hover:bg-[#f86e7e]/10 group-hover:text-[#f86e7e] transition-colors">
+    <div className="flex items-center gap-5 flex-1">
+      <div className="w-12 h-12 bg-black/30 group-hover:bg-[#f86e7e] group-hover:text-[#121212] rounded-xl flex items-center justify-center text-slate-400 font-extrabold transition-all duration-300 shadow-inner">
         {chapter.order}
       </div>
       <div>
-        <h4 className="font-bold text-white mb-1 group-hover:text-[#f86e7e] transition-colors">{chapter.title}</h4>
-        <div className="flex items-center gap-3 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-          <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {chapter.date}</span>
+        <h4 className="font-bold text-white mb-1.5 group-hover:text-[#f86e7e] transition-colors">{chapter.title}</h4>
+        <div className="flex items-center flex-wrap gap-3 text-[10px] text-slate-400 font-medium">
+          <span className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-md border border-white/5"><Clock className="w-3 h-3 text-[#f86e7e]" /> {chapter.date}</span>
           <span className="w-1 h-1 bg-slate-700 rounded-full" />
-          <span>{chapter.content.length} حرف</span>
+          <span className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-md border border-white/5"><FileText className="w-3 h-3 text-slate-500" /> {chapter.content.length} حرف</span>
         </div>
       </div>
     </div>
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
       <button 
         onClick={() => onPreview(chapter)}
-        className="p-2.5 text-slate-500 hover:text-[#f86e7e] hover:bg-[#f86e7e]/10 rounded-xl transition-all"
+        className="p-2.5 text-slate-400 hover:text-[#f86e7e] hover:bg-[#f86e7e]/10 rounded-xl transition-all"
         title="معاينة"
       >
         <Eye className="w-5 h-5" />
       </button>
       <button 
         onClick={() => onEdit(chapter)}
-        className="p-2.5 text-slate-500 hover:text-[#f86e7e] hover:bg-[#f86e7e]/10 rounded-xl transition-all"
+        className="p-2.5 text-slate-400 hover:text-[#f86e7e] hover:bg-[#f86e7e]/10 rounded-xl transition-all"
+        title="تعديل الفصول"
       >
         <Edit className="w-5 h-5" />
       </button>
       <button 
         onClick={() => onDelete(chapter.id)}
-        className="p-2.5 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+        className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+        title="حذف الفصل"
       >
         <Trash2 className="w-5 h-5" />
       </button>
@@ -468,19 +471,20 @@ const NovelCard = React.memo(({
       layoutId={novel.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="group bg-gradient-to-b from-[#18181a] to-[#121214] rounded-tr-[3.5rem] rounded-bl-[3.5rem] rounded-tl-2xl rounded-br-2xl border border-[#2f2e30] overflow-hidden hover:border-[#f86e7e]/50 hover:shadow-[0_25px_50px_-12px_rgba(248,110,126,0.15)] transition-all duration-500 flex flex-col h-full relative"
+      onClick={() => onViewChapters(novel)}
+      className="group bg-[#1c1c1e] rounded-[2rem] border border-[#2f2e30] overflow-hidden hover:border-[#f86e7e]/40 hover:shadow-[0_20px_40px_-15px_rgba(248,110,126,0.18)] transition-all duration-300 flex flex-col h-full relative cursor-pointer"
     >
-      {/* Background glow overlay on hover */}
+      {/* Background soft color glow on hover */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#f86e7e]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
       <div className="p-4 flex-1 flex flex-col">
-        {/* Cover Wrap */}
-        <div className="aspect-[3/4] relative overflow-hidden rounded-tr-[2.75rem] rounded-bl-[2.75rem] rounded-tl-[1rem] rounded-br-[1rem] border border-[#2f2e30] bg-[#121212]">
+        {/* Cover Aspect Ratio Wrap */}
+        <div className="aspect-[3/4] relative overflow-hidden rounded-[1.5rem] border border-[#2f2e30] bg-[#121212]">
           {novel.coverImages && novel.coverImages.length > 0 ? (
             <img 
               src={novel.coverImages[0]} 
               alt={novel.name} 
-              className="w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-all duration-700 ease-out"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
               referrerPolicy="no-referrer"
             />
           ) : (
@@ -490,26 +494,18 @@ const NovelCard = React.memo(({
             </div>
           )}
 
-          {/* Frosted Action Drawer Over Cover */}
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center p-6 gap-3.5 z-10">
-            <button 
-              onClick={() => onViewChapters(novel)}
-              className="w-full bg-[#f86e7e] text-[#121212] py-3.5 rounded-2xl font-black text-xs transition-all hover:scale-[1.03] active:scale-95 shadow-lg shadow-[#f86e7e]/20"
-            >
-              عرض الفصول والأغلفة
-            </button>
-            <button 
-              onClick={() => onEditNovel(novel)}
-              className="w-full bg-[#1e1e20] hover:bg-[#252528] text-white border border-[#3c3b3d] py-3.5 rounded-2xl font-bold text-xs transition-all hover:scale-[1.03] active:scale-95"
-            >
-              تعديل تفاصيل الرواية
-            </button>
+          {/* Quick Info Cover Overlay on Hover */}
+          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5 z-10">
+            <span className="inline-flex items-center justify-center gap-1.5 bg-[#f86e7e] text-[#121212] py-2.5 px-4 rounded-xl font-bold text-[11px] w-full transition-transform translate-y-2 group-hover:translate-y-0 duration-300">
+              <Eye className="w-3.5 h-3.5" />
+              تصفح الفصول والأغلفة
+            </span>
           </div>
           
-          {/* Top Indicators */}
+          {/* Top Left Status Pill */}
           {novel.status && (
             <div className="absolute top-3 left-3 z-20">
-              <span className={`px-3 py-1.5 rounded-xl text-[9px] font-extrabold uppercase tracking-widest shadow-lg backdrop-blur-md border ${
+              <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wide shadow-lg border backdrop-blur-md ${
                 novel.status === 'مستمرة' 
                   ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
                   : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
@@ -519,35 +515,36 @@ const NovelCard = React.memo(({
             </div>
           )}
 
-          {/* Floating Rating Badge with Space Grotesk layout */}
-          <div className="absolute bottom-3 right-3 z-20 bg-black/75 backdrop-blur-md border border-white/10 py-1.5 px-3 rounded-xl text-yellow-500 flex items-center gap-1 text-[10px] font-black shadow-xl">
+          {/* Top Right Admin Controls */}
+          <div className="absolute top-3 right-3 z-20 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={() => onEditNovel(novel)}
+              className="p-2 bg-black/70 hover:bg-[#f86e7e] hover:text-[#121212] backdrop-blur-md rounded-lg text-slate-300 transition-all border border-white/5"
+              title="تعديل تفاصيل الرواية"
+            >
+              <Edit className="w-3.5 h-3.5" />
+            </button>
+            <button 
+              onClick={() => onDeleteNovel(novel.id)}
+              className="p-2 bg-black/70 hover:bg-red-500 hover:text-white backdrop-blur-md rounded-lg text-slate-300 transition-all border border-white/5"
+              title="حذف الرواية"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Floating Rating Badge */}
+          <div className="absolute bottom-3 right-3 z-20 bg-black/75 backdrop-blur-md border border-white/10 py-1 px-2.5 rounded-lg text-yellow-500 flex items-center gap-1 text-[10px] font-bold shadow-md">
             <Star className="w-3 h-3 text-yellow-500 fill-current" />
             <span>{novel.rating || '0.0'}</span>
           </div>
-
-          {/* Glowing Status Dot on Hover */}
-          {novel.status && (
-            <div className="absolute top-3 right-3 z-20 pointer-events-none opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 ease-out">
-              <div className="bg-black/80 border border-[#3c3b3d] backdrop-blur-md text-white/95 text-[9px] font-bold px-3 py-1.5 rounded-xl shadow-2xl flex items-center gap-1.5">
-                <span className="relative flex h-2 w-2">
-                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                    novel.status === 'مستمرة' ? 'bg-amber-500' : 'bg-emerald-500'
-                  }`} />
-                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                    novel.status === 'مستمرة' ? 'bg-amber-500' : 'bg-emerald-500'
-                  }`} />
-                </span>
-                <span>تحديث نشط</span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Info Area */}
-        <div className="mt-5 flex-1 flex flex-col px-1.5">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-2 h-2 rounded-full bg-[#f86e7e] opacity-75 group-hover:scale-125 transition-transform" />
-            <h3 className="text-base font-black text-white line-clamp-1 group-hover:text-[#f86e7e] transition-colors duration-300">
+        <div className="mt-4 flex-1 flex flex-col px-1">
+          <div className="flex items-center gap-1.5 mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#f86e7e]" />
+            <h3 className="text-sm font-black text-white line-clamp-1 group-hover:text-[#f86e7e] transition-colors duration-300">
               {novel.name || 'Untitled'}
             </h3>
           </div>
@@ -557,11 +554,11 @@ const NovelCard = React.memo(({
           </p>
           
           {novel.categories && novel.categories.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-5 mt-auto">
+            <div className="flex flex-wrap gap-1.5 mb-4 mt-auto">
               {novel.categories.slice(0, 3).map((cat, i) => (
                 <span 
                   key={i} 
-                  className="px-2.5 py-1 rounded-lg bg-[#212124] text-slate-300 text-[9px] font-bold border border-[#2f2e30]"
+                  className="px-2 py-0.5 rounded-md bg-white/5 text-slate-300 text-[9px] font-bold border border-white/5"
                 >
                   {cat}
                 </span>
@@ -574,23 +571,19 @@ const NovelCard = React.memo(({
             </div>
           )}
           
-          <div className="pt-4 border-t border-[#2f2e30]/80 flex items-center justify-between mt-auto">
+          <div className="pt-3.5 border-t border-white/5 flex items-center justify-between mt-auto">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#f86e7e]/10 border border-[#f86e7e]/20 flex items-center justify-center text-[#f86e7e] font-extrabold text-[9px]">
+              <div className="w-5 h-5 rounded-full bg-[#f86e7e]/10 border border-[#f86e7e]/20 flex items-center justify-center text-[#f86e7e] font-bold text-[8px]">
                 {novel.author ? novel.author.trim().substring(0, 1).toUpperCase() : 'A'}
               </div>
-              <span className="text-[10px] font-extrabold text-slate-200 uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-slate-300 truncate max-w-[120px]">
                 {novel.author}
               </span>
             </div>
             
-            <button 
-              onClick={(e) => { e.stopPropagation(); onDeleteNovel(novel.id); }}
-              className="p-2 bg-red-500/5 hover:bg-red-500/15 border border-transparent hover:border-red-500/20 text-slate-400 hover:text-red-500 rounded-xl transition-all"
-              title="حذف الرواية"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            <span className="text-[9px] font-bold text-[#f86e7e] flex items-center gap-1">
+              اقرأ الآن &larr;
+            </span>
           </div>
         </div>
       </div>
