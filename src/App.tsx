@@ -368,7 +368,7 @@ const NovelCard = React.memo(({
       layoutId={novel.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="group bg-[#1e1e1e] rounded-[2rem] border border-[#383636] overflow-hidden hover:shadow-2xl hover:shadow-[#f86e7e]/5 transition-all duration-300 flex flex-col h-full"
+      className="group bg-[#1e1e1e] rounded-[2rem] border border-[#383636] overflow-hidden transition-all duration-300 flex flex-col h-full"
     >
       <div className="aspect-[3/4] relative overflow-hidden">
         {novel.coverImages && novel.coverImages.length > 0 ? (
@@ -399,14 +399,28 @@ const NovelCard = React.memo(({
         </div>
         
         {novel.status && (
-          <div className="absolute top-4 left-4">
-            <span className={`px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg ${
-              novel.status === 'مستمرة' ? 'bg-yellow-500 text-white' : 
-              novel.status === 'مكتملة' ? 'bg-green-500 text-white' : 
-              'bg-slate-700 text-white'
-            }`}>
-              {novel.status}
-            </span>
+          <div className="absolute top-4 left-4 z-20 pointer-events-none opacity-0 scale-90 translate-y-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 transition-all duration-300 ease-out">
+            <div className="relative">
+              <div className={`px-4 py-2 rounded-2xl text-[10px] font-extrabold uppercase tracking-widest shadow-2xl flex items-center gap-2 border border-white/10 backdrop-blur-md ${
+                novel.status === 'مستمرة' ? 'bg-amber-500/90 text-white shadow-amber-500/20' : 
+                novel.status === 'مكتملة' ? 'bg-emerald-500/90 text-white shadow-emerald-500/20' : 
+                'bg-slate-700/95 text-white'
+              }`}>
+                <span className="relative flex h-2 w-2">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    novel.status === 'مستمرة' ? 'bg-amber-100' : 
+                    novel.status === 'مكتملة' ? 'bg-emerald-100' : 
+                    'bg-slate-300'
+                  }`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                    novel.status === 'مستمرة' ? 'bg-amber-200' : 
+                    novel.status === 'مكتملة' ? 'bg-emerald-200' : 
+                    'bg-white'
+                  }`}></span>
+                </span>
+                <span>{novel.status}</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
