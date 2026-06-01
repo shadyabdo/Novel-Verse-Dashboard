@@ -1,5 +1,5 @@
 {
-  "name": "Novel Dashboard",
-  "description": "A dashboard for managing novels and chapters, connected to Firebase Firestore.",
+  "name": "كوم روايات",
+  "description": "منصة كوم روايات لإدارة وقراءة الروايات والفصول.",
   "requestFramePermissions": []
 }

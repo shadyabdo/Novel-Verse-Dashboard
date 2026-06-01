@@ -1406,8 +1406,8 @@ export default function App() {
           <div className="w-20 h-20 bg-[#f86e7e] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#f86e7e]/30">
             <Book className="w-10 h-10 text-[#121212]" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white mb-3 tracking-tight">لوحة الروايات</h1>
-          <p className="text-slate-400 mb-8 leading-relaxed">نظام إدارة الروايات وفصولها بكل سهولة.</p>
+          <h1 className="text-3xl font-extrabold text-white mb-3 tracking-tight">كوم روايات</h1>
+          <p className="text-slate-400 mb-8 leading-relaxed">منصتك المفضلة لإدارة وقراءة الروايات وفصولها بكل سهولة.</p>
           <button 
             onClick={login}
             className="w-full flex items-center justify-center gap-3 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] font-bold py-4 rounded-2xl transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98]"
@@ -1533,8 +1533,8 @@ export default function App() {
               <Book className="w-6 h-6 text-[#121212]" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold text-white tracking-tight">لوحة الروايات</h1>
-              <p className="text-[10px] text-[#f86e7e] font-bold uppercase tracking-widest">الإدارة</p>
+              <h1 className="text-xl font-extrabold text-white tracking-tight">كوم روايات</h1>
+              <p className="text-[10px] text-[#f86e7e] font-bold uppercase tracking-widest">الرئيسية</p>
             </div>
           </div>
 
