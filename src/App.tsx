@@ -43,6 +43,7 @@ import {
   Compass,
   SlidersHorizontal,
   Folder,
+  FolderOpen,
   LayoutDashboard,
   Settings,
   Star,
@@ -623,15 +624,35 @@ export default function App() {
 
   const groupedChapters = useMemo(() => {
     const groups: { [key: string]: Chapter[] } = { 'none': [] };
+    
+    // Initialize group lists for known/real volumes
     volumes.forEach(v => {
       groups[v.id] = [];
     });
+    
+    // Map chapters to their appropriate volume groups
     chapters.forEach(c => {
-      const volId = c.volumeId && groups[c.volumeId] ? c.volumeId : 'none';
-      groups[volId].push(c);
+      // Check standard and possible legacy fields (volumeId, volume_id, volume, volId)
+      const rawVolId = c.volumeId || (c as any).volume_id || (c as any).volume || (c as any).volId;
+      
+      if (rawVolId && typeof rawVolId === 'string' && rawVolId.trim() !== '') {
+        const cleanedVolId = rawVolId.trim();
+        if (!groups[cleanedVolId]) {
+          groups[cleanedVolId] = [];
+        }
+        groups[cleanedVolId].push(c);
+      } else {
+        groups['none'].push(c);
+      }
     });
+    
     return groups;
   }, [chapters, volumes]);
+
+  const virtualVolumes = useMemo(() => {
+    const realVolIds = new Set(volumes.map(v => v.id));
+    return Object.keys(groupedChapters).filter(key => key !== 'none' && !realVolIds.has(key));
+  }, [groupedChapters, volumes]);
 
   const isAdmin = user?.email === "shadyabdowd2020@gmail.com";
 
@@ -1810,40 +1831,91 @@ export default function App() {
                   ) : (
                     <>
                       {/* Volumes with Chapters */}
-                      {volumes.map(vol => groupedChapters[vol.id] && groupedChapters[vol.id].length > 0 && (
-                        <div key={vol.id} className="space-y-4">
-                          <div className="flex items-center gap-4 group">
-                            <div className="flex items-center gap-3 bg-[#f86e7e] text-[#121212] px-5 py-2.5 rounded-2xl shadow-lg shadow-[#f86e7e]/20 transition-all hover:scale-[1.02]">
-                              <Folder className="w-5 h-5 fill-current" />
-                              <h3 className="text-lg font-black tracking-wide">
-                                {vol.name}
-                              </h3>
+                      {volumes.map(vol => {
+                        const volChapters = groupedChapters[vol.id] || [];
+                        return (
+                          <div key={vol.id} className="space-y-4">
+                            <div className="flex items-center gap-4 group">
+                              <div className="flex items-center gap-3 bg-[#f86e7e] text-[#121212] px-5 py-2.5 rounded-2xl shadow-lg shadow-[#f86e7e]/20 transition-all hover:scale-[1.02]">
+                                <Folder className="w-5 h-5 fill-current" />
+                                <h3 className="text-lg font-black tracking-wide">
+                                  {vol.name}
+                                </h3>
+                                <span className="text-[10px] bg-[#121212]/20 text-[#121212] px-2 py-0.5 rounded-md font-bold">
+                                  {volChapters.length} فصول
+                                </span>
+                              </div>
+                              <div className="h-px bg-white/5 flex-1" />
+                              {isAdmin && (
+                                <button 
+                                  onClick={() => deleteVolume(vol.id, vol.name)}
+                                  className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
                             </div>
-                            <div className="h-px bg-white/5 flex-1" />
-                            {isAdmin && (
-                              <button 
-                                onClick={() => deleteVolume(vol.id, vol.name)}
-                                className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                            
+                            {volChapters.length === 0 ? (
+                              <div className="py-6 px-10 border border-[#383636] border-dashed rounded-[2rem] bg-[#1a1a1a]/40 text-center flex flex-col items-center justify-center gap-2 text-slate-500 hover:border-white/5 transition-all">
+                                <FolderOpen className="w-6 h-6 text-slate-600 opacity-60" />
+                                <p className="text-xs font-bold text-slate-500">لا توجد فصول في هذا المجلد حالياً.</p>
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-1 gap-4 pr-12 relative">
+                                <div className="absolute top-0 right-6 bottom-0 w-0.5 bg-white/5" />
+                                {volChapters.map((chapter, index) => (
+                                  <ChapterItem 
+                                    key={chapter.id} 
+                                    chapter={chapter} 
+                                    index={index} 
+                                    onPreview={setPreviewChapter}
+                                    onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
+                                    onDelete={deleteChapter}
+                                  />
+                                ))}
+                              </div>
                             )}
                           </div>
-                          <div className="grid grid-cols-1 gap-4 pr-12 relative">
-                            <div className="absolute top-0 right-6 bottom-0 w-0.5 bg-white/5" />
-                            {groupedChapters[vol.id].map((chapter, index) => (
-                              <ChapterItem 
-                                key={chapter.id} 
-                                chapter={chapter} 
-                                index={index} 
-                                onPreview={setPreviewChapter}
-                                onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
-                                onDelete={deleteChapter}
-                              />
-                            ))}
+                        );
+                      })}
+
+                      {/* Virtual Volumes discovered from custom/legacy db records */}
+                      {virtualVolumes.map(virtualVolId => {
+                        const virtualVolChapters = groupedChapters[virtualVolId] || [];
+                        if (virtualVolChapters.length === 0) return null;
+                        
+                        return (
+                          <div key={virtualVolId} className="space-y-4">
+                            <div className="flex items-center gap-4 group">
+                              <div className="flex items-center gap-3 bg-indigo-500 text-white px-5 py-2.5 rounded-2xl shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02]">
+                                <Folder className="w-5 h-5 fill-current text-white/90" />
+                                <h3 className="text-lg font-black tracking-wide">
+                                  {virtualVolId}
+                                </h3>
+                                <span className="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-md font-bold">
+                                  {virtualVolChapters.length} فصول (بيانات سابقة)
+                                </span>
+                              </div>
+                              <div className="h-px bg-white/5 flex-1" />
+                            </div>
+                            
+                            <div className="grid grid-cols-1 gap-4 pr-12 relative">
+                              <div className="absolute top-0 right-6 bottom-0 w-0.5 bg-white/5" />
+                              {virtualVolChapters.map((chapter, index) => (
+                                <ChapterItem 
+                                  key={chapter.id} 
+                                  chapter={chapter} 
+                                  index={index} 
+                                  onPreview={setPreviewChapter}
+                                  onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
+                                  onDelete={deleteChapter}
+                                />
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
 
                       {/* Chapters without Volume */}
                       {groupedChapters['none'] && groupedChapters['none'].length > 0 && (
