@@ -368,7 +368,7 @@ const NovelCard = React.memo(({
       layoutId={novel.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="group bg-[#1e1e1e] rounded-[2rem] border border-[#383636] overflow-hidden transition-all duration-300 flex flex-col h-full"
+      className="group bg-[#1e1e1e] rounded-[2rem] border border-white/5 overflow-hidden hover:shadow-2xl hover:shadow-[#f86e7e]/5 transition-all duration-300 flex flex-col h-full"
     >
       <div className="aspect-[3/4] relative overflow-hidden">
         {novel.coverImages && novel.coverImages.length > 0 ? (
@@ -407,19 +407,6 @@ const NovelCard = React.memo(({
             }`}>
               {novel.status}
             </span>
-          </div>
-        )}
-
-        {novel.status && (
-          <div className="absolute top-4 right-4 z-20 pointer-events-none opacity-0 scale-90 translate-x-1 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-x-0 transition-all duration-300 ease-out">
-            <div className="bg-[#121212]/95 border border-[#383636] backdrop-blur-md text-white/90 text-[10px] font-semibold px-3 py-1.5 rounded-xl shadow-2xl flex items-center gap-1.5" dir="rtl">
-              <span className={`w-1.5 h-1.5 rounded-full ${
-                novel.status === 'مستمرة' ? 'bg-yellow-500' : 
-                novel.status === 'مكتملة' ? 'bg-green-500' : 
-                'bg-slate-400'
-              }`} />
-              <span>حالة الرواية: {novel.status}</span>
-            </div>
           </div>
         )}
       </div>
