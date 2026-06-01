@@ -53,7 +53,8 @@ import {
   Sun,
   Moon,
   X,
-  Eye
+  Eye,
+  Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Swal from 'sweetalert2';
@@ -300,6 +301,103 @@ const ChapterPreviewModal = ({ chapter, onClose }: { chapter: Chapter, onClose: 
   );
 };
 
+const LightboxSlider = ({ images, initialIndex, onClose }: { images: string[], initialIndex: number, onClose: () => void }) => {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const validImages = useMemo(() => images.filter(img => img && img.trim() !== ''), [images]);
+
+  if (validImages.length === 0) return null;
+
+  const next = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setCurrentIndex((prev) => (prev + 1) % validImages.length);
+  };
+
+  const prev = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setCurrentIndex((prev) => (prev - 1 + validImages.length) % validImages.length);
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#121212]/98 backdrop-blur-2xl p-4 md:p-10 select-none"
+    >
+      <div className="absolute top-6 left-6 flex items-center gap-3 z-30">
+        <span className="text-xs font-bold text-slate-400 bg-white/5 py-2 px-4 rounded-xl border border-white/5">
+          {currentIndex + 1} / {validImages.length}
+        </span>
+        <button 
+          onClick={onClose}
+          className="p-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-slate-400 hover:text-white transition-all shadow-lg"
+          title="إغلاق المعرض"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="relative w-full max-w-5xl flex-1 flex items-center justify-center px-4 md:px-12">
+        {validImages.length > 1 && (
+          <button 
+            onClick={prev}
+            className="absolute left-2 md:left-4 z-20 p-4 bg-[#1e1e1e] hover:bg-[#252528] text-[#f86e7e] hover:text-white rounded-2xl transition-all border border-[#383636] shadow-2xl"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+        )}
+
+        <div className="w-full h-full max-h-[75vh] flex items-center justify-center relative overflow-hidden rounded-3xl">
+          <AnimatePresence mode="wait">
+            <motion.img 
+              key={currentIndex}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              src={validImages[currentIndex]} 
+              alt={`Cover Large ${currentIndex + 1}`} 
+              className="max-h-full max-w-full object-contain rounded-2xl shadow-2xl border border-white/5"
+              referrerPolicy="no-referrer"
+            />
+          </AnimatePresence>
+        </div>
+
+        {validImages.length > 1 && (
+          <button 
+            onClick={next}
+            className="absolute right-2 md:right-4 z-20 p-4 bg-[#1e1e1e] hover:bg-[#252528] text-[#f86e7e] hover:text-white rounded-2xl transition-all border border-[#383636] shadow-2xl"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        )}
+      </div>
+
+      <div className="w-full max-w-md mt-6 flex justify-center gap-2 overflow-x-auto py-2 px-4 whitespace-nowrap scrollbar-hide">
+        {validImages.map((img, idx) => (
+          <button 
+            key={idx}
+            onClick={() => setCurrentIndex(idx)}
+            className={`relative w-12 h-16 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${
+              idx === currentIndex 
+                ? 'border-[#f86e7e] scale-110 shadow-lg shadow-[#f86e7e]/20' 
+                : 'border-white/5 opacity-40 hover:opacity-100 hover:border-white/20'
+            }`}
+          >
+            <img src={img} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          </button>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
 // --- Components ---
 
 const ChapterItem = ({ chapter, index, onPreview, onEdit, onDelete }: { 
@@ -368,97 +466,130 @@ const NovelCard = React.memo(({
       layoutId={novel.id}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="group bg-[#1e1e1e] rounded-[2rem] border border-[#383636] overflow-hidden hover:border-[#f86e7e]/40 hover:shadow-2xl hover:shadow-[#f86e7e]/5 transition-all duration-300 flex flex-col h-full relative"
+      className="group bg-gradient-to-b from-[#18181a] to-[#121214] rounded-tr-[3.5rem] rounded-bl-[3.5rem] rounded-tl-2xl rounded-br-2xl border border-[#2f2e30] overflow-hidden hover:border-[#f86e7e]/50 hover:shadow-[0_25px_50px_-12px_rgba(248,110,126,0.15)] transition-all duration-500 flex flex-col h-full relative"
     >
-      <div className="aspect-[3/4] relative overflow-hidden">
-        {novel.coverImages && novel.coverImages.length > 0 ? (
-          <img 
-            src={novel.coverImages[0]} 
-            alt={novel.name} 
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-[#121212] text-slate-700">
-            <ImageIcon className="w-16 h-16" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 gap-3 z-10">
-          <button 
-            onClick={() => onViewChapters(novel)}
-            className="w-full bg-[#f86e7e] text-[#121212] py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]"
-          >
-            عرض الفصول
-          </button>
-          <button 
-            onClick={() => onEditNovel(novel)}
-            className="w-full bg-white/10 backdrop-blur-md text-white py-3 rounded-xl font-bold text-sm transition-all hover:bg-white/20"
-          >
-            تعديل الرواية
-          </button>
-        </div>
-        
-        {novel.status && (
-          <div className="absolute top-4 left-4 z-20">
-            <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-md ${
-              novel.status === 'مستمرة' ? 'bg-amber-500/90 text-white' : 
-              novel.status === 'مكتملة' ? 'bg-emerald-500/90 text-white' : 
-              'bg-slate-700/90 text-white'
-            }`}>
-              {novel.status}
-            </span>
-          </div>
-        )}
+      {/* Background glow overlay on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#f86e7e]/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-        {/* Star Rating Floating Badge */}
-        <div className="absolute bottom-4 right-4 z-20 bg-[#121212]/80 backdrop-blur-md border border-white/5 py-1 px-2.5 rounded-lg text-yellow-500 flex items-center gap-1 text-[10px] font-bold shadow-lg">
-          <Star className="w-3 text-yellow-500 fill-current" />
-          <span>{novel.rating || '0.0'}</span>
-        </div>
-
-        {/* Dynamic Hover Status Tooltip */}
-        {novel.status && (
-          <div className="absolute top-4 right-4 z-20 pointer-events-none opacity-0 scale-90 translate-x-2 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-x-0 transition-all duration-300 ease-out">
-            <div className="bg-[#121212]/95 border border-[#383636] backdrop-blur-md text-white/90 text-[10px] font-semibold px-3 py-1.5 rounded-xl shadow-2xl flex items-center gap-1.5" dir="rtl">
-              <span className="relative flex h-2 w-2">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  novel.status === 'مستمرة' ? 'bg-amber-500' : 'bg-emerald-500'
-                }`} />
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                  novel.status === 'مستمرة' ? 'bg-amber-500' : 'bg-emerald-500'
-                }`} />
-              </span>
-              <span>حالة الرواية: {novel.status}</span>
+      <div className="p-4 flex-1 flex flex-col">
+        {/* Cover Wrap */}
+        <div className="aspect-[3/4] relative overflow-hidden rounded-tr-[2.75rem] rounded-bl-[2.75rem] rounded-tl-[1rem] rounded-br-[1rem] border border-[#2f2e30] bg-[#121212]">
+          {novel.coverImages && novel.coverImages.length > 0 ? (
+            <img 
+              src={novel.coverImages[0]} 
+              alt={novel.name} 
+              className="w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-all duration-700 ease-out"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-slate-700 gap-2">
+              <ImageIcon className="w-12 h-12 stroke-[1.5]" />
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">بدون غلاف</span>
             </div>
+          )}
+
+          {/* Frosted Action Drawer Over Cover */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-center p-6 gap-3.5 z-10">
+            <button 
+              onClick={() => onViewChapters(novel)}
+              className="w-full bg-[#f86e7e] text-[#121212] py-3.5 rounded-2xl font-black text-xs transition-all hover:scale-[1.03] active:scale-95 shadow-lg shadow-[#f86e7e]/20"
+            >
+              عرض الفصول والأغلفة
+            </button>
+            <button 
+              onClick={() => onEditNovel(novel)}
+              className="w-full bg-[#1e1e20] hover:bg-[#252528] text-white border border-[#3c3b3d] py-3.5 rounded-2xl font-bold text-xs transition-all hover:scale-[1.03] active:scale-95"
+            >
+              تعديل تفاصيل الرواية
+            </button>
           </div>
-        )}
-      </div>
-      
-      <div className="p-6 flex-1 flex flex-col">
-        <h3 className="text-lg font-bold text-white mb-2 line-clamp-1 group-hover:text-[#f86e7e] transition-colors">{novel.name || 'Untitled'}</h3>
-        <p className="text-xs text-slate-400 mb-3 line-clamp-2 leading-relaxed">{novel.description || 'No description available.'}</p>
-        
-        {novel.categories && novel.categories.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {novel.categories.slice(0, 3).map((cat, i) => (
-              <span key={i} className="px-2.5 py-0.5 rounded-md bg-[#121212]/50 text-slate-400 text-[9px] font-bold border border-[#383636]">
-                {cat}
+          
+          {/* Top Indicators */}
+          {novel.status && (
+            <div className="absolute top-3 left-3 z-20">
+              <span className={`px-3 py-1.5 rounded-xl text-[9px] font-extrabold uppercase tracking-widest shadow-lg backdrop-blur-md border ${
+                novel.status === 'مستمرة' 
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              }`}>
+                {novel.status}
               </span>
-            ))}
-            {novel.categories.length > 3 && (
-              <span className="text-[9px] text-slate-600 font-bold">+{novel.categories.length - 3}</span>
-            )}
+            </div>
+          )}
+
+          {/* Floating Rating Badge with Space Grotesk layout */}
+          <div className="absolute bottom-3 right-3 z-20 bg-black/75 backdrop-blur-md border border-white/10 py-1.5 px-3 rounded-xl text-yellow-500 flex items-center gap-1 text-[10px] font-black shadow-xl">
+            <Star className="w-3 h-3 text-yellow-500 fill-current" />
+            <span>{novel.rating || '0.0'}</span>
           </div>
-        )}
-        
-        <div className="mt-auto pt-4 border-t border-[#383636] flex items-center justify-between">
-          <span className="text-[10px] font-bold text-[#f86e7e] uppercase tracking-wider">{novel.author}</span>
-          <button 
-            onClick={() => onDeleteNovel(novel.id)}
-            className="p-2 text-slate-600 hover:text-red-500 transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+
+          {/* Glowing Status Dot on Hover */}
+          {novel.status && (
+            <div className="absolute top-3 right-3 z-20 pointer-events-none opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 ease-out">
+              <div className="bg-black/80 border border-[#3c3b3d] backdrop-blur-md text-white/95 text-[9px] font-bold px-3 py-1.5 rounded-xl shadow-2xl flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    novel.status === 'مستمرة' ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`} />
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                    novel.status === 'مستمرة' ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`} />
+                </span>
+                <span>تحديث نشط</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Info Area */}
+        <div className="mt-5 flex-1 flex flex-col px-1.5">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full bg-[#f86e7e] opacity-75 group-hover:scale-125 transition-transform" />
+            <h3 className="text-base font-black text-white line-clamp-1 group-hover:text-[#f86e7e] transition-colors duration-300">
+              {novel.name || 'Untitled'}
+            </h3>
+          </div>
+
+          <p className="text-xs text-slate-400 mb-4 line-clamp-2 leading-relaxed font-medium">
+            {novel.description || 'لا يوجد وصف متاح لهذه الرواية حالياً.'}
+          </p>
+          
+          {novel.categories && novel.categories.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-5 mt-auto">
+              {novel.categories.slice(0, 3).map((cat, i) => (
+                <span 
+                  key={i} 
+                  className="px-2.5 py-1 rounded-lg bg-[#212124] text-slate-300 text-[9px] font-bold border border-[#2f2e30]"
+                >
+                  {cat}
+                </span>
+              ))}
+              {novel.categories.length > 3 && (
+                <span className="text-[9px] text-[#f86e7e] font-extrabold self-center">
+                  +{novel.categories.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+          
+          <div className="pt-4 border-t border-[#2f2e30]/80 flex items-center justify-between mt-auto">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-[#f86e7e]/10 border border-[#f86e7e]/20 flex items-center justify-center text-[#f86e7e] font-extrabold text-[9px]">
+                {novel.author ? novel.author.trim().substring(0, 1).toUpperCase() : 'A'}
+              </div>
+              <span className="text-[10px] font-extrabold text-slate-200 uppercase tracking-wider">
+                {novel.author}
+              </span>
+            </div>
+            
+            <button 
+              onClick={(e) => { e.stopPropagation(); onDeleteNovel(novel.id); }}
+              className="p-2 bg-red-500/5 hover:bg-red-500/15 border border-transparent hover:border-red-500/20 text-slate-400 hover:text-red-500 rounded-xl transition-all"
+              title="حذف الرواية"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -484,6 +615,8 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSidebar, setShowSidebar] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>('الكل');
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const groupedChapters = useMemo(() => {
@@ -1585,6 +1718,39 @@ export default function App() {
                         </p>
                       </div>
 
+                      {/* قسم صور الرواية - معرض الأغلفة التفاعلي */}
+                      {selectedNovel.coverImages && selectedNovel.coverImages.filter(img => img && img.trim() !== '').length > 0 && (
+                        <div className="pt-6 border-t border-white/5 mb-8">
+                          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center justify-between">
+                            <span>صور وأغلفة الرواية ({selectedNovel.coverImages.filter(img => img && img.trim() !== '').length})</span>
+                            <span className="text-[9px] text-[#f86e7e] font-black bg-[#f86e7e]/10 px-2.5 py-1 rounded-lg border border-[#f86e7e]/25">معرض تفاعلي</span>
+                          </h4>
+                          <div className="grid grid-cols-4 gap-2">
+                            {selectedNovel.coverImages.filter(img => img && img.trim() !== '').map((img, idx) => (
+                              <button 
+                                key={idx}
+                                onClick={() => {
+                                  setLightboxImages(selectedNovel.coverImages || []);
+                                  setLightboxIndex(idx);
+                                }}
+                                className="group/thumb relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 hover:border-[#f86e7e]/40 hover:shadow-lg transition-all duration-300 hover:scale-[1.03]"
+                                title="عرض الغلاف وتكبيره"
+                              >
+                                <img 
+                                  src={img} 
+                                  alt={`Novel Thumb ${idx + 1}`} 
+                                  className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-500"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-all duration-300">
+                                  <Maximize2 className="w-4 h-4 text-white" />
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <button 
                         onClick={() => {
                           setEditingChapter({ novelId: selectedNovel.id, title: '', content: '', order: chapters.length + 1, date: new Date().toLocaleDateString('ar-EG') });
@@ -2068,6 +2234,13 @@ export default function App() {
           <ChapterPreviewModal 
             chapter={previewChapter} 
             onClose={() => setPreviewChapter(null)} 
+          />
+        )}
+        {lightboxIndex !== null && (
+          <LightboxSlider 
+            images={lightboxImages} 
+            initialIndex={lightboxIndex} 
+            onClose={() => setLightboxIndex(null)} 
           />
         )}
       </AnimatePresence>
