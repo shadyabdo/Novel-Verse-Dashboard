@@ -515,26 +515,8 @@ const NovelCard = React.memo(({
             </div>
           )}
 
-          {/* Top Right Admin Controls */}
-          <div className="absolute top-3 right-3 z-20 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={(e) => e.stopPropagation()}>
-            <button 
-              onClick={() => onEditNovel(novel)}
-              className="p-2 bg-black/70 hover:bg-[#f86e7e] hover:text-[#121212] backdrop-blur-md rounded-lg text-slate-300 transition-all border border-white/5"
-              title="تعديل تفاصيل الرواية"
-            >
-              <Edit className="w-3.5 h-3.5" />
-            </button>
-            <button 
-              onClick={() => onDeleteNovel(novel.id)}
-              className="p-2 bg-black/70 hover:bg-red-500 hover:text-white backdrop-blur-md rounded-lg text-slate-300 transition-all border border-white/5"
-              title="حذف الرواية"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Floating Rating Badge */}
-          <div className="absolute bottom-3 right-3 z-20 bg-black/75 backdrop-blur-md border border-white/10 py-1 px-2.5 rounded-lg text-yellow-500 flex items-center gap-1 text-[10px] font-bold shadow-md">
+          {/* Floating Rating Badge (moved to top right) */}
+          <div className="absolute top-3 right-3 z-20 bg-black/75 backdrop-blur-md border border-[#2f2e30] py-1 px-2.5 rounded-lg text-yellow-500 flex items-center gap-1 text-[10px] font-black shadow-md">
             <Star className="w-3 h-3 text-yellow-500 fill-current" />
             <span>{novel.rating || '0.0'}</span>
           </div>
@@ -646,6 +628,12 @@ export default function App() {
     const realVolIds = new Set(volumes.map(v => v.id));
     return Object.keys(groupedChapters).filter(key => key !== 'none' && !realVolIds.has(key));
   }, [groupedChapters, volumes]);
+
+  const latestChapters = useMemo(() => {
+    return [...chapters]
+      .sort((a, b) => (b.order || 0) - (a.order || 0))
+      .slice(0, 3);
+  }, [chapters]);
 
   const isAdmin = user?.email === "shadyabdowd2020@gmail.com";
 
@@ -872,6 +860,49 @@ export default function App() {
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, `novels/${selectedNovel.id}/volumes/${id}`);
       }
+    }
+  };
+
+  const handleEditSelectedNovel = () => {
+    if (!selectedNovel) return;
+    const currentCovers = selectedNovel.coverImages || [];
+    const paddedCovers = [...currentCovers];
+    while (paddedCovers.length < 4) paddedCovers.push('');
+    setEditingNovel({ ...selectedNovel, coverImages: paddedCovers });
+    setView('edit-novel');
+  };
+
+  const handleDeleteSelectedNovel = async () => {
+    if (!selectedNovel) return;
+    const result = await Swal.fire({
+      title: 'هل أنت متأكد؟',
+      text: "سيتم حذف الرواية وجميع فصولها نهائياً!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#f86e7e',
+      confirmButtonText: 'نعم، احذفها',
+      cancelButtonText: 'إلغاء',
+      background: '#1e1e1e',
+      color: '#fff'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await deleteDoc(doc(db, 'novels', selectedNovel.id));
+      Swal.fire({
+        title: 'تم الحذف!',
+        text: 'تم حذف الرواية بنجاح',
+        icon: 'success',
+        background: '#1e1e1e',
+        color: '#fff',
+        confirmButtonColor: '#f86e7e'
+      });
+      setSelectedNovel(null);
+      setView('novels');
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `novels/${selectedNovel.id}`);
     }
   };
 
@@ -1742,40 +1773,76 @@ export default function App() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1">
-                  <div className="bg-[#1e1e1e] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-sm sticky top-28">
-                    <div className="aspect-[3/4] relative">
+                  <div className="bg-gradient-to-br from-[#242426] to-[#161618] rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl sticky top-28 hover:shadow-[#f86e7e]/5 transition-all duration-500">
+                    {/* Glamorous cover area with backdrop blur */}
+                    <div className="relative aspect-[3/4] group overflow-hidden">
                       <CoverSlider images={selectedNovel.coverImages || []} />
-                    </div>
-                    <div className="p-8">
-                      <h3 className="font-bold text-xl mb-4 text-white">{selectedNovel.name}</h3>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent pointer-events-none" />
                       
-                      <div className="flex items-center gap-2 text-yellow-500 mb-6">
-                        <Star className="w-4 h-4 fill-current" />
-                        <span className="text-sm font-bold">{selectedNovel.rating || '0.0'}</span>
-                        <span className="text-slate-500 text-xs font-normal">/ 5.0</span>
+                      {/* Premium Floating Badges inside Cover for Selected Novel page */}
+                      <div className="absolute bottom-4 right-4 left-4 flex justify-between items-center z-10 pointer-events-none">
+                        <span className="bg-black/75 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-xs font-bold text-slate-300">
+                          {selectedNovel.author || 'الكاتب غير معروف'}
+                        </span>
+                        <div className="flex items-center gap-1.5 bg-black/75 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-yellow-500 text-xs font-black">
+                          <Star className="w-3.5 h-3.5 fill-current" />
+                          <span>{selectedNovel.rating || '0.0'}</span>
+                        </div>
                       </div>
+                    </div>
+                    
+                    <div className="p-8">
+                      <h3 className="font-black text-2xl mb-4 text-white tracking-wide border-b border-white/5 pb-4 leading-tight">
+                        {selectedNovel.name}
+                      </h3>
+                      
+                      {/* Render Admin Edit/Delete Novel Actions */}
+                      {isAdmin && (
+                        <div className="grid grid-cols-2 gap-3 mb-6" id="novel-admin-actions">
+                          <button 
+                            type="button"
+                            onClick={handleEditSelectedNovel}
+                            className="bg-[#f86e7e]/5 hover:bg-[#f86e7e] text-[#f86e7e] hover:text-[#121212] border border-[#f86e7e]/30 hover:border-transparent py-3.5 rounded-2xl font-black text-xs transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-md shadow-[#f86e7e]/5"
+                            title="تعديل تفاصيل الرواية"
+                          >
+                            <Edit className="w-4 h-4" />
+                            تعديل الرواية
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={handleDeleteSelectedNovel}
+                            className="bg-red-500/5 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-transparent py-3.5 rounded-2xl font-black text-xs transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-md shadow-red-500/5"
+                            title="حذف الرواية نهائياً"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            حذف الرواية
+                          </button>
+                        </div>
+                      )}
 
-                      <div className="space-y-4 mb-8">
+                      <div className="space-y-4 mb-6 bg-black/20 p-4.5 rounded-2xl border border-white/5">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">عدد الفصول</span>
-                          <span className="font-bold text-[#f86e7e] bg-[#f86e7e]/10 px-3 py-1 rounded-lg">{chapters.length}</span>
+                          <span className="text-slate-400 font-medium">إجمالي الفصول المضافة</span>
+                          <span className="font-black text-[#f86e7e] bg-[#f86e7e]/10 px-3.5 py-1.5 rounded-xl border border-[#f86e7e]/10">{chapters.length}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-500">الحالة</span>
-                          <span className={`font-bold px-3 py-1 rounded-lg ${
-                            selectedNovel.status === 'مستمرة' ? 'text-yellow-500 bg-yellow-500/10' : 
-                            selectedNovel.status === 'مكتملة' ? 'text-green-500 bg-green-500/10' : 
-                            'text-slate-300 bg-white/5'
+                          <span className="text-slate-400 font-medium">حالة النشر الحالية</span>
+                          <span className={`font-black px-3.5 py-1.5 rounded-xl border ${
+                            selectedNovel.status === 'مستمرة' 
+                              ? 'text-amber-400 bg-amber-500/10 border-amber-500/10' 
+                              : selectedNovel.status === 'مكتملة' 
+                              ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/10' 
+                              : 'text-slate-300 bg-white/5 border-white/5'
                           }`}>
-                            {selectedNovel.status || 'N/A'}
+                            {selectedNovel.status || 'مستمرة'}
                           </span>
                         </div>
                       </div>
 
-                      <div className="pt-6 border-t border-white/5 mb-8">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">قصة الرواية</h4>
-                        <p className="text-xs text-slate-400 leading-relaxed line-clamp-6">
-                          {selectedNovel.description}
+                      <div className="pt-6 border-t border-white/5 mb-6">
+                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">قصة الرواية</h4>
+                        <p className="text-xs text-slate-400 leading-relaxed font-semibold max-h-48 overflow-y-auto custom-scrollbar">
+                          {selectedNovel.description || 'لا يوجد وصف متاح لهذا العمل.'}
                         </p>
                       </div>
 
@@ -1870,6 +1937,56 @@ export default function App() {
                 </div>
 
                 <div className="lg:col-span-2 space-y-8">
+                  {/* قسم أحدث الفصول المضافة */}
+                  {latestChapters.length > 0 && (
+                    <div className="space-y-4 mb-10 pb-6 border-b border-white/5">
+                      <h3 className="text-lg font-black text-white flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#f86e7e]"></span>
+                        أحدث الفصول المضافة
+                      </h3>
+                      <div className="card-group grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {latestChapters.map((chapter, idx) => (
+                          <div key={chapter.id || idx} className="card bg-[#1c1c1e] border border-white/5 rounded-3xl overflow-hidden hover:border-[#f86e7e]/30 hover:scale-[1.01] transition-all duration-300 flex flex-col h-full relative cursor-pointer" onClick={() => setPreviewChapter(chapter)}>
+                            <div className="relative h-44 overflow-hidden">
+                              <img 
+                                src={selectedNovel.coverImages?.[0] || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e'} 
+                                className="card-img-top w-full h-full object-cover transition-transform duration-500 hover:scale-105" 
+                                alt={selectedNovel.name}
+                                referrerPolicy="no-referrer"
+                              />
+                              
+                              {/* Badge showing Chapter number with the requested position-absolute style */}
+                              <div className="absolute top-4 right-4">
+                                <button type="button" className="btn btn-primary position-relative bg-[#f86e7e] text-[#121212] border-none font-black px-4 py-2 rounded-xl text-xs flex items-center justify-center select-none shadow-lg">
+                                  الفصل
+                                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-[#ef4444] text-white rounded-full text-[10px] w-6 h-6 flex items-center justify-center font-black border-2 border-[#1c1c1e] absolute -top-2.5 -left-2.5">
+                                    {chapter.order}
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                            <div className="card-body p-5 flex-1 flex flex-col justify-between">
+                              <div>
+                                <h5 className="card-title font-bold text-white mb-2 line-clamp-1 group-hover:text-[#f86e7e] transition-colors">
+                                  {chapter.title}
+                                </h5>
+                                <p className="card-text text-slate-400 text-xs line-clamp-2 leading-relaxed mb-4">
+                                  {chapter.content ? chapter.content.replace(/[#*`]/g, '').substring(0, 100) : 'تصفح محتوى ودراسة الفصل بالكامل...'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="card-footer bg-black/25 p-4 border-t border-white/5 flex items-center justify-between">
+                              <small className="text-body-secondary text-[11px] text-slate-500 font-bold flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-[#f86e7e]" />
+                                مضاف في {chapter.date}
+                              </small>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {chapters.length === 0 ? (
                     <div className="bg-[#1e1e1e] rounded-[2.5rem] border-2 border-dashed border-white/5 p-20 text-center">
                       <FileText className="w-12 h-12 text-slate-700 mx-auto mb-4" />
