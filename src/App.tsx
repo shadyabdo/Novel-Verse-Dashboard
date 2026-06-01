@@ -15,7 +15,9 @@ import {
   orderBy, 
   serverTimestamp,
   Timestamp,
-  getDocFromServer
+  getDocFromServer,
+  collectionGroup,
+  limit
 } from 'firebase/firestore';
 import { 
   signInWithPopup, 
@@ -581,6 +583,7 @@ export default function App() {
   const [volumes, setVolumes] = useState<Volume[]>([]);
   const [selectedNovel, setSelectedNovel] = useState<Novel | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [globalLatestChapters, setGlobalLatestChapters] = useState<(Chapter & { novel?: Novel })[]>([]);
   
   // UI State
   const [view, setView] = useState<'novels' | 'chapters' | 'edit-novel' | 'edit-chapter'>('novels');
@@ -747,6 +750,63 @@ export default function App() {
 
     return () => unsubscribe();
   }, [selectedNovel]);
+
+  // Global chapters Listener (Latest 16 across all novels)
+  useEffect(() => {
+    if (!isAuthReady) return;
+
+    let unsubscribe: (() => void) | undefined;
+
+    // Try with server-side orderBy first
+    try {
+      const q = query(collectionGroup(db, 'chapters'), orderBy('createdAt', 'desc'), limit(16));
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const chapterData = snapshot.docs.map(doc => {
+          const data = doc.data() as Chapter;
+          const novelId = data.novelId || doc.ref.parent?.parent?.id;
+          const novel = novels.find(n => n.id === novelId);
+          return { id: doc.id, ...data, novel };
+        });
+        setGlobalLatestChapters(chapterData);
+      }, (error) => {
+        console.warn("Index may be missing for collection group, falling back to client-side sorting:", error);
+        fallbackListen();
+      });
+    } catch (e) {
+      console.warn("Error creating query, falling back to client-side sorting:", e);
+      fallbackListen();
+    }
+
+    function fallbackListen() {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+      const qFallback = query(collectionGroup(db, 'chapters'));
+      unsubscribe = onSnapshot(qFallback, (snapshot) => {
+        const chapterData = snapshot.docs.map(doc => {
+          const data = doc.data() as Chapter;
+          const novelId = data.novelId || doc.ref.parent?.parent?.id;
+          const novel = novels.find(n => n.id === novelId);
+          return { id: doc.id, ...data, novel };
+        });
+        
+        // Sort by createdAt desc in client
+        const sorted = [...chapterData].sort((a, b) => {
+          const d1 = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+          const d2 = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+          return d2 - d1;
+        }).slice(0, 16);
+
+        setGlobalLatestChapters(sorted);
+      }, (error) => {
+        console.error("Critical error loading global chapters:", error);
+      });
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [isAuthReady, novels]);
 
   // --- Actions ---
 
@@ -1747,6 +1807,84 @@ export default function App() {
                   ))}
                 </div>
               )}
+
+              {/* قسم أحدث فصول مضافة في أسفل الرئيسية */}
+              {globalLatestChapters.length > 0 && (
+                <div className="mt-20 pt-10 border-t border-[#383636] space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-black text-white flex items-center gap-3">
+                      <span className="w-3.5 h-3.5 rounded-full bg-[#f86e7e] animate-pulse"></span>
+                      أحدث الفصول المضافة
+                    </h3>
+                  </div>
+                  
+                  <div className="card-group grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {globalLatestChapters.map((chapter, idx) => {
+                      const novelCover = chapter.novel?.coverImages?.[0] || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e';
+                      const novelName = chapter.novel?.name || 'رواية غير معروفة';
+                      return (
+                        <div 
+                          key={chapter.id || idx} 
+                          className="card bg-[#1c1c1e] border border-white/5 rounded-3xl overflow-hidden hover:border-[#f86e7e]/30 hover:scale-[1.02] transition-all duration-300 flex flex-col h-full relative cursor-pointer group shadow-lg" 
+                          onClick={() => {
+                            if (chapter.novel) {
+                              setSelectedNovel(chapter.novel);
+                              setPreviewChapter(chapter);
+                              setView('chapters');
+                            }
+                          }}
+                        >
+                          <div className="relative h-48 overflow-hidden">
+                            <img 
+                              src={novelCover} 
+                              className="card-img-top w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                              alt={novelName}
+                              referrerPolicy="no-referrer"
+                            />
+                            
+                            {/* Novel name floating badge */}
+                            <div className="absolute top-4 left-4 right-16 z-10">
+                              <span className="bg-black/85 backdrop-blur-md text-white text-[10px] font-black py-1.5 px-3 rounded-xl border border-white/10 block truncate shadow-md">
+                                {novelName}
+                              </span>
+                            </div>
+
+                            {/* Badge showing Chapter number with the requested position-absolute style */}
+                            <div className="absolute top-4 right-4 z-10">
+                              <button type="button" className="btn btn-primary position-relative bg-[#f86e7e] text-[#121212] border-none font-black px-4 py-2 rounded-xl text-xs flex items-center justify-center select-none shadow-lg">
+                                {chapter.order}
+                                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-[#ef4444] text-white rounded-full text-[10px] w-6 h-6 flex items-center justify-center font-black border-2 border-[#1c1c1e] absolute -top-2.5 -left-2.5">
+                                  {chapter.order}
+                                </span>
+                              </button>
+                            </div>
+                            
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-40 animate-fade-in" />
+                          </div>
+                          
+                          <div className="card-body p-5 flex-1 flex flex-col justify-between">
+                            <div>
+                              <h5 className="card-title font-bold text-white mb-2 line-clamp-1 group-hover:text-[#f86e7e] transition-colors">
+                                {chapter.title}
+                              </h5>
+                              <p className="card-text text-slate-400 text-xs line-clamp-2 leading-relaxed mb-4">
+                                {chapter.content ? chapter.content.replace(/[#*`]/g, '').substring(0, 100) : 'تصفح محتوى ودراسة الفصل بالكامل...'}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="card-footer bg-black/25 p-4 border-t border-white/5 flex items-center justify-between">
+                            <small className="text-body-secondary text-[11px] text-slate-500 font-bold flex items-center gap-1.5">
+                              <Clock className="w-3.5 h-3.5 text-[#f86e7e]" />
+                              مضاف في {chapter.date}
+                            </small>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -1958,7 +2096,7 @@ export default function App() {
                               {/* Badge showing Chapter number with the requested position-absolute style */}
                               <div className="absolute top-4 right-4">
                                 <button type="button" className="btn btn-primary position-relative bg-[#f86e7e] text-[#121212] border-none font-black px-4 py-2 rounded-xl text-xs flex items-center justify-center select-none shadow-lg">
-                                  الفصل
+                                  {chapter.order}
                                   <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-[#ef4444] text-white rounded-full text-[10px] w-6 h-6 flex items-center justify-center font-black border-2 border-[#1c1c1e] absolute -top-2.5 -left-2.5">
                                     {chapter.order}
                                   </span>
