@@ -1999,14 +1999,14 @@ export default function App() {
               <div className="card mb-10 bg-[#1c1c1e] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
                 <div className="flex flex-col md:flex-row">
                   {/* اليمين: صورة الرواية الأولى */}
-                  <div className="md:w-1/3 aspect-[3/4] md:aspect-auto md:h-[420px] relative overflow-hidden">
+                  <div className="md:w-1/3 aspect-[3/4] md:aspect-auto md:self-stretch relative overflow-hidden shrink-0">
                     <img 
                       src={selectedNovel.coverImages?.[0] || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e'} 
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" 
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105" 
                       alt={selectedNovel.name}
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/30 to-[#1c1c1e]" />
+                    <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-l from-transparent via-black/30 to-[#1c1c1e] pointer-events-none" />
                   </div>
                   
                   {/* اليسار: تفاصيل الرواية */}
