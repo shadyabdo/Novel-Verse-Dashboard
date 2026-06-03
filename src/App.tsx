@@ -39,6 +39,8 @@ import {
   LogIn,
   Save,
   ArrowLeft,
+  ArrowUp,
+  ArrowDown,
   Loader2,
   Image as ImageIcon,
   Search,
@@ -58,7 +60,16 @@ import {
   Moon,
   X,
   Eye,
-  Maximize2
+  Maximize2,
+  ChevronUp,
+  ChevronDown,
+  Bold,
+  Italic,
+  Link,
+  Heading,
+  Quote,
+  Sparkles,
+  BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Swal from 'sweetalert2';
@@ -275,7 +286,7 @@ const ChapterPreviewModal = ({ chapter, onClose }: { chapter: Chapter, onClose: 
         
         <div className="flex-1 overflow-y-auto p-8 md:p-12 scrollbar-hide">
           <div className="max-w-2xl mx-auto prose prose-invert prose-slate">
-            <div className="markdown-body text-slate-300 leading-[2] text-lg md:text-xl font-serif">
+            <div className="markdown-body text-slate-300 leading-[2] text-lg md:text-xl font-sans">
               <Markdown 
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -600,6 +611,9 @@ export default function App() {
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showAddVolumeModal, setShowAddVolumeModal] = useState(false);
+  const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write');
+  const [editorFontSize, setEditorFontSize] = useState<number>(20);
+  const [distractionFree, setDistractionFree] = useState<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const groupedChapters = useMemo(() => {
@@ -820,6 +834,11 @@ export default function App() {
       if (unsubscribe) unsubscribe();
     };
   }, [isAuthReady, novels]);
+
+  // Reset chapter editor tab to 'write' on view changes
+  useEffect(() => {
+    setEditorTab('write');
+  }, [view]);
 
   // --- Actions ---
 
@@ -1909,6 +1928,29 @@ export default function App() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
+              {/* Floating Up & Down Scroll Buttons (مربوطة ببعض) */}
+              <div 
+                className="fixed bottom-24 left-6 md:left-8 z-50 flex flex-col items-center bg-[#1c1c1e]/90 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-1.5 gap-1.5 transition-all duration-300 hover:border-[#f86e7e]/30 select-none animate-fade-in"
+                style={{ direction: 'rtl' }}
+              >
+                <button
+                  type="button"
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-[#f86e7e] hover:text-[#121212] transition-all duration-300 group"
+                  title="الانتقال لأعلى الصفحة"
+                >
+                  <ChevronUp className="w-5 h-5 text-slate-300 group-hover:text-[#121212] transition-colors" />
+                </button>
+                <div className="w-6 h-px bg-white/15" />
+                <button
+                  type="button"
+                  onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-[#f86e7e] hover:text-[#121212] transition-all duration-300 group"
+                  title="الانتقال لأسفل الصفحة"
+                >
+                  <ChevronDown className="w-5 h-5 text-slate-300 group-hover:text-[#121212] transition-colors" />
+                </button>
+              </div>
               <div className="flex items-center gap-6 mb-10">
                 <button 
                   onClick={() => setView('novels')}
@@ -2347,6 +2389,27 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {/* Floating scroll buttons connected together */}
+              <div className="fixed bottom-8 left-8 z-[100] flex flex-col bg-[#1c1c1e]/90 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-1 gap-1">
+                <button 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  type="button"
+                  className="w-12 h-12 flex items-center justify-center rounded-xl bg-transparent text-[#f86e7e] hover:bg-[#f86e7e]/10 active:scale-95 transition-all cursor-pointer"
+                  title="الانتقال إلى أعلى الصفحة"
+                >
+                  <ArrowUp className="w-5 h-5" />
+                </button>
+                <div className="h-px bg-white/10 mx-2" />
+                <button 
+                  type="button"
+                  onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })}
+                  className="w-12 h-12 flex items-center justify-center rounded-xl bg-transparent text-[#f86e7e] hover:bg-[#f86e7e]/10 active:scale-95 transition-all cursor-pointer"
+                  title="الانتقال إلى أسفل الصفحة"
+                >
+                  <ArrowDown className="w-5 h-5" />
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -2482,7 +2545,7 @@ export default function App() {
                         rows={12}
                         value={editingNovel.description}
                         onChange={e => setEditingNovel({...editingNovel, description: e.target.value})}
-                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all leading-relaxed resize-none"
+                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all leading-relaxed resize-none font-sans"
                         placeholder="اكتب ملخصاً للرواية..."
                       />
                     </div>
@@ -2490,7 +2553,7 @@ export default function App() {
                     <div className="p-8 bg-[#121212] rounded-[2rem] border border-white/5">
                       <div className="flex items-center gap-2 text-slate-500 mb-6">
                         <ImageIcon className="w-5 h-5" />
-                        <span className="text-xs font-bold">معاينة الرواية</span>
+                        <span className="text-xs font-bold font-sans">معاينة الرواية</span>
                       </div>
                       
                       <div className="aspect-[3/4] bg-[#1e1e1e] rounded-2xl border border-white/5 overflow-hidden mb-6">
@@ -2498,17 +2561,17 @@ export default function App() {
                       </div>
 
                       <div className="space-y-4">
-                        <h3 className="font-bold text-lg text-white line-clamp-1">{editingNovel.name || 'اسم الرواية'}</h3>
+                        <h3 className="font-bold text-lg text-white line-clamp-1 font-sans">{editingNovel.name || 'اسم الرواية'}</h3>
                         
-                        <div className="flex items-center gap-2 text-yellow-500">
-                          <Star className="w-4 h-4 fill-current" />
-                          <span className="text-sm font-bold">{editingNovel.rating || '0.0'}</span>
+                        <div className="flex items-center gap-2 text-yellow-500 bg-[#121212]/30 px-3 py-1.5 rounded-xl border border-white/5 w-fit">
+                          <Star className="w-4 h-4 fill-current text-amber-500 font-sans" />
+                          <span className="text-sm font-black font-sans text-slate-200">{editingNovel.rating || '0.0'}</span>
                           <span className="text-slate-500 text-xs font-normal">/ 5.0</span>
                         </div>
 
                         <div className="pt-4 border-t border-white/5">
-                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">معاينة الوصف</h4>
-                          <p className="text-xs text-slate-400 leading-relaxed line-clamp-4">
+                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 font-sans">معاينة الوصف</h4>
+                          <p className="text-xs text-slate-400 leading-relaxed line-clamp-4 font-sans">
                             {editingNovel.description || 'لا يوجد وصف متاح حالياً...'}
                           </p>
                         </div>
@@ -2521,15 +2584,15 @@ export default function App() {
                   <button 
                     type="submit"
                     disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-3 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] font-extrabold py-5 rounded-2xl transition-all shadow-xl shadow-[#f86e7e]/20 disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-3 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] font-black py-5 rounded-2xl transition-all shadow-xl shadow-[#f86e7e]/20 disabled:opacity-50 text-sm font-sans"
                   >
-                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                     حفظ الرواية
                   </button>
                   <button 
                     type="button"
                     onClick={() => setView('novels')}
-                    className="px-10 py-5 font-bold text-slate-500 hover:bg-white/5 rounded-2xl transition-all"
+                    className="px-10 py-5 font-bold text-slate-500 hover:bg-white/5 rounded-2xl transition-all font-sans text-sm"
                   >
                     إلغاء
                   </button>
@@ -2544,142 +2607,412 @@ export default function App() {
               key="edit-chapter"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="max-w-7xl mx-auto"
+              className="max-w-7xl mx-auto px-4 sm:px-6 relative"
             >
-              <div className="flex items-center gap-6 mb-10">
-                <button 
-                  onClick={() => setView('chapters')}
-                  className="w-12 h-12 flex items-center justify-center bg-[#1e1e1e] border border-white/5 rounded-2xl hover:bg-white/5 transition-all shadow-sm"
-                >
-                  <ArrowLeft className="w-6 h-6 text-slate-400" />
-                </button>
-                <h2 className="text-2xl font-extrabold text-white">{editingChapter.id ? 'تعديل الفصل' : 'إضافة فصل جديد'}</h2>
+              {/* Back & Title Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-gradient-to-l from-[#1e1e1e] to-transparent p-6 rounded-3xl border-r-4 border-[#f86e7e]">
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => setView('chapters')}
+                    className="w-12 h-12 flex items-center justify-center bg-[#1e1e1e] border border-white/5 rounded-2xl hover:bg-white/10 hover:border-[#f86e7e]/20 text-[#f86e7e] transition-all duration-300 shadow-md active:scale-95"
+                    title="العودة للفصول"
+                  >
+                    <ArrowLeft className="w-6 h-6 rotate-180" />
+                  </button>
+                  <div>
+                    <h2 className="text-2xl font-black text-white">{editingChapter.id ? 'محرر ومصمم الفصول الاحترافي' : 'كتابة وصياغة فصل جديد'}</h2>
+                    <p className="text-slate-400 text-xs mt-1 font-sans">تعديل وصياغة فصول رواية <span className="text-[#f86e7e] font-bold">{selectedNovel?.name}</span></p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button 
+                    type="button"
+                    onClick={() => setDistractionFree(true)}
+                    className="flex items-center gap-2 bg-[#f86e7e]/10 hover:bg-[#f86e7e]/20 text-[#f86e7e] px-4 py-3 rounded-xl border border-[#f86e7e]/20 text-xs font-black transition-all active:scale-95"
+                  >
+                    <Sparkles className="w-4 h-4 animate-pulse animate-spin-slow text-[#f86e7e]" />
+                    وضع التركيز (خالي من المشتتات)
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                {/* Side Column: Novel Info */}
-                <div className="lg:col-span-1 space-y-6">
-                  <div className="bg-[#1e1e1e] p-6 rounded-[2rem] border border-white/5 shadow-xl">
-                    <div className="aspect-[3/4] mb-6">
-                      <CoverSlider images={selectedNovel?.coverImages || []} />
+              {/* Distraction-Free Fullscreen Mode Overlay */}
+              {distractionFree && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="fixed inset-0 z-[110] bg-[#121212] flex flex-col p-4 sm:p-8"
+                >
+                  <div className="max-w-4xl w-full mx-auto flex-1 flex flex-col gap-6">
+                    {/* Header bar */}
+                    <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                      <div>
+                        <h3 className="text-lg font-black text-white mb-0.5">{editingChapter.title || 'فصل بدون عنوان'}</h3>
+                        <p className="text-[10px] text-slate-500 font-bold font-sans">وضع التركيز الاحترافي للكتابة المريحة</p>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 font-sans">
+                        {/* Font size adjust */}
+                        <div className="flex items-center gap-1.5 bg-[#1a1a1b] p-1 rounded-lg border border-white/5">
+                          <button 
+                            type="button" 
+                            onClick={() => setEditorFontSize(Math.max(14, editorFontSize - 1))}
+                            className="w-8 h-8 flex items-center justify-center rounded bg-white/5 hover:bg-white/10 text-slate-400 text-sm font-black transition-all"
+                            title="تصغير الخط"
+                          >
+                            -
+                          </button>
+                          <span className="text-xs font-black text-slate-300 px-1 font-mono">{editorFontSize}px</span>
+                          <button 
+                            type="button" 
+                            onClick={() => setEditorFontSize(Math.min(28, editorFontSize + 1))}
+                            className="w-8 h-8 flex items-center justify-center rounded bg-white/5 hover:bg-white/10 text-slate-400 text-sm font-black transition-all"
+                            title="تكبير الخط"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setDistractionFree(false)}
+                          className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 text-slate-300 text-xs font-bold rounded-xl transition-all"
+                        >
+                          خروج من التركيز
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Stats Widget */}
+                    <div className="flex items-center gap-4 text-xs font-sans text-slate-400">
+                      <span>الكلمات: <strong className="text-[#f86e7e]">{(editingChapter.content || '').trim().split(/\s+/).filter(Boolean).length}</strong></span>
+                      <span className="text-slate-700">|</span>
+                      <span>الحروف: <strong className="text-white font-mono">{(editingChapter.content || '').length}</strong></span>
+                      <span className="text-slate-700">|</span>
+                      <span>وقت القراءة المقدر: <strong className="text-[#f86e7e]">{Math.max(1, Math.ceil(((editingChapter.content || '').trim().split(/\s+/).filter(Boolean).length) / 200))} دقيقة</strong></span>
+                    </div>
+
+                    {/* Editor Textarea in Screen */}
+                    <div className="flex-1 flex flex-col">
+                      <textarea
+                        required
+                        value={editingChapter.content}
+                        onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
+                        style={{ fontSize: `${editorFontSize}px` }}
+                        className="w-full flex-1 p-6 sm:p-10 rounded-[2rem] border border-white/5 bg-[#161617] text-white focus:ring-2 focus:ring-[#f86e7e]/30 outline-none transition-all leading-relaxed resize-none custom-scrollbar font-sans font-normal"
+                        placeholder="ابدأ في صياغة كلمات هذا الفصل بنقاء تام..."
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* Side Column: Novel Info & Chapter Metadata Summary */}
+                <div className="lg:col-span-1 space-y-6">
+                  <div className="bg-[#1e1e1e] p-6 rounded-[2.5rem] border border-white/5 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-l from-[#f86e7e] to-[#ef4444]" />
+                    <div className="aspect-[3/4] mb-6 rounded-2xl overflow-hidden shadow-lg border border-white/10 relative">
+                      <CoverSlider images={selectedNovel?.coverImages || []} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute bottom-4 right-4 text-xs font-bold bg-black/60 backdrop-blur-md px-3 py-1 rounded-xl text-slate-300 border border-white/5">
+                        {selectedNovel?.author || 'الكاتب غير معروف'}
+                      </div>
+                    </div>
+                    
                     <div className="space-y-4">
-                      <h3 className="font-bold text-lg text-white line-clamp-1">{selectedNovel?.name}</h3>
-                      <div className="flex items-center gap-2 text-yellow-500">
-                        <Star className="w-4 h-4 fill-current" />
-                        <span className="text-sm font-bold">{selectedNovel?.rating || '0.0'}</span>
+                      <h3 className="font-extrabold text-lg text-white line-clamp-2 leading-snug">{selectedNovel?.name}</h3>
+                      <div className="flex items-center gap-2 text-yellow-500 bg-black/20 px-3.5 py-1.5 rounded-xl border border-white/5 w-fit">
+                        <Star className="w-4 h-4 fill-current text-amber-400" />
+                        <span className="text-sm font-black text-slate-200">{selectedNovel?.rating || '0.0'}</span>
                         <span className="text-slate-500 text-xs font-normal">/ 5.0</span>
                       </div>
+                      
                       <div className="pt-4 border-t border-white/5">
+                        <span className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">قصة العمل</span>
                         <p className="text-xs text-slate-400 leading-relaxed line-clamp-6">
-                          {selectedNovel?.description}
+                          {selectedNovel?.description || 'لا يوجد وصف حالياً لهذه الرواية.'}
                         </p>
+                      </div>
+
+                      <div className="pt-4 border-t border-white/5 space-y-2.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-500 font-bold">الفصل المحدد للحافة</span>
+                          <span className="text-emerald-400 font-black">{editingChapter.id ? 'تعديل حالي' : 'فصل جديد بالكامل'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-500 font-bold">رقم الترتيب</span>
+                          <span className="text-white font-black">{editingChapter.order || '-'}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Main Column: Chapter Form */}
+                {/* Main Column: Advanced Chapter Form */}
                 <div className="lg:col-span-3">
-                  <form onSubmit={saveChapter} className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-bold text-slate-400 mb-2">عنوان الفصل</label>
-                        <input 
-                          type="text"
-                          required
-                          value={editingChapter.title}
-                          onChange={e => setEditingChapter({...editingChapter, title: e.target.value})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
-                          placeholder="أدخل عنوان الفصل..."
-                        />
+                  <form 
+                    onSubmit={saveChapter} 
+                    className="bg-[#1e1e1e] p-6 sm:p-10 rounded-[2.5rem] border border-white/5 shadow-2xl space-y-8 relative"
+                  >
+                    {/* Form Group: Row of Meta Options */}
+                    <div className="bg-[#151516] p-6 rounded-3xl border border-white/5 grid grid-cols-1 md:grid-cols-4 gap-6">
+                      <div className="md:col-span-2 space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-400">عنوان وثيقة الفصل</label>
+                        <div className="relative">
+                          <input 
+                            type="text"
+                            required
+                            value={editingChapter.title}
+                            onChange={e => setEditingChapter({...editingChapter, title: e.target.value})}
+                            className="w-full px-5 py-4 rounded-xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all placeholder-slate-600 font-semibold text-sm"
+                            placeholder="مثال: الفصل الأول: البداية الجديدة..."
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-400 mb-2 flex items-center justify-between">
-                          المجلد
+
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-400 flex items-center justify-between">
+                          المجلد التابع
                           <button 
                             type="button"
                             onClick={(e) => { e.preventDefault(); addVolume(); }}
-                            className="bg-[#f86e7e]/10 text-[#f86e7e] p-1.5 rounded-lg hover:bg-[#f86e7e]/20 transition-all"
+                            className="bg-[#f86e7e]/10 text-[#f86e7e] hover:bg-[#f86e7e] hover:text-[#121212] p-1 rounded-lg transition-all duration-300"
                             title="إضافة مجلد جديد"
                           >
-                            <Plus className="w-3 h-3" />
+                            <Plus className="w-3.5 h-3.5" />
                           </button>
                         </label>
                         <select 
                           value={editingChapter.volumeId || ''}
                           onChange={e => setEditingChapter({...editingChapter, volumeId: e.target.value})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all appearance-none"
+                          className="w-full px-5 py-4 rounded-xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all appearance-none cursor-pointer font-bold text-xs"
                         >
-                          <option value="">بدون مجلد</option>
+                          <option value="">بدون مجلد فرعي</option>
                           {volumes.map(v => (
                             <option key={v.id} value={v.id}>{v.name}</option>
                           ))}
                         </select>
                       </div>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-400 mb-2">الترتيب</label>
-                        <input 
-                          type="number"
-                          required
-                          value={editingChapter.order}
-                          onChange={e => setEditingChapter({...editingChapter, order: parseInt(e.target.value)})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-400 mb-2">التاريخ</label>
-                        <input 
-                          type="text"
-                          value={editingChapter.date || ''}
-                          onChange={e => setEditingChapter({...editingChapter, date: e.target.value})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
-                          placeholder="مثال: 13/3/2026"
-                        />
-                      </div>
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-bold text-slate-400 mb-2 flex items-center justify-between">
-                        <span>محتوى الفصل</span>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            type="button"
-                            onClick={addImageToContent}
-                            className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border border-white/5"
-                          >
-                            <ImageIcon className="w-3.5 h-3.5 text-[#f86e7e]" />
-                            إضافة صورة
-                          </button>
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest hidden sm:inline">يدعم Markdown</span>
+                      <div className="grid grid-cols-2 gap-3 md:col-span-1">
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-slate-400">ترتيب رقمي</label>
+                          <input 
+                            type="number"
+                            required
+                            value={editingChapter.order}
+                            onChange={e => setEditingChapter({...editingChapter, order: parseInt(e.target.value) || 0})}
+                            className="w-full px-4 py-4 rounded-xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all text-center font-bold text-sm"
+                          />
                         </div>
-                      </label>
-                      <textarea 
-                        ref={textareaRef}
-                        required
-                        rows={22}
-                        value={editingChapter.content}
-                        onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
-                        className="w-full px-8 py-8 rounded-[2rem] border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all font-serif text-xl leading-relaxed resize-none"
-                        placeholder="ابدأ بكتابة أحداث الفصل هنا..."
-                      />
+
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-slate-400">تاريخ النشر</label>
+                          <input 
+                            type="text"
+                            required
+                            value={editingChapter.date || ''}
+                            onChange={e => setEditingChapter({...editingChapter, date: e.target.value})}
+                            className="w-full px-3 py-4 rounded-xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all text-center font-bold text-xs"
+                            placeholder="الأسبوع الحالي"
+                          />
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="flex gap-4 pt-6">
+                    {/* Integrated Rich Editor tab control & preview system */}
+                    <div className="space-y-4">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+                        {/* Tab buttons */}
+                        <div className="flex bg-[#121212] p-1 rounded-2xl border border-white/5 self-start">
+                          <button
+                            type="button"
+                            onClick={() => setEditorTab('write')}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all duration-300 flex items-center gap-2 ${
+                              editorTab === 'write' 
+                                ? 'bg-[#f86e7e] text-[#121212] shadow-lg shadow-[#f86e7e]/10' 
+                                : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            كتابة وتنسيق الكلمات
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditorTab('preview')}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all duration-300 flex items-center gap-2 ${
+                              editorTab === 'preview' 
+                                ? 'bg-[#f86e7e] text-[#121212] shadow-lg shadow-[#f86e7e]/10' 
+                                : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            معاينة الفصل الحية
+                          </button>
+                        </div>
+
+                        {/* Editor Shortcuts & counters */}
+                        {editorTab === 'write' ? (
+                          <div className="flex flex-wrap items-center gap-2 self-end">
+                            {/* Formatting helpers wrapper */}
+                            <div className="flex items-center gap-1.5 bg-black/25 p-1 rounded-xl border border-white/5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  // insert Bold **
+                                  const textarea = textareaRef.current;
+                                  if (textarea) {
+                                    const start = textarea.selectionStart;
+                                    const end = textarea.selectionEnd;
+                                    const text = editingChapter.content || '';
+                                    const sel = text.substring(start, end);
+                                    const replacement = `**${sel || 'نص عريض'}**`;
+                                    setEditingChapter({...editingChapter, content: text.substring(0, start) + replacement + text.substring(end)});
+                                    setTimeout(() => textarea.focus(), 50);
+                                  }
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+                                title="تنسيق عريض"
+                              >
+                                <b>B</b>
+                              </button>
+                              
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  // insert Italic *
+                                  const textarea = textareaRef.current;
+                                  if (textarea) {
+                                    const start = textarea.selectionStart;
+                                    const end = textarea.selectionEnd;
+                                    const text = editingChapter.content || '';
+                                    const sel = text.substring(start, end);
+                                    const replacement = `*${sel || 'نص مائل'}*`;
+                                    setEditingChapter({...editingChapter, content: text.substring(0, start) + replacement + text.substring(end)});
+                                    setTimeout(() => textarea.focus(), 50);
+                                  }
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold italic text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+                                title="تنسيق مائل"
+                              >
+                                <i>I</i>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  // insert Blockquote
+                                  const textarea = textareaRef.current;
+                                  if (textarea) {
+                                    const start = textarea.selectionStart;
+                                    const text = editingChapter.content || '';
+                                    const replacement = `\n> `;
+                                    setEditingChapter({...editingChapter, content: text.substring(0, start) + replacement + text.substring(start)});
+                                    setTimeout(() => textarea.focus(), 50);
+                                  }
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+                                title="إضافة اقتباس"
+                              >
+                                &ldquo;
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  // insert H3
+                                  const textarea = textareaRef.current;
+                                  if (textarea) {
+                                    const start = textarea.selectionStart;
+                                    const text = editingChapter.content || '';
+                                    const replacement = `\n### `;
+                                    setEditingChapter({...editingChapter, content: text.substring(0, start) + replacement + text.substring(start)});
+                                    setTimeout(() => textarea.focus(), 50);
+                                  }
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg text-[10px] font-extrabold text-slate-300 hover:text-white hover:bg-white/5 transition-all"
+                                title="إضافة عنوان"
+                              >
+                                H
+                              </button>
+                            </div>
+
+                            <button 
+                              type="button"
+                              onClick={addImageToContent}
+                              className="flex items-center gap-1.5 bg-[#f86e7e]/5 hover:bg-[#f86e7e]/15 text-[#f86e7e] px-3.5 py-2 rounded-xl text-xs font-black transition-all border border-[#f86e7e]/15 shadow-sm"
+                            >
+                              <ImageIcon className="w-3.5 h-3.5" />
+                              إدراج صورة
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] text-slate-500 font-extrabold bg-[#121212] px-3.5 py-2 rounded-xl border border-white/5">يدعم كامل تنسيقات Markdown المعيارية</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content panel switch */}
+                      {editorTab === 'write' ? (
+                        <div className="relative">
+                          <textarea 
+                            ref={textareaRef}
+                            required
+                            rows={20}
+                            value={editingChapter.content}
+                            onChange={e => setEditingChapter({...editingChapter, content: e.target.value})}
+                            className="w-full px-6 py-6 sm:px-8 sm:py-8 rounded-[2rem] border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/40 outline-none transition-all font-normal text-base leading-relaxed resize-none h-[480px] custom-scrollbar focus:border-[#f86e7e]/30"
+                            placeholder="ابدأ بصياغة كلمات أحداث ومجريات هذا الفصل الشيق للرواية هنا..."
+                          />
+                          
+                          {/* Live counters overlay at bottom */}
+                          <div className="absolute bottom-4 left-6 flex items-center gap-3 pointer-events-none select-none bg-black/75 px-3.5 py-1.5 rounded-xl border border-white/5 backdrop-blur-md">
+                            <span className="text-[10px] font-bold text-slate-300">
+                              الكلمات: <b className="text-[#f86e7e]">{(editingChapter.content || '').trim().split(/\s+/).filter(Boolean).length}</b>
+                            </span>
+                            <span className="w-px h-3.5 bg-white/10" />
+                            <span className="text-[10px] font-bold text-slate-300">
+                              الحروف: <b className="text-white">{(editingChapter.content || '').length}</b>
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-[#121212] rounded-[2rem] border border-[#f86e7e]/10 p-6 sm:p-10 h-[480px] overflow-y-auto custom-scrollbar shadow-inner text-right relative">
+                          <div className="prose prose-invert max-w-none space-y-6 leading-relaxed custom-markdown select-text">
+                            {editingChapter.content ? (
+                              <Markdown remarkPlugins={[remarkGfm]}>
+                                {editingChapter.content}
+                              </Markdown>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center text-center h-full text-slate-500 gap-3 py-10">
+                                <FileText className="w-10 h-10 text-slate-700 animate-pulse" />
+                                <p className="font-bold text-slate-600 text-sm">لا يتوفر أي محتوى لمعاينته، ابدأ بالكتابة في التبويب الآخر أولاً لتظهر النتيجة الحية هنا.</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Submit Actions */}
+                    <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-white/5">
                       <button 
                         type="submit"
                         disabled={loading}
-                        className="flex-1 flex items-center justify-center gap-3 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] font-extrabold py-5 rounded-2xl transition-all shadow-xl shadow-[#f86e7e]/20 disabled:opacity-50"
+                        className="flex-1 flex items-center justify-center gap-3 bg-[#f86e7e] hover:bg-[#e25667] active:scale-98 text-[#121212] font-extrabold py-5 rounded-2xl transition-all shadow-xl shadow-[#f86e7e]/10 disabled:opacity-50 text-sm"
                       >
-                        {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                        حفظ الفصل
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                        {editingChapter.id ? 'حفظ وتحديث بيانات الفصل' : 'نشر وتثبيت الفصل الجديد'}
                       </button>
                       <button 
                         type="button"
                         onClick={() => setView('chapters')}
-                        className="px-10 py-5 font-bold text-slate-500 hover:bg-white/5 rounded-2xl transition-all"
+                        className="px-10 py-5 font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-2xl transition-all duration-300 text-sm"
                       >
-                        إلغاء
+                        إلغاء العملية والعودة
                       </button>
                     </div>
                   </form>
