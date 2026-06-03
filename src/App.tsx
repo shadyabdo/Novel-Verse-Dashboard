@@ -1978,7 +1978,7 @@ export default function App() {
 
               {/* كارت الرواية العريض */}
               <div className="card mb-10 bg-[#1c1c1e] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
-                <div className="flex flex-col md:flex-row-reverse">
+                <div className="flex flex-col md:flex-row">
                   {/* اليمين: صورة الرواية الأولى */}
                   <div className="md:w-1/3 aspect-[3/4] md:aspect-auto md:h-[420px] relative overflow-hidden">
                     <img 
@@ -2049,6 +2049,39 @@ export default function App() {
                   </div>
                 </div>
               </div>
+
+              {/* قسم صور وأغلفة الرواية */}
+              {selectedNovel.coverImages && selectedNovel.coverImages.filter(img => img && img.trim() !== '').length > 0 && (
+                <div className="mb-10 animate-fade-in text-right">
+                  <div className="flex items-center gap-2.5 mb-6 border-b border-white/5 pb-2">
+                    <span className="w-3 h-3 rounded-full bg-[#f86e7e]"></span>
+                    <h3 className="text-xl font-black text-white">صور وأغلفة الرواية</h3>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {selectedNovel.coverImages.filter(img => img && img.trim() !== '').map((img, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => {
+                          setLightboxImages(selectedNovel.coverImages || []);
+                          setLightboxIndex(idx);
+                        }}
+                        className="group/thumb relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 hover:border-[#f86e7e]/40 hover:shadow-lg transition-all duration-300 hover:scale-[1.03] bg-[#1c1c1e]"
+                        title="عرض الغلاف وتكبيره"
+                      >
+                        <img 
+                          src={img} 
+                          alt={`Novel Cover ${idx + 1}`} 
+                          className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-500"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-all duration-300 backdrop-blur-[2px]">
+                          <Maximize2 className="w-6 h-6 text-white" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* قسم المجلدات */}
               <div className="space-y-6">
