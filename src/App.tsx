@@ -45,6 +45,7 @@ import {
   Compass,
   SlidersHorizontal,
   Folder,
+  FolderPlus,
   FolderOpen,
   LayoutDashboard,
   Settings,
@@ -636,7 +637,7 @@ export default function App() {
   const latestChapters = useMemo(() => {
     return [...chapters]
       .sort((a, b) => (b.order || 0) - (a.order || 0))
-      .slice(0, 3);
+      .slice(0, 5);
   }, [chapters]);
 
   const isAdmin = user?.email === "shadyabdowd2020@gmail.com";
@@ -1921,419 +1922,398 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1">
-                  <div className="bg-gradient-to-br from-[#242426] to-[#161618] rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl sticky top-28 hover:shadow-[#f86e7e]/5 transition-all duration-500">
-                    {/* Glamorous cover area with backdrop blur */}
-                    <div className="relative aspect-[3/4] group overflow-hidden">
-                      <CoverSlider images={selectedNovel.coverImages || []} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent pointer-events-none" />
-                      
-                      {/* Premium Floating Badges inside Cover for Selected Novel page */}
-                      <div className="absolute bottom-4 right-4 left-4 flex justify-between items-center z-10 pointer-events-none">
-                        <span className="bg-black/75 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-xs font-bold text-slate-300">
-                          {selectedNovel.author || 'الكاتب غير معروف'}
-                        </span>
-                        <div className="flex items-center gap-1.5 bg-black/75 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/10 text-yellow-500 text-xs font-black">
-                          <Star className="w-3.5 h-3.5 fill-current" />
-                          <span>{selectedNovel.rating || '0.0'}</span>
+              {/* قسم أحدث فصول مضافة لهذه الرواية في الأعلى */}
+              {latestChapters.length > 0 && (
+                <div className="space-y-4 mb-10 pb-8 border-b border-white/5">
+                  <h3 className="text-xl font-black text-white flex items-center gap-2.5">
+                    <span className="w-3 h-3 rounded-full bg-[#f86e7e] animate-pulse"></span>
+                    أحدث فصول مضافة للرواية
+                  </h3>
+                  <div className="card-group grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {latestChapters.map((chapter, idx) => (
+                      <div 
+                        key={chapter.id || idx} 
+                        className="card bg-[#1c1c1e] border border-white/5 rounded-2xl overflow-hidden hover:border-[#f86e7e]/30 hover:scale-[1.02] transition-all duration-300 flex flex-col h-full relative cursor-pointer group shadow-md" 
+                        onClick={() => setPreviewChapter(chapter)}
+                      >
+                        <div className="relative h-32 overflow-hidden">
+                          <img 
+                            src={selectedNovel.coverImages?.[0] || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e'} 
+                            className="card-img-top w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                            alt={selectedNovel.name}
+                            referrerPolicy="no-referrer"
+                          />
+                          
+                          {/* Badge showing Chapter number */}
+                          <div className="absolute top-2.5 right-2.5 z-10">
+                            <button type="button" className="btn btn-primary position-relative bg-[#f86e7e] text-[#121212] border-none font-black px-2.5 py-1 rounded-lg text-[10px] flex items-center justify-center select-none shadow-md">
+                              {chapter.order}
+                              <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-[#ef4444] text-white rounded-full text-[8px] w-5 h-5 flex items-center justify-center font-black border-2 border-[#1c1c1e] absolute -top-2 -left-2">
+                                {chapter.order}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+                        <div className="card-body p-4 flex-1 flex flex-col justify-between">
+                          <div>
+                            <h5 className="card-title font-bold text-white text-xs mb-1.5 line-clamp-1 group-hover:text-[#f86e7e] transition-colors">
+                              {chapter.title}
+                            </h5>
+                            <p className="card-text text-slate-400 text-[10px] line-clamp-1 leading-relaxed mb-2">
+                              {chapter.content ? chapter.content.replace(/[#*`]/g, '').substring(0, 50) : 'عرض الفصل بالكامل...'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="card-footer bg-black/15 p-3 border-t border-white/5 flex items-center justify-between">
+                          <small className="text-[9px] text-slate-500 font-bold flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-[#f86e7e]" />
+                            {chapter.date}
+                          </small>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="p-8">
-                      <h3 className="font-black text-2xl mb-4 text-white tracking-wide border-b border-white/5 pb-4 leading-tight">
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* كارت الرواية العريض */}
+              <div className="card mb-10 bg-[#1c1c1e] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
+                <div className="flex flex-col md:flex-row-reverse">
+                  {/* اليمين: صورة الرواية الأولى */}
+                  <div className="md:w-1/3 aspect-[3/4] md:aspect-auto md:h-[420px] relative overflow-hidden">
+                    <img 
+                      src={selectedNovel.coverImages?.[0] || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e'} 
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" 
+                      alt={selectedNovel.name}
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/30 to-[#1c1c1e]" />
+                  </div>
+                  
+                  {/* اليسار: تفاصيل الرواية */}
+                  <div className="md:w-2/3 p-8 md:p-10 flex flex-col justify-between">
+                    <div className="space-y-4">
+                      {/* اسم الرواية */}
+                      <h4 className="text-3xl font-black text-white leading-tight">
                         {selectedNovel.name}
-                      </h3>
-                      
-                      {/* Render Admin Edit/Delete Novel Actions */}
-                      {isAdmin && (
-                        <div className="grid grid-cols-2 gap-3 mb-6" id="novel-admin-actions">
-                          <button 
-                            type="button"
-                            onClick={handleEditSelectedNovel}
-                            className="bg-[#f86e7e]/5 hover:bg-[#f86e7e] text-[#f86e7e] hover:text-[#121212] border border-[#f86e7e]/30 hover:border-transparent py-3.5 rounded-2xl font-black text-xs transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-md shadow-[#f86e7e]/5"
-                            title="تعديل تفاصيل الرواية"
-                          >
-                            <Edit className="w-4 h-4" />
-                            تعديل الرواية
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={handleDeleteSelectedNovel}
-                            className="bg-red-500/5 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-transparent py-3.5 rounded-2xl font-black text-xs transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-md shadow-red-500/5"
-                            title="حذف الرواية نهائياً"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            حذف الرواية
-                          </button>
+                      </h4>
+
+                      {/* تصنيفات الرواية */}
+                      {selectedNovel.categories && selectedNovel.categories.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {selectedNovel.categories.map((cat, idx) => (
+                            <span 
+                              key={idx}
+                              className="text-xs font-black bg-[#f86e7e]/10 text-[#f86e7e] px-4 py-2 rounded-xl border border-[#f86e7e]/10"
+                            >
+                              {cat}
+                            </span>
+                          ))}
                         </div>
                       )}
 
-                      <div className="space-y-4 mb-6 bg-black/20 p-4.5 rounded-2xl border border-white/5">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-400 font-medium">إجمالي الفصول المضافة</span>
-                          <span className="font-black text-[#f86e7e] bg-[#f86e7e]/10 px-3.5 py-1.5 rounded-xl border border-[#f86e7e]/10">{chapters.length}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-400 font-medium">حالة النشر الحالية</span>
-                          <span className={`font-black px-3.5 py-1.5 rounded-xl border ${
-                            selectedNovel.status === 'مستمرة' 
-                              ? 'text-amber-400 bg-amber-500/10 border-amber-500/10' 
-                              : selectedNovel.status === 'مكتملة' 
-                              ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/10' 
-                              : 'text-slate-300 bg-white/5 border-white/5'
-                          }`}>
-                            {selectedNovel.status || 'مستمرة'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="pt-6 border-t border-white/5 mb-6">
-                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3">قصة الرواية</h4>
-                        <p className="text-xs text-slate-400 leading-relaxed font-semibold max-h-48 overflow-y-auto custom-scrollbar">
+                      {/* قصة الرواية */}
+                      <div className="pt-4 border-t border-white/5">
+                        <span className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">قصة الرواية</span>
+                        <p className="text-sm text-slate-300 leading-relaxed max-h-40 overflow-y-auto custom-scrollbar">
                           {selectedNovel.description || 'لا يوجد وصف متاح لهذا العمل.'}
                         </p>
                       </div>
-
-                      {/* قسم صور الرواية - معرض الأغلفة التفاعلي */}
-                      {selectedNovel.coverImages && selectedNovel.coverImages.filter(img => img && img.trim() !== '').length > 0 && (
-                        <div className="pt-6 border-t border-white/5 mb-8">
-                          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center justify-between">
-                            <span>صور وأغلفة الرواية ({selectedNovel.coverImages.filter(img => img && img.trim() !== '').length})</span>
-                            <span className="text-[9px] text-[#f86e7e] font-black bg-[#f86e7e]/10 px-2.5 py-1 rounded-lg border border-[#f86e7e]/25">معرض تفاعلي</span>
-                          </h4>
-                          <div className="grid grid-cols-4 gap-2">
-                            {selectedNovel.coverImages.filter(img => img && img.trim() !== '').map((img, idx) => (
-                              <button 
-                                key={idx}
-                                onClick={() => {
-                                  setLightboxImages(selectedNovel.coverImages || []);
-                                  setLightboxIndex(idx);
-                                }}
-                                className="group/thumb relative aspect-[3/4] rounded-xl overflow-hidden border border-white/5 hover:border-[#f86e7e]/40 hover:shadow-lg transition-all duration-300 hover:scale-[1.03]"
-                                title="عرض الغلاف وتكبيره"
-                              >
-                                <img 
-                                  src={img} 
-                                  alt={`Novel Thumb ${idx + 1}`} 
-                                  className="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-500"
-                                  referrerPolicy="no-referrer"
-                                />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/thumb:opacity-100 flex items-center justify-center transition-all duration-300">
-                                  <Maximize2 className="w-4 h-4 text-white" />
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <button 
-                        onClick={() => {
-                          setEditingChapter({ novelId: selectedNovel.id, title: '', content: '', order: chapters.length + 1, date: new Date().toLocaleDateString('ar-EG') });
-                          setView('edit-chapter');
-                        }}
-                        className="w-full flex items-center justify-center gap-2 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] py-4 rounded-2xl font-bold transition-all shadow-lg shadow-[#f86e7e]/10"
-                      >
-                        <Plus className="w-5 h-5" />
-                        إضافة فصل جديد
-                      </button>
-
-                      {isAdmin && (
-                        <div className="mt-8 pt-8 border-t border-white/5">
-                          <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">المجلدات</h4>
-                            <button 
-                              onClick={addVolume}
-                              className="w-8 h-8 flex items-center justify-center bg-[#f86e7e]/10 text-[#f86e7e] rounded-lg hover:bg-[#f86e7e]/20 transition-all"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <div className="space-y-2">
-                            {volumes.length === 0 ? (
-                              <p className="text-[10px] text-slate-500 italic">لا توجد مجلدات بعد.</p>
-                            ) : (
-                              volumes.map(vol => (
-                                <div key={vol.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group">
-                                  <span className="text-sm font-bold text-slate-300">{vol.name}</span>
-                                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
-                                    <button 
-                                      type="button"
-                                      onClick={() => editVolume(vol.id, vol.name)}
-                                      className="p-1 text-slate-500 hover:text-[#f86e7e] transition-colors"
-                                      title="تعديل اسم المجلد"
-                                    >
-                                      <Edit className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button 
-                                      type="button"
-                                      onClick={() => deleteVolume(vol.id, vol.name)}
-                                      className="p-1 text-slate-500 hover:text-red-500 transition-colors"
-                                      title="حذف المجلد"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                </div>
 
-                <div className="lg:col-span-2 space-y-8">
-                  {/* قسم أحدث الفصول المضافة */}
-                  {latestChapters.length > 0 && (
-                    <div className="space-y-4 mb-10 pb-6 border-b border-white/5">
-                      <h3 className="text-lg font-black text-white flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#f86e7e]"></span>
-                        أحدث الفصول المضافة
-                      </h3>
-                      <div className="card-group grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {latestChapters.map((chapter, idx) => (
-                          <div key={chapter.id || idx} className="card bg-[#1c1c1e] border border-white/5 rounded-3xl overflow-hidden hover:border-[#f86e7e]/30 hover:scale-[1.01] transition-all duration-300 flex flex-col h-full relative cursor-pointer" onClick={() => setPreviewChapter(chapter)}>
-                            <div className="relative h-44 overflow-hidden">
-                              <img 
-                                src={selectedNovel.coverImages?.[0] || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e'} 
-                                className="card-img-top w-full h-full object-cover transition-transform duration-500 hover:scale-105" 
-                                alt={selectedNovel.name}
-                                referrerPolicy="no-referrer"
-                              />
-                              
-                              {/* Badge showing Chapter number with the requested position-absolute style */}
-                              <div className="absolute top-4 right-4">
-                                <button type="button" className="btn btn-primary position-relative bg-[#f86e7e] text-[#121212] border-none font-black px-4 py-2 rounded-xl text-xs flex items-center justify-center select-none shadow-lg">
-                                  {chapter.order}
-                                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-[#ef4444] text-white rounded-full text-[10px] w-6 h-6 flex items-center justify-center font-black border-2 border-[#1c1c1e] absolute -top-2.5 -left-2.5">
-                                    {chapter.order}
-                                  </span>
-                                </button>
-                              </div>
-                            </div>
-                            <div className="card-body p-5 flex-1 flex flex-col justify-between">
-                              <div>
-                                <h5 className="card-title font-bold text-white mb-2 line-clamp-1 group-hover:text-[#f86e7e] transition-colors">
-                                  {chapter.title}
-                                </h5>
-                                <p className="card-text text-slate-400 text-xs line-clamp-2 leading-relaxed mb-4">
-                                  {chapter.content ? chapter.content.replace(/[#*`]/g, '').substring(0, 100) : 'تصفح محتوى ودراسة الفصل بالكامل...'}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="card-footer bg-black/25 p-4 border-t border-white/5 flex items-center justify-between">
-                              <small className="text-body-secondary text-[11px] text-slate-500 font-bold flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-[#f86e7e]" />
-                                مضاف في {chapter.date}
-                              </small>
-                            </div>
-                          </div>
-                        ))}
+                    {/* التقييم الخاص بالرواية والمؤلف وعدد الفصول */}
+                    <div className="grid grid-cols-3 gap-4 bg-black/20 p-5 rounded-2xl border border-white/5 mt-6">
+                      <div className="text-center">
+                        <span className="block text-[11px] text-slate-500 font-bold mb-1">المؤلف</span>
+                        <span className="font-extrabold text-white text-xs md:text-sm truncate block" title={selectedNovel.author}>
+                          {selectedNovel.author || 'كاتب غير معروف'}
+                        </span>
+                      </div>
+                      
+                      <div className="text-center border-x border-white/5">
+                        <span className="block text-[11px] text-slate-500 font-bold mb-1">التقييم</span>
+                        <span className="font-extrabold text-yellow-500 text-xs md:text-sm flex items-center justify-center gap-1">
+                          <Star className="w-4 h-4 fill-current animate-pulse" />
+                          {selectedNovel.rating || '0.0'}
+                        </span>
+                      </div>
+
+                      <div className="text-center">
+                        <span className="block text-[11px] text-slate-500 font-bold mb-1">عدد الفصول</span>
+                        <span className="font-extrabold text-[#f86e7e] text-xs md:text-sm bg-[#f86e7e]/5 px-2.5 py-0.5 rounded-lg border border-[#f86e7e]/10 inline-block">
+                          {chapters.length} فصول
+                        </span>
                       </div>
                     </div>
-                  )}
 
-                  {chapters.length === 0 ? (
-                    <div className="bg-[#1e1e1e] rounded-[2.5rem] border-2 border-dashed border-white/5 p-20 text-center">
-                      <FileText className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                      <p className="text-slate-500 font-bold">لا توجد فصول لهذه الرواية بعد.</p>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Nav & Tabs for Volumes */}
-                      {volumes.length > 0 && (
-                        <div className="flex flex-wrap gap-3 mb-8 border-b border-white/5 pb-4 overflow-x-auto custom-scrollbar" id="volumes-tabs">
-                          {volumes.map(vol => {
-                            const isActive = selectedVolumeId === vol.id;
-                            const volChapters = groupedChapters[vol.id] || [];
-                            return (
-                              <button
-                                type="button"
-                                key={vol.id}
-                                onClick={() => setSelectedVolumeId(vol.id)}
-                                className={`px-6 py-3.5 rounded-2xl text-xs font-black transition-all duration-300 flex items-center gap-2.5 whitespace-nowrap active:scale-95 border ${
-                                  isActive 
-                                    ? 'bg-[#f86e7e] text-[#121212] border-transparent shadow-lg shadow-[#f86e7e]/10' 
-                                    : 'bg-[#1c1c1e] text-slate-400 border-white/5 hover:text-white hover:bg-white/5'
-                                }`}
-                              >
-                                <Folder className={`w-4 h-4 ${isActive ? 'fill-current' : ''}`} />
-                                <span>{vol.name}</span>
-                                <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${
-                                  isActive ? 'bg-black/15 text-[#121212]' : 'bg-white/5 text-slate-500'
-                                }`}>
-                                  {volChapters.length}
-                                </span>
-                              </button>
-                            );
-                          })}
-                          
-                          {/* If there are virtual volumes, render them too as tabs */}
-                          {virtualVolumes.map(virtualVolId => {
-                            const isActive = selectedVolumeId === virtualVolId;
-                            const volChapters = groupedChapters[virtualVolId] || [];
-                            return (
-                              <button
-                                type="button"
-                                key={virtualVolId}
-                                onClick={() => setSelectedVolumeId(virtualVolId)}
-                                className={`px-6 py-3.5 rounded-2xl text-xs font-black transition-all duration-300 flex items-center gap-2.5 whitespace-nowrap active:scale-95 border ${
-                                  isActive 
-                                    ? 'bg-[#f86e7e] text-[#121212] border-transparent shadow-lg shadow-[#f86e7e]/10' 
-                                    : 'bg-[#1c1c1e] text-slate-400 border-white/5 hover:text-white hover:bg-white/5'
-                                }`}
-                              >
-                                <Folder className={`w-4 h-4 ${isActive ? 'fill-current' : ''}`} />
-                                <span>{virtualVolId}</span>
-                                <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${
-                                  isActive ? 'bg-black/15 text-[#121212]' : 'bg-white/5 text-slate-500'
-                                }`}>
-                                  {volChapters.length}
-                                </span>
-                              </button>
-                            );
-                          })}
+                  </div>
+                </div>
+              </div>
 
-                          {/* If there are un-volumed chapters, render an additional tab for them */}
-                          {groupedChapters['none'] && groupedChapters['none'].length > 0 && (
+              {/* قسم المجلدات */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                  <h3 className="text-xl font-black text-white flex items-center gap-2.5">
+                    <span className="w-3 h-3 rounded-full bg-[#f86e7e]"></span>
+                    مجلدات الرواية وفصولها
+                  </h3>
+                </div>
+
+                {chapters.length === 0 ? (
+                  <div className="bg-[#1c1c1e] rounded-[2.5rem] border border-white/5 p-20 text-center">
+                    <FileText className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+                    <p className="text-slate-500 font-bold">لا توجد فصول لهذه الرواية بعد.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Nav & Tabs for Volumes */}
+                    {volumes.length > 0 && (
+                      <div className="flex flex-wrap gap-3 mb-8 border-b border-white/5 pb-4 overflow-x-auto custom-scrollbar" id="volumes-tabs">
+                        {volumes.map(vol => {
+                          const isActive = selectedVolumeId === vol.id;
+                          const volChapters = groupedChapters[vol.id] || [];
+                          return (
                             <button
                               type="button"
-                              onClick={() => setSelectedVolumeId('none')}
+                              key={vol.id}
+                              onClick={() => setSelectedVolumeId(vol.id)}
                               className={`px-6 py-3.5 rounded-2xl text-xs font-black transition-all duration-300 flex items-center gap-2.5 whitespace-nowrap active:scale-95 border ${
-                                selectedVolumeId === 'none' 
+                                isActive 
                                   ? 'bg-[#f86e7e] text-[#121212] border-transparent shadow-lg shadow-[#f86e7e]/10' 
                                   : 'bg-[#1c1c1e] text-slate-400 border-white/5 hover:text-white hover:bg-white/5'
                               }`}
                             >
-                              <FileText className="w-4 h-4" />
-                              <span>فصول غير مجلدة</span>
+                              <Folder className={`w-4 h-4 ${isActive ? 'fill-current' : ''}`} />
+                              <span>{vol.name}</span>
                               <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${
-                                selectedVolumeId === 'none' ? 'bg-black/15 text-[#121212]' : 'bg-white/5 text-slate-500'
+                                isActive ? 'bg-black/15 text-[#121212]' : 'bg-white/5 text-slate-500'
                               }`}>
-                                {groupedChapters['none'].length}
+                                {volChapters.length}
                               </span>
                             </button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Fallback layout for totally unvolumed novels with zero volumes defined */}
-                      {volumes.length === 0 && (
-                        <div className="space-y-6">
-                          <div className="grid grid-cols-1 gap-4 pr-12 relative">
-                            <div className="absolute top-0 right-6 bottom-0 w-0.5 bg-white/5" />
-                            {chapters.map((chapter, index) => (
-                              <ChapterItem 
-                                key={chapter.id} 
-                                chapter={chapter} 
-                                index={index} 
-                                onPreview={setPreviewChapter}
-                                onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
-                                onDelete={deleteChapter}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Render current selected volume chapters */}
-                      {volumes.length > 0 && selectedVolumeId && selectedVolumeId !== 'none' && (
-                        (() => {
-                          const vol = volumes.find(v => v.id === selectedVolumeId);
-                          const isVirtual = !vol && virtualVolumes.includes(selectedVolumeId);
-                          const volName = vol ? vol.name : selectedVolumeId;
-                          const volChapters = groupedChapters[selectedVolumeId] || [];
-                          
+                          );
+                        })}
+                        
+                        {/* If there are virtual volumes, render them too as tabs */}
+                        {virtualVolumes.map(virtualVolId => {
+                          const isActive = selectedVolumeId === virtualVolId;
+                          const volChapters = groupedChapters[virtualVolId] || [];
                           return (
-                            <div className="space-y-6">
-                              <div className="flex items-center gap-4 group">
-                                <div className="flex items-center gap-3 bg-[#f86e7e] text-[#121212] px-5 py-2.5 rounded-2xl shadow-lg shadow-[#f86e7e]/20 transition-all hover:scale-[1.02]">
-                                  <Folder className="w-5 h-5 fill-current" />
-                                  <h3 className="text-lg font-black tracking-wide">
-                                    {volName}
-                                  </h3>
-                                  <span className="text-[10px] bg-[#121212]/20 text-[#121212] px-2 py-0.5 rounded-md font-bold">
-                                    {volChapters.length} فصول
-                                  </span>
-                                </div>
-                                <div className="h-px bg-white/5 flex-1" />
-                                {isAdmin && vol && (
-                                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                    <button 
-                                      onClick={() => editVolume(vol.id, vol.name)}
-                                      className="p-2 text-slate-500 hover:text-[#f86e7e] hover:bg-[#f86e7e]/10 rounded-xl transition-all"
-                                      title="تعديل اسم المجلد"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button 
-                                      onClick={() => deleteVolume(vol.id, vol.name)}
-                                      className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
-                                      title="حذف المجلد"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                )}
+                            <button
+                              type="button"
+                              key={virtualVolId}
+                              onClick={() => setSelectedVolumeId(virtualVolId)}
+                              className={`px-6 py-3.5 rounded-2xl text-xs font-black transition-all duration-300 flex items-center gap-2.5 whitespace-nowrap active:scale-95 border ${
+                                isActive 
+                                  ? 'bg-[#f86e7e] text-[#121212] border-transparent shadow-lg shadow-[#f86e7e]/10' 
+                                  : 'bg-[#1c1c1e] text-slate-400 border-white/5 hover:text-white hover:bg-white/5'
+                              }`}
+                            >
+                              <Folder className={`w-4 h-4 ${isActive ? 'fill-current' : ''}`} />
+                              <span>{virtualVolId}</span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${
+                                isActive ? 'bg-black/15 text-[#121212]' : 'bg-white/5 text-slate-500'
+                              }`}>
+                                {volChapters.length}
+                              </span>
+                            </button>
+                          );
+                        })}
+
+                        {/* If there are un-volumed chapters, render an additional tab for them */}
+                        {groupedChapters['none'] && groupedChapters['none'].length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedVolumeId('none')}
+                            className={`px-6 py-3.5 rounded-2xl text-xs font-black transition-all duration-300 flex items-center gap-2.5 whitespace-nowrap active:scale-95 border ${
+                              selectedVolumeId === 'none' 
+                                ? 'bg-[#f86e7e] text-[#121212] border-transparent shadow-lg shadow-[#f86e7e]/10' 
+                                : 'bg-[#1c1c1e] text-slate-400 border-white/5 hover:text-white hover:bg-white/5'
+                            }`}
+                          >
+                            <FileText className="w-4 h-4" />
+                            <span>فصول غير مجلدة</span>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${
+                              selectedVolumeId === 'none' ? 'bg-black/15 text-[#121212]' : 'bg-white/5 text-slate-500'
+                            }`}>
+                              {groupedChapters['none'].length}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Fallback layout for totally unvolumed novels with zero volumes defined */}
+                    {volumes.length === 0 && (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 gap-4 pr-12 relative">
+                          <div className="absolute top-0 right-6 bottom-0 w-0.5 bg-white/5" />
+                          {chapters.map((chapter, index) => (
+                            <ChapterItem 
+                              key={chapter.id} 
+                              chapter={chapter} 
+                              index={index} 
+                              onPreview={setPreviewChapter}
+                              onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
+                              onDelete={deleteChapter}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Render current selected volume chapters */}
+                    {volumes.length > 0 && selectedVolumeId && selectedVolumeId !== 'none' && (
+                      (() => {
+                        const vol = volumes.find(v => v.id === selectedVolumeId);
+                        const isVirtual = !vol && virtualVolumes.includes(selectedVolumeId);
+                        const volName = vol ? vol.name : selectedVolumeId;
+                        const volChapters = groupedChapters[selectedVolumeId] || [];
+                        
+                        return (
+                          <div className="space-y-6 animate-fade-in text-right">
+                            <div className="flex items-center gap-4 group">
+                              <div className="flex items-center gap-3 bg-[#f86e7e] text-[#121212] px-5 py-2.5 rounded-2xl shadow-lg shadow-[#f86e7e]/20 transition-all hover:scale-[1.02]">
+                                <Folder className="w-5 h-5 fill-current" />
+                                <h3 className="text-lg font-black tracking-wide">
+                                  {volName}
+                                </h3>
+                                <span className="text-[10px] bg-[#121212]/20 text-[#121212] px-2 py-0.5 rounded-md font-bold">
+                                  {volChapters.length} فصول
+                                </span>
                               </div>
-                              
-                              {volChapters.length === 0 ? (
-                                <div className="py-6 px-10 border border-[#383636] border-dashed rounded-[2rem] bg-[#1a1a1a]/40 text-center flex flex-col items-center justify-center gap-2 text-slate-500 hover:border-white/5 transition-all">
-                                  <FolderOpen className="w-6 h-6 text-slate-600 opacity-60" />
-                                  <p className="text-xs font-bold text-slate-500">لا توجد فصول في هذا المجلد حالياً.</p>
-                                </div>
-                              ) : (
-                                <div className="grid grid-cols-1 gap-4 pr-12 relative">
-                                  <div className="absolute top-0 right-6 bottom-0 w-0.5 bg-white/5" />
-                                  {volChapters.map((chapter, index) => (
-                                    <ChapterItem 
-                                      key={chapter.id} 
-                                      chapter={chapter} 
-                                      index={index} 
-                                      onPreview={setPreviewChapter}
-                                      onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
-                                      onDelete={deleteChapter}
-                                    />
-                                  ))}
+                              <div className="h-px bg-white/5 flex-1" />
+                              {isAdmin && vol && (
+                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                  <button 
+                                    onClick={() => editVolume(vol.id, vol.name)}
+                                    className="p-2 text-slate-500 hover:text-[#f86e7e] hover:bg-[#f86e7e]/10 rounded-xl transition-all"
+                                    title="تعديل اسم المجلد"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => deleteVolume(vol.id, vol.name)}
+                                    className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                                    title="حذف المجلد"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
                                 </div>
                               )}
                             </div>
-                          );
-                        })()
-                      )}
+                            
+                            {volChapters.length === 0 ? (
+                              <div className="py-6 px-10 border border-[#383636] border-dashed rounded-[2rem] bg-[#1a1a1a]/40 text-center flex flex-col items-center justify-center gap-2 text-slate-500 hover:border-white/5 transition-all">
+                                <FolderOpen className="w-6 h-6 text-slate-600 opacity-60" />
+                                <p className="text-xs font-bold text-slate-500">لا توجد فصول في هذا المجلد حالياً.</p>
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-1 gap-4 pr-12 relative animate-fade-in">
+                                <div className="absolute top-0 right-6 bottom-0 w-0.5 bg-white/5" />
+                                {volChapters.map((chapter, index) => (
+                                  <ChapterItem 
+                                    key={chapter.id} 
+                                    chapter={chapter} 
+                                    index={index} 
+                                    onPreview={setPreviewChapter}
+                                    onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
+                                    onDelete={deleteChapter}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()
+                    )}
 
-                      {/* Render un-volumed chapters if active */}
-                      {volumes.length > 0 && selectedVolumeId === 'none' && groupedChapters['none'] && groupedChapters['none'].length > 0 && (
-                        <div className="space-y-6">
-                          <div className="flex items-center gap-4">
-                            <h3 className="text-lg font-bold text-slate-500 bg-white/5 px-4 py-1.5 rounded-xl border border-white/5">
-                              فصول غير مجلدة
-                            </h3>
-                            <div className="h-px bg-white/5 flex-1" />
-                          </div>
-                          <div className="grid grid-cols-1 gap-4 pr-12 relative">
-                            <div className="absolute top-0 right-6 bottom-0 w-0.5 bg-white/5" />
-                            {groupedChapters['none'].map((chapter, index) => (
-                              <ChapterItem 
-                                key={chapter.id} 
-                                chapter={chapter} 
-                                index={index} 
-                                onPreview={setPreviewChapter}
-                                onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
-                                onDelete={deleteChapter}
-                              />
-                            ))}
-                          </div>
+                    {/* Render un-volumed chapters if active */}
+                    {volumes.length > 0 && selectedVolumeId === 'none' && groupedChapters['none'] && groupedChapters['none'].length > 0 && (
+                      <div className="space-y-6 animate-fade-in text-right">
+                        <div className="flex items-center gap-4">
+                          <h3 className="text-lg font-bold text-slate-500 bg-white/5 px-4 py-1.5 rounded-xl border border-white/5">
+                            فصول غير مجلدة
+                          </h3>
+                          <div className="h-px bg-white/5 flex-1" />
                         </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                        <div className="grid grid-cols-1 gap-4 pr-12 relative animate-fade-in">
+                          <div className="absolute top-0 right-6 bottom-0 w-0.5 bg-white/5" />
+                          {groupedChapters['none'].map((chapter, index) => (
+                            <ChapterItem 
+                              key={chapter.id} 
+                              chapter={chapter} 
+                              index={index} 
+                              onPreview={setPreviewChapter}
+                              onEdit={(c) => { setEditingChapter(c); setView('edit-chapter'); }}
+                              onDelete={deleteChapter}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
+
+              {/* أزرار الإدارة والتحكم بالرواية في النهاية */}
+              {isAdmin && (
+                <div className="mt-16 pt-10 border-t border-[#383636] space-y-6">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#f86e7e] animate-pulse"></span>
+                    <h4 className="text-base font-black text-white">إجراءات المدير والتحكم</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* تعديل الرواية */}
+                    <button 
+                      type="button"
+                      onClick={handleEditSelectedNovel}
+                      className="bg-[#f86e7e]/5 hover:bg-[#f86e7e] text-[#f86e7e] hover:text-[#121212] border border-[#f86e7e]/30 hover:border-transparent py-4 rounded-2xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2.5 active:scale-95 shadow-lg shadow-[#f86e7e]/5"
+                      title="تعديل تفاصيل الرواية"
+                    >
+                      <Edit className="w-5 h-5" />
+                      تعديل الرواية
+                    </button>
+
+                    {/* حذف الرواية */}
+                    <button 
+                      type="button"
+                      onClick={handleDeleteSelectedNovel}
+                      className="bg-red-500/5 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 hover:border-transparent py-4 rounded-2xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2.5 active:scale-95 shadow-lg shadow-red-500/5"
+                      title="حذف الرواية نهائياً"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                      حذف الرواية
+                    </button>
+
+                    {/* إضافة فصل جديد */}
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setEditingChapter({ novelId: selectedNovel.id, title: '', content: '', order: chapters.length + 1, date: new Date().toLocaleDateString('ar-EG') });
+                        setView('edit-chapter');
+                      }}
+                      className="bg-emerald-500/5 hover:bg-emerald-500 text-emerald-400 hover:text-[#121212] border border-emerald-500/20 hover:border-transparent py-4 rounded-2xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2.5 active:scale-95 shadow-lg shadow-emerald-500/5"
+                      title="إضافة فصل جديد"
+                    >
+                      <Plus className="w-5 h-5" />
+                      إضافة فصل جديد
+                    </button>
+
+                    {/* إضافة مجلد جديد */}
+                    <button 
+                      type="button"
+                      onClick={addVolume}
+                      className="bg-sky-500/5 hover:bg-sky-500 text-sky-400 hover:text-[#121212] border border-sky-500/20 hover:border-transparent py-4 rounded-2xl font-black text-sm transition-all duration-300 flex items-center justify-center gap-2.5 active:scale-95 shadow-lg shadow-sky-500/5"
+                      title="إضافة مجلد جديد"
+                    >
+                      <FolderPlus className="w-5 h-5" />
+                      إضافة مجلد جديد
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
