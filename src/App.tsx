@@ -1928,29 +1928,6 @@ export default function App() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              {/* Floating Up & Down Scroll Buttons (مربوطة ببعض) */}
-              <div 
-                className="fixed bottom-24 left-6 md:left-8 z-50 flex flex-col items-center bg-[#1c1c1e]/90 text-white rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md p-1.5 gap-1.5 transition-all duration-300 hover:border-[#f86e7e]/30 select-none animate-fade-in"
-                style={{ direction: 'rtl' }}
-              >
-                <button
-                  type="button"
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-[#f86e7e] hover:text-[#121212] transition-all duration-300 group"
-                  title="الانتقال لأعلى الصفحة"
-                >
-                  <ChevronUp className="w-5 h-5 text-slate-300 group-hover:text-[#121212] transition-colors" />
-                </button>
-                <div className="w-6 h-px bg-white/15" />
-                <button
-                  type="button"
-                  onClick={() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-[#f86e7e] hover:text-[#121212] transition-all duration-300 group"
-                  title="الانتقال لأسفل الصفحة"
-                >
-                  <ChevronDown className="w-5 h-5 text-slate-300 group-hover:text-[#121212] transition-colors" />
-                </button>
-              </div>
               <div className="flex items-center gap-6 mb-10">
                 <button 
                   onClick={() => setView('novels')}
