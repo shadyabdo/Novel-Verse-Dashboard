@@ -69,7 +69,8 @@ import {
   Heading,
   Quote,
   Sparkles,
-  BookOpen
+  BookOpen,
+  Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Swal from 'sweetalert2';
@@ -614,6 +615,8 @@ export default function App() {
   const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write');
   const [editorFontSize, setEditorFontSize] = useState<number>(20);
   const [distractionFree, setDistractionFree] = useState<boolean>(false);
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState<boolean>(false);
+  const [volumeDropdownOpen, setVolumeDropdownOpen] = useState<boolean>(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const groupedChapters = useMemo(() => {
@@ -2457,15 +2460,52 @@ export default function App() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-bold text-slate-400 mb-2">الحالة</label>
-                        <select 
-                          value={editingNovel.status || 'مستمرة'}
-                          onChange={e => setEditingNovel({...editingNovel, status: e.target.value})}
-                          className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all appearance-none"
-                        >
-                          <option value="مستمرة">مستمرة</option>
-                          <option value="متوقفة">متوقفة</option>
-                          <option value="مكتملة">مكتملة</option>
-                        </select>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
+                            className="w-full flex items-center justify-between px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all text-right font-medium text-sm"
+                          >
+                            <span>{editingNovel?.status || 'مستمرة'}</span>
+                            <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${statusDropdownOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                          
+                          <AnimatePresence>
+                            {statusDropdownOpen && editingNovel && (
+                              <>
+                                <div className="fixed inset-0 z-[60]" onClick={() => setStatusDropdownOpen(false)} />
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                                  className="absolute z-[70] w-full mt-2 rounded-2xl border border-white/5 bg-[#1a1a1c] p-1.5 shadow-2xl backdrop-blur-md"
+                                >
+                                  {['مستمرة', 'متوقفة', 'مكتملة'].map((option) => (
+                                    <button
+                                      key={option}
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingNovel({...editingNovel, status: option});
+                                        setStatusDropdownOpen(false);
+                                      }}
+                                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm transition-all text-right ${
+                                        (editingNovel.status || 'مستمرة') === option
+                                          ? 'bg-[#f86e7e]/15 text-[#f86e7e] font-bold'
+                                          : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                                      }`}
+                                    >
+                                      <span>{option}</span>
+                                      {(editingNovel.status || 'مستمرة') === option && (
+                                        <Check className="w-4 h-4 text-[#f86e7e]" />
+                                      )}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-slate-400 mb-2">التقييم</label>
@@ -2761,16 +2801,74 @@ export default function App() {
                             <Plus className="w-3.5 h-3.5" />
                           </button>
                         </label>
-                        <select 
-                          value={editingChapter.volumeId || ''}
-                          onChange={e => setEditingChapter({...editingChapter, volumeId: e.target.value})}
-                          className="w-full px-5 py-4 rounded-xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all appearance-none cursor-pointer font-bold text-xs"
-                        >
-                          <option value="">بدون مجلد فرعي</option>
-                          {volumes.map(v => (
-                            <option key={v.id} value={v.id}>{v.name}</option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setVolumeDropdownOpen(!volumeDropdownOpen)}
+                            className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all text-right font-medium text-xs duration-300"
+                          >
+                            <span className="truncate">
+                              {editingChapter?.volumeId 
+                                ? (volumes.find(v => v.id === editingChapter.volumeId)?.name || 'مجلد فرعي غير معروف') 
+                                : 'بدون مجلد فرعي'}
+                            </span>
+                            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-300 shrink-0 ${volumeDropdownOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                          
+                          <AnimatePresence>
+                            {volumeDropdownOpen && editingChapter && (
+                              <>
+                                <div className="fixed inset-0 z-[60]" onClick={() => setVolumeDropdownOpen(false)} />
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                                  className="absolute z-[70] w-full mt-2 rounded-xl border border-white/5 bg-[#1a1a1c] p-1.5 shadow-2xl backdrop-blur-md max-h-60 overflow-y-auto custom-scrollbar"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingChapter({...editingChapter, volumeId: ''});
+                                      setVolumeDropdownOpen(false);
+                                    }}
+                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-xs transition-all text-right ${
+                                      !editingChapter.volumeId
+                                        ? 'bg-[#f86e7e]/15 text-[#f86e7e] font-bold'
+                                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                                    }`}
+                                  >
+                                    <span>بدون مجلد فرعي</span>
+                                    {!editingChapter.volumeId && (
+                                      <Check className="w-3.5 h-3.5 text-[#f86e7e]" />
+                                    )}
+                                  </button>
+                                  
+                                  {volumes.map(v => (
+                                    <button
+                                      key={v.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingChapter({...editingChapter, volumeId: v.id});
+                                        setVolumeDropdownOpen(false);
+                                      }}
+                                      className={`w-full flex items-center justify-between px-4 py-3 rounded-lg text-xs transition-all text-right ${
+                                        editingChapter.volumeId === v.id
+                                          ? 'bg-[#f86e7e]/15 text-[#f86e7e] font-bold'
+                                          : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                                      }`}
+                                    >
+                                      <span className="truncate">{v.name}</span>
+                                      {editingChapter.volumeId === v.id && (
+                                        <Check className="w-3.5 h-3.5 text-[#f86e7e]" />
+                                      )}
+                                    </button>
+                                  ))}
+                                </motion.div>
+                              </>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 md:col-span-1">
