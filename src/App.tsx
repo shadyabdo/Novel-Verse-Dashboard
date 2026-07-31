@@ -83,6 +83,7 @@ import remarkGfm from 'remark-gfm';
 interface Novel {
   id: string;
   name: string;
+  arabicName?: string;
   description: string;
   author: string;
   coverImages?: string[];
@@ -539,12 +540,17 @@ const NovelCard = React.memo(({
 
         {/* Info Area */}
         <div className="mt-4 flex-1 flex flex-col px-1">
-          <div className="flex items-center gap-1.5 mb-2">
+          <div className="flex items-center gap-1.5 mb-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#f86e7e]" />
             <h3 className="text-sm font-black text-white line-clamp-1 group-hover:text-[#f86e7e] transition-colors duration-300">
               {novel.name || 'Untitled'}
             </h3>
           </div>
+          {novel.arabicName && (
+            <p className="text-xs text-[#f86e7e] font-bold line-clamp-1 mb-2">
+              {novel.arabicName}
+            </p>
+          )}
 
           <p className="text-xs text-slate-400 mb-4 line-clamp-2 leading-relaxed font-medium">
             {novel.description || 'لا يوجد وصف متاح لهذه الرواية حالياً.'}
@@ -1220,9 +1226,11 @@ export default function App() {
   const filteredNovels = React.useMemo(() => {
     return novels.filter(n => {
       const name = n.name || '';
+      const arabicName = n.arabicName || '';
       const author = n.author || '';
       const search = searchTerm || '';
       const matchesSearch = name.toLowerCase().includes(search.toLowerCase()) || 
+                           arabicName.toLowerCase().includes(search.toLowerCase()) ||
                            author.toLowerCase().includes(search.toLowerCase());
       const matchesCategory = selectedCategory === 'الكل' || (n.categories && n.categories.includes(selectedCategory));
       const matchesStatus = selectedStatus === 'الكل' || n.status === selectedStatus;
@@ -1800,7 +1808,7 @@ export default function App() {
                     
                     <button 
                       onClick={() => {
-                        setEditingNovel({ name: '', description: '', author: user.displayName || '', coverImages: ['', '', '', ''], categories: [] });
+                        setEditingNovel({ name: '', arabicName: '', description: '', author: user.displayName || '', coverImages: ['', '', '', ''], categories: [] });
                         setView('edit-novel');
                       }}
                       className="flex items-center gap-2 bg-[#f86e7e] hover:bg-[#e05d6b] text-[#121212] px-8 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-[#f86e7e]/20"
@@ -2016,9 +2024,16 @@ export default function App() {
                   <div className="md:w-2/3 p-8 md:p-10 flex flex-col justify-between">
                     <div className="space-y-4">
                       {/* اسم الرواية */}
-                      <h4 className="text-3xl font-black text-white leading-tight">
-                        {selectedNovel.name}
-                      </h4>
+                      <div>
+                        <h4 className="text-3xl font-black text-white leading-tight">
+                          {selectedNovel.name}
+                        </h4>
+                        {selectedNovel.arabicName && (
+                          <h5 className="text-lg font-bold text-[#f86e7e] mt-1">
+                            {selectedNovel.arabicName}
+                          </h5>
+                        )}
+                      </div>
 
                       {/* تصنيفات الرواية */}
                       {selectedNovel.categories && selectedNovel.categories.length > 0 && (
@@ -2415,14 +2430,25 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-sm font-bold text-slate-400 mb-2">اسم الرواية</label>
+                      <label className="block text-sm font-bold text-slate-400 mb-2">اسم الرواية (بالإنجليزي)</label>
                       <input 
                         type="text"
                         required
-                        value={editingNovel.name}
+                        value={editingNovel.name || ''}
                         onChange={e => setEditingNovel({...editingNovel, name: e.target.value})}
                         className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
-                        placeholder="أدخل اسم الرواية..."
+                        placeholder="أدخل اسم الرواية بالإنجليزي..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-slate-400 mb-2">اسم الرواية (بالعربي)</label>
+                      <input 
+                        type="text"
+                        value={editingNovel.arabicName || ''}
+                        onChange={e => setEditingNovel({...editingNovel, arabicName: e.target.value})}
+                        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white focus:ring-2 focus:ring-[#f86e7e]/50 outline-none transition-all"
+                        placeholder="أدخل اسم الرواية بالعربي..."
                       />
                     </div>
                     
