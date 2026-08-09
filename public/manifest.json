@@ -1,0 +1,21 @@
+{
+  "name": "NovelVerse Reader",
+  "short_name": "NovelVerse",
+  "description": "تطبيق قراءة الروايات المفضل لديك",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#F87171",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/novelverse/192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/novelverse/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

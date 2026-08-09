@@ -4,10 +4,10 @@
 @theme {
   --font-sans: "Almarai", ui-sans-serif, system-ui, sans-serif;
   
-  --color-primary: #f86e7e;
+  --color-primary: #F87171;
   --color-dark: #121212;
   --color-surface: #1e1e1e;
-  --color-accent: #f86e7e;
+  --color-accent: #3db5ad;
   --color-light: #ffffff;
 }
 
@@ -16,4 +16,61 @@
     @apply bg-[#121212] text-white antialiased transition-colors duration-300;
     font-family: 'Almarai', sans-serif;
   }
+  
+  /* Firefox Scrollbar */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #2a2a2a #121212;
+  }
+  
+  /* Webkit Smooth Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #121212;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #2a2a2a;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #F87171;
+  }
+}
+
+@keyframes border-glow {
+  0% { border-color: rgba(248, 113, 113, 0.1); box-shadow: 0 0 5px rgba(248, 113, 113, 0.05); }
+  50% { border-color: rgba(248, 113, 113, 0.6); box-shadow: 0 0 15px rgba(248, 113, 113, 0.3); }
+  100% { border-color: rgba(248, 113, 113, 0.1); box-shadow: 0 0 5px rgba(248, 113, 113, 0.05); }
+}
+
+.animate-border-glow {
+  animation: border-glow 3s infinite ease-in-out;
+}
+
+.novel-reader-content {
+  @apply antialiased;
+}
+
+.novel-reader-content strong {
+  @apply text-white font-black;
+}
+
+.novel-reader-content em {
+  @apply text-white/90 italic;
+}
+
+.novel-reader-content a {
+  @apply text-[#F87171] underline decoration-white/10 underline-offset-4 hover:decoration-[#F87171] transition-all;
+}
+
+.novel-reader-content code {
+  @apply bg-white/5 px-1.5 py-0.5 rounded text-sm font-mono text-[#F87171];
 }

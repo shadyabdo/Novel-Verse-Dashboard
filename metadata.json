@@ -1,5 +1,6 @@
 {
   "name": "كوم روايات",
-  "description": "منصة كوم روايات لإدارة وقراءة الروايات والفصول.",
-  "requestFramePermissions": []
+  "description": "منصة متكاملة لإدارة وقراءة الروايات مع لوحة تحكم احترافية وتطبيق قارئ للهاتف.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -19,9 +19,12 @@
     "firebase": "^12.11.0",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
+    "prop-types": "^15.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-intersection-observer": "^10.0.3",
     "react-markdown": "^10.1.0",
+    "react-quick-pinch-zoom": "^5.1.1",
     "remark-gfm": "^4.0.1",
     "sweetalert2": "^11.26.24",
     "vite": "^6.2.0"
