@@ -418,6 +418,10 @@ export default function App() {
   const [showVolumePopup, setShowVolumePopup] = useState(false);
   const [newVolumeName, setNewVolumeName] = useState('');
   const [expandedVolumes, setExpandedVolumes] = useState<string[]>([]);
+  const [selectingVolumeForChapters, setSelectingVolumeForChapters] = useState<Volume | null>(null);
+  const [selectedChapterIdsForVolume, setSelectedChapterIdsForVolume] = useState<string[]>([]);
+  const [volumeChapterSearch, setVolumeChapterSearch] = useState('');
+  const [savingVolumeChapters, setSavingVolumeChapters] = useState(false);
 
   // Image Insertion State
   const [showImagePopup, setShowImagePopup] = useState(false);
@@ -744,16 +748,43 @@ export default function App() {
       });
     } catch (error: any) {
       console.error("Login failed", error);
-      Swal.fire({
-        title: 'فشل الدخول',
-        text: error?.code === 'auth/popup-blocked' 
-          ? 'تم حظر النافذة المنبثقة. يرجى فتح التطبيق في تبويب جديد.'
-          : 'حدث خطأ أثناء تسجيل الدخول',
-        icon: 'error',
-        background: '#1e1e1e',
-        color: '#fff',
-        confirmButtonColor: '#F87171'
-      });
+      const currentDomain = window.location.hostname;
+      if (error?.code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized-domain')) {
+        Swal.fire({
+          title: 'النطاق غير مصرح به (Unauthorized Domain)',
+          html: `
+            <div style="text-align: right; font-size: 13px; line-height: 1.6; color: #ccc;">
+              <p style="margin-bottom: 8px;">لمي يتم إضافة نطاق التطبيق الحالي إلى النطاقات المصرح بها في <b>Firebase Authentication</b>.</p>
+              <p style="margin-bottom: 8px;">النطاق الحالي هو:</p>
+              <div style="background: #121212; padding: 8px 12px; border-radius: 8px; font-family: monospace; color: #4ade80; user-select: all; margin-bottom: 12px; word-break: break-all;">
+                ${currentDomain}
+              </div>
+              <p><b>خطوات التفعيل في Firebase Console:</b></p>
+              <ol style="margin-right: 18px; margin-top: 4px;">
+                <li>افتح لوحة تحكم Firebase Console</li>
+                <li>توجه إلى <b>Authentication</b> &larr; <b>Settings</b> &larr; <b>Authorized domains</b></li>
+                <li>اضغط على <b>Add domain</b> وأضف النطاق الموضح أعلاه.</li>
+              </ol>
+            </div>
+          `,
+          icon: 'warning',
+          background: '#1e1e1e',
+          color: '#fff',
+          confirmButtonColor: '#F87171',
+          confirmButtonText: 'حسناً، فهمت'
+        });
+      } else {
+        Swal.fire({
+          title: 'فشل الدخول',
+          text: error?.code === 'auth/popup-blocked' 
+            ? 'تم حظر النافذة المنبثقة. يرجى فتح التطبيق في تبويب جديد.'
+            : (error?.message || 'حدث خطأ أثناء تسجيل الدخول'),
+          icon: 'error',
+          background: '#1e1e1e',
+          color: '#fff',
+          confirmButtonColor: '#F87171'
+        });
+      }
     }
   };
 
@@ -1253,8 +1284,70 @@ export default function App() {
           confirmButtonColor: '#F87171'
         });
       } catch (error) {
-        handleFirestoreError(error, OperationType.UPDATE, `novels/${selectedNovel.id}`);
+        handleFirestoreError(error, OperationType.UPDATE, `novels/${activeNovel.id}`);
       }
+    }
+  };
+
+  const saveVolumeChapters = async () => {
+    const activeNovel = currentNovel || selectedNovel;
+    if (!activeNovel || !selectingVolumeForChapters) return;
+
+    setSavingVolumeChapters(true);
+    try {
+      const volumeId = selectingVolumeForChapters.id;
+      const updates: Promise<void>[] = [];
+
+      for (const chapter of chapters) {
+        const isSelected = selectedChapterIdsForVolume.includes(chapter.id);
+        const currentBelongsToThisVol = chapter.volumeId === volumeId || chapter.volumeId === selectingVolumeForChapters.name;
+
+        if (isSelected && !currentBelongsToThisVol) {
+          updates.push(
+            updateDoc(doc(db, `novels/${activeNovel.id}/chapters`, chapter.id), {
+              volumeId: volumeId,
+              updatedAt: serverTimestamp()
+            })
+          );
+        } else if (!isSelected && currentBelongsToThisVol) {
+          updates.push(
+            updateDoc(doc(db, `novels/${activeNovel.id}/chapters`, chapter.id), {
+              volumeId: null,
+              updatedAt: serverTimestamp()
+            })
+          );
+        }
+      }
+
+      await Promise.all(updates);
+
+      setExpandedVolumes(prev => Array.from(new Set([...prev, volumeId])));
+
+      Swal.fire({
+        title: 'تم التحديث!',
+        text: `تم تحديث الفصول الملحقة بمجلد "${selectingVolumeForChapters.name}" بنجاح`,
+        icon: 'success',
+        background: '#1e1e1e',
+        color: '#fff',
+        confirmButtonColor: '#F87171'
+      });
+
+      setSelectingVolumeForChapters(null);
+      setSelectedChapterIdsForVolume([]);
+      setVolumeChapterSearch('');
+    } catch (error) {
+      console.error("Failed to save volume chapters", error);
+      handleFirestoreError(error, OperationType.UPDATE, `novels/${activeNovel.id}/chapters`);
+      Swal.fire({
+        title: 'خطأ',
+        text: 'فشل ربط الفصول بالمجلد',
+        icon: 'error',
+        background: '#1e1e1e',
+        color: '#fff',
+        confirmButtonColor: '#F87171'
+      });
+    } finally {
+      setSavingVolumeChapters(false);
     }
   };
 
@@ -1992,13 +2085,30 @@ export default function App() {
                                 <div className="flex items-center gap-2">
                                   <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{volumeChapters.length} فصلاً متاحاً</span>
                                   {isAdmin && (
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="flex items-center gap-1.5 mr-3">
+                                      <button 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const initialSelected = chapters
+                                            .filter(c => c.volumeId === volume.id || c.volumeId === volume.name)
+                                            .map(c => c.id);
+                                          setSelectedChapterIdsForVolume(initialSelected);
+                                          setSelectingVolumeForChapters(volume);
+                                          setVolumeChapterSearch('');
+                                        }}
+                                        className="flex items-center gap-1 px-3 py-1 bg-[#F87171]/10 hover:bg-[#F87171] text-[#F87171] hover:text-[#121212] rounded-xl text-xs font-black transition-all border border-[#F87171]/20 shadow-sm active:scale-95"
+                                        title="إضافة وتحديد فصول هذا المجلد"
+                                      >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        <span>تحديد الفصول</span>
+                                      </button>
                                       <button 
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           editVolume(volume.id, volume.name);
                                         }}
-                                        className="p-1 text-white/20 hover:text-white"
+                                        className="p-1.5 text-white/30 hover:text-white bg-[#121212] hover:bg-white/10 rounded-xl border border-white/5 transition-all"
+                                        title="تعديل اسم المجلد"
                                       >
                                         <Edit className="w-3.5 h-3.5" />
                                       </button>
@@ -2007,7 +2117,8 @@ export default function App() {
                                           e.stopPropagation();
                                           deleteVolume(volume.id);
                                         }}
-                                        className="p-1 text-white/20 hover:text-red-400"
+                                        className="p-1.5 text-white/30 hover:text-red-400 bg-[#121212] hover:bg-red-500/10 rounded-xl border border-white/5 transition-all"
+                                        title="حذف المجلد"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />
                                       </button>
@@ -2037,9 +2148,25 @@ export default function App() {
                                 <div className="px-10 pb-10 space-y-3">
                                   <div className="h-px bg-white/5 w-full mb-6" />
                                   {volumeChapters.length === 0 ? (
-                                    <div className="py-20 text-center bg-[#121212]/40 rounded-[2rem] border border-dashed border-white/5">
+                                    <div className="py-12 text-center bg-[#121212]/40 rounded-[2rem] border border-dashed border-white/5">
                                       <FileQuestion className="w-12 h-12 text-white/5 mx-auto mb-4" />
-                                      <p className="text-white/20 text-xs font-black uppercase tracking-widest">لا توجد فصول في هذا المجلد حالياً</p>
+                                      <p className="text-white/20 text-xs font-black uppercase tracking-widest mb-4">لا توجد فصول في هذا المجلد حالياً</p>
+                                      {isAdmin && (
+                                        <button
+                                          onClick={() => {
+                                            const initialSelected = chapters
+                                              .filter(c => c.volumeId === volume.id || c.volumeId === volume.name)
+                                              .map(c => c.id);
+                                            setSelectedChapterIdsForVolume(initialSelected);
+                                            setSelectingVolumeForChapters(volume);
+                                            setVolumeChapterSearch('');
+                                          }}
+                                          className="inline-flex items-center gap-2 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] px-6 py-3 rounded-xl font-black text-xs transition-all shadow-lg shadow-[#F87171]/10 active:scale-95 cursor-pointer"
+                                        >
+                                          <Plus className="w-4 h-4" />
+                                          اختر الفصول التابعة لهذا المجلد
+                                        </button>
+                                      )}
                                     </div>
                                   ) : (
                                     volumeChapters.map((chapter, idx) => (
@@ -3273,6 +3400,191 @@ export default function App() {
               </button>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Select Chapters for Volume Modal */}
+      <AnimatePresence>
+        {selectingVolumeForChapters && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[#1e1e1e] w-full max-w-2xl rounded-[2.5rem] border border-white/10 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              {/* Header */}
+              <div className="p-6 md:p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-[#F87171]/10 to-transparent">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#F87171]/20 rounded-xl flex items-center justify-center border border-[#F87171]/30">
+                    <Layers className="w-5 h-5 text-[#F87171]" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-white text-lg tracking-tight">
+                      تحديد فصول المجلد: {selectingVolumeForChapters.name}
+                    </h3>
+                    <p className="text-white/40 text-xs mt-0.5">
+                      اختر الفصول المراد ربطها بهذا المجلد
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setSelectingVolumeForChapters(null);
+                    setSelectedChapterIdsForVolume([]);
+                    setVolumeChapterSearch('');
+                  }} 
+                  className="w-10 h-10 flex items-center justify-center hover:bg-white/5 rounded-xl transition-all"
+                >
+                  <X className="w-5 h-5 text-white/40" />
+                </button>
+              </div>
+              
+              {/* Search & Actions Bar */}
+              <div className="p-6 border-b border-white/5 bg-[#121212]/50 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                  <div className="relative w-full sm:w-auto flex-1">
+                    <input 
+                      type="text"
+                      placeholder="ابحث برقم أو عنوان الفصل..."
+                      value={volumeChapterSearch}
+                      onChange={e => setVolumeChapterSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-white/5 bg-[#121212] text-white text-xs focus:ring-2 focus:ring-[#F87171]/50 outline-none transition-all"
+                    />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 w-4 h-4" />
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const filteredIds = chapters
+                          .filter(c => {
+                            if (!volumeChapterSearch.trim()) return true;
+                            const term = volumeChapterSearch.toLowerCase();
+                            return (c.title || '').toLowerCase().includes(term) || String(c.order).includes(term);
+                          })
+                          .map(c => c.id);
+                        setSelectedChapterIdsForVolume(prev => Array.from(new Set([...prev, ...filteredIds])));
+                      }}
+                      className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 text-xs font-black rounded-xl border border-white/5 transition-all"
+                    >
+                      تحديد الكل
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedChapterIdsForVolume([])}
+                      className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/70 text-xs font-black rounded-xl border border-white/5 transition-all"
+                    >
+                      إلغاء التحديد
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-white/40 font-bold px-1">
+                  <span>إجمالي فصول الرواية: {chapters.length}</span>
+                  <span className="text-[#F87171]">
+                    تم تحديد: {selectedChapterIdsForVolume.length} فصل
+                  </span>
+                </div>
+              </div>
+
+              {/* Chapters List */}
+              <div className="p-6 overflow-y-auto space-y-2 flex-1">
+                {chapters.length === 0 ? (
+                  <div className="py-12 text-center text-white/30 text-xs font-bold">
+                    لا توجد فصول متاحة لهذه الرواية بعد.
+                  </div>
+                ) : (
+                  chapters
+                    .filter(c => {
+                      if (!volumeChapterSearch.trim()) return true;
+                      const term = volumeChapterSearch.toLowerCase();
+                      return (c.title || '').toLowerCase().includes(term) || String(c.order).includes(term);
+                    })
+                    .map(chapter => {
+                      const isSelected = selectedChapterIdsForVolume.includes(chapter.id);
+                      const currentVol = (currentNovel?.volumes || []).find(v => v.id === chapter.volumeId || v.name === chapter.volumeId);
+                      const isAssignedToOther = currentVol && currentVol.id !== selectingVolumeForChapters.id;
+
+                      return (
+                        <div
+                          key={chapter.id}
+                          onClick={() => {
+                            setSelectedChapterIdsForVolume(prev => 
+                              prev.includes(chapter.id) 
+                                ? prev.filter(id => id !== chapter.id)
+                                : [...prev, chapter.id]
+                            );
+                          }}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                            isSelected 
+                              ? 'bg-[#F87171]/10 border-[#F87171]/40 text-white' 
+                              : 'bg-[#121212]/60 border-white/5 text-white/60 hover:bg-white/[0.03]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${
+                              isSelected 
+                                ? 'bg-[#F87171] border-[#F87171] text-[#121212]' 
+                                : 'border-white/20 bg-transparent'
+                            }`}>
+                              {isSelected && <Check className="w-4 h-4 stroke-[3]" />}
+                            </div>
+
+                            <div>
+                              <h4 className="font-black text-sm text-white flex items-center gap-2">
+                                <span>الفصل {chapter.order}:</span>
+                                <span>{chapter.title}</span>
+                              </h4>
+                              {isAssignedToOther && (
+                                <span className="text-[10px] font-black text-yellow-500/80 bg-yellow-500/10 px-2 py-0.5 rounded-md mt-1 inline-block">
+                                  موجود حالياً في: {currentVol.name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-right text-[10px] text-white/30 font-mono">
+                            {formatDate(chapter.updatedAt || chapter.createdAt || chapter.date)}
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 border-t border-white/5 bg-[#121212]/80 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectingVolumeForChapters(null);
+                    setSelectedChapterIdsForVolume([]);
+                    setVolumeChapterSearch('');
+                  }}
+                  className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-black text-xs rounded-xl transition-all"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  onClick={saveVolumeChapters}
+                  disabled={savingVolumeChapters}
+                  className="px-8 py-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-black text-xs rounded-xl transition-all shadow-lg shadow-[#F87171]/20 flex items-center gap-2 disabled:opacity-50"
+                >
+                  {savingVolumeChapters ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>جاري الحفظ...</span>
+                    </>
+                  ) : (
+                    <span>حفظ الفصول المحددة</span>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
