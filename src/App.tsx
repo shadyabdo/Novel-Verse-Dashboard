@@ -14,6 +14,8 @@ import {
   updateDoc, 
   deleteDoc, 
   doc, 
+  getDoc,
+  setDoc,
   query, 
   orderBy, 
   serverTimestamp,
@@ -83,7 +85,12 @@ import {
   Activity,
   CheckCircle2,
   PauseCircle,
-  Tags
+  Tags,
+  Lock,
+  Key,
+  ShieldCheck,
+  Unlock,
+  EyeOff
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import { useInView } from 'react-intersection-observer';
@@ -440,6 +447,111 @@ export default function App() {
   const [showAdultWarning, setShowAdultWarning] = useState(true);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
+  // --- Passcode Security State ---
+  const DEFAULT_PASSCODE_HASH = 'd3e0db966efaa36bb337a7b8e1f0e4b2d5a3746c19f1873132e4d0d2ff86ef56';
+  const [isPasscodeUnlocked, setIsPasscodeUnlocked] = useState<boolean>(() => {
+    return sessionStorage.getItem('dashboard_unlocked') === 'true';
+  });
+  const [passcodeInput, setPasscodeInput] = useState('');
+  const [showPasscode, setShowPasscode] = useState(false);
+  const [passcodeError, setPasscodeError] = useState('');
+  const [isCheckingPasscode, setIsCheckingPasscode] = useState(false);
+  const [dbPasscodeHash, setDbPasscodeHash] = useState<string>(DEFAULT_PASSCODE_HASH);
+
+  // Sync Passcode Settings with Firestore
+  useEffect(() => {
+    if (!isAuthReady) return;
+
+    const accessDocRef = doc(db, 'settings', 'access');
+    const unsub = onSnapshot(accessDocRef, async (snap) => {
+      if (snap.exists() && snap.data().passcodeHash) {
+        setDbPasscodeHash(snap.data().passcodeHash);
+      } else {
+        try {
+          await setDoc(accessDocRef, {
+            passcodeHash: DEFAULT_PASSCODE_HASH,
+            description: "تأمين لوحة التحكم برمز أمان شاشة الدخول",
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (err) {
+          console.warn("Could not auto-initialize settings/access document in Firestore:", err);
+        }
+      }
+    }, (error) => {
+      console.warn("Firestore settings/access listener warning:", error);
+    });
+
+    return () => unsub();
+  }, [isAuthReady]);
+
+  const verifyPasscode = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!passcodeInput.trim()) {
+      setPasscodeError('يرجى إدخال رمز المرور');
+      return;
+    }
+
+    setIsCheckingPasscode(true);
+    setPasscodeError('');
+
+    try {
+      // Compute SHA-256 hash of the input
+      const encoder = new TextEncoder();
+      const data = encoder.encode(passcodeInput.trim());
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+      let targetHash = dbPasscodeHash;
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'access'));
+        if (snap.exists() && snap.data().passcodeHash) {
+          targetHash = snap.data().passcodeHash;
+          setDbPasscodeHash(targetHash);
+        }
+      } catch (err) {
+        // Fallback to local state hash if offline
+      }
+
+      if (inputHash === targetHash) {
+        sessionStorage.setItem('dashboard_unlocked', 'true');
+        setIsPasscodeUnlocked(true);
+        setPasscodeInput('');
+        setPasscodeError('');
+        Swal.fire({
+          title: 'تم التحقق بنجاح!',
+          text: 'تم إلغاء قفل الأمان. يمكنك الآن تسجيل الدخول باستخدام حساب جوجل المسموح له.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+          background: '#1e1e1e',
+          color: '#fff'
+        });
+      } else {
+        setPasscodeError('رمز المرور غير صحيح!');
+        Swal.fire({
+          title: 'رمز غير صحيح',
+          text: 'رمز المرور الذي أدخلته غير صحيح. يرجى المحاولة مرة أخرى.',
+          icon: 'error',
+          background: '#1e1e1e',
+          color: '#fff',
+          confirmButtonColor: '#F87171'
+        });
+      }
+    } catch (err) {
+      setPasscodeError('حدث خطأ أثناء التحقق من رمز المرور');
+    } finally {
+      setIsCheckingPasscode(false);
+    }
+  };
+
+  const lockDashboard = () => {
+    sessionStorage.removeItem('dashboard_unlocked');
+    setIsPasscodeUnlocked(false);
+    setPasscodeInput('');
+    setPasscodeError('');
+  };
+
   const { ref: novelsEndRef, inView: novelsEndInView } = useInView();
   const { ref: chaptersEndRef, inView: chaptersEndInView } = useInView();
 
@@ -790,6 +902,10 @@ export default function App() {
 
   const logout = async () => {
     await signOut(auth);
+    sessionStorage.removeItem('dashboard_unlocked');
+    setIsPasscodeUnlocked(false);
+    setPasscodeInput('');
+    setPasscodeError('');
     Swal.fire({
       title: 'تم تسجيل الخروج',
       icon: 'info',
@@ -1378,21 +1494,114 @@ export default function App() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-2xl max-w-md w-full text-center relative z-10"
+          className="bg-[#1e1e1e] p-8 md:p-10 rounded-[2.5rem] border border-white/5 shadow-2xl max-w-md w-full text-center relative z-10"
         >
-          <div className="w-20 h-20 bg-[#F87171] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[#F87171]/30">
-            <Book className="w-10 h-10 text-[#121212]" />
+          {/* Header Icon with Lock Badge */}
+          <div className="relative inline-block mb-6">
+            <div className="w-20 h-20 bg-[#F87171] rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-[#F87171]/30">
+              <Book className="w-10 h-10 text-[#121212]" />
+            </div>
+            <div className={`absolute -bottom-1 -left-1 w-7 h-7 rounded-full flex items-center justify-center border-2 border-[#1e1e1e] shadow-md transition-colors ${
+              isPasscodeUnlocked ? 'bg-emerald-500 text-[#121212]' : 'bg-[#121212] text-[#F87171] border-white/10'
+            }`}>
+              {isPasscodeUnlocked ? <Unlock className="w-3.5 h-3.5 stroke-[3]" /> : <Lock className="w-3.5 h-3.5" />}
+            </div>
           </div>
-          <h1 className="text-3xl font-normal text-white mb-3 tracking-wide" style={{ fontFamily: "'New Rocker', system-ui" }}>كوم روايات</h1>
-          <p className="text-white/60 mb-8 leading-relaxed">لوحة التحكم الاحترافية لإدارة رواياتك وفصولك بكل سهولة وأناقة.</p>
-          <button 
-            onClick={login}
-            className="w-full flex items-center justify-center gap-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-bold py-4 rounded-2xl transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <LogIn className="w-5 h-5" />
-            تسجيل الدخول باستخدام جوجل
-          </button>
-          <p className="mt-6 text-xs text-white/50">بواسطة فريق كوم روايات</p>
+
+          <h1 className="text-3xl font-normal text-white mb-2 tracking-wide" style={{ fontFamily: "'New Rocker', system-ui" }}>كوم روايات</h1>
+          <p className="text-white/60 text-sm mb-8 leading-relaxed">لوحة التحكم الاحترافية لإدارة رواياتك وفصولك بكل سهولة وأناقة.</p>
+
+          {!isPasscodeUnlocked ? (
+            /* STEP 1: Passcode Entry Screen */
+            <form onSubmit={verifyPasscode} className="space-y-5 text-right">
+              <div className="bg-[#121212]/80 p-4 rounded-2xl border border-white/5 text-center">
+                <div className="flex items-center justify-center gap-2 text-[#F87171] text-xs font-black uppercase tracking-wider mb-1">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>دخول محمي برمز أمان</span>
+                </div>
+                <p className="text-white/40 text-[11px]">أدخل رمز المرور الخاص بالداشبورد للمتابعة</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-white/50 uppercase tracking-widest mb-2 text-right">
+                  رمز المرور المطلوب
+                </label>
+                <div className="relative">
+                  <input 
+                    type={showPasscode ? "text" : "password"}
+                    required
+                    value={passcodeInput}
+                    onChange={(e) => {
+                      setPasscodeInput(e.target.value);
+                      if (passcodeError) setPasscodeError('');
+                    }}
+                    placeholder="••••••••"
+                    className={`w-full bg-[#121212] border ${passcodeError ? 'border-red-500' : 'border-white/10 focus:border-[#F87171]'} rounded-2xl px-5 py-4 pl-12 text-white font-mono text-center tracking-widest text-lg outline-none transition-all placeholder:text-white/20`}
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasscode(!showPasscode)}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors p-1"
+                  >
+                    {showPasscode ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {passcodeError && (
+                  <p className="text-red-400 text-xs font-bold mt-2 text-center">
+                    {passcodeError}
+                  </p>
+                )}
+              </div>
+
+              <button 
+                type="submit"
+                disabled={isCheckingPasscode}
+                className="w-full flex items-center justify-center gap-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-black py-4 rounded-2xl transition-all shadow-xl shadow-[#F87171]/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+              >
+                {isCheckingPasscode ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <Key className="w-5 h-5" />
+                    <span>تأكيد رمز الأمان</span>
+                  </>
+                )}
+              </button>
+            </form>
+          ) : (
+            /* STEP 2: Unlocked Google Sign-In */
+            <div className="space-y-4">
+              <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex items-center justify-between text-right">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-emerald-400 font-black text-xs">تم التحقق من الأمان بنجاح</p>
+                    <p className="text-white/40 text-[10px]">يمكنك الآن الدخول بحساب جوجل المسموح له</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={lockDashboard}
+                  className="text-[10px] font-bold text-white/40 hover:text-red-400 transition-colors underline"
+                >
+                  قفل
+                </button>
+              </div>
+
+              <button 
+                onClick={login}
+                className="w-full flex items-center justify-center gap-3 bg-[#F87171] hover:bg-[#EF4444] text-[#121212] font-black py-4 rounded-2xl transition-all shadow-xl hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              >
+                <LogIn className="w-5 h-5" />
+                تسجيل الدخول باستخدام جوجل
+              </button>
+            </div>
+          )}
+
+          <p className="mt-8 text-xs text-white/30 font-medium">بواسطة فريق كوم روايات</p>
         </motion.div>
       </div>
     );
