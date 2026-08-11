@@ -636,20 +636,27 @@ export default function App() {
   // Chapters Listener
   // Selected Novel Chapters Listener
   useEffect(() => {
-    if (!selectedNovel) {
+    const activeId = selectedNovel?.id;
+    if (!activeId) {
       setChapters([]);
       return;
     }
 
-    const q = query(collection(db, `novels/${selectedNovel.id}/chapters`), orderBy('order', 'asc'));
+    const q = query(collection(db, `novels/${activeId}/chapters`));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chapterData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Chapter));
+      // Memory sort by order ascending safely (even if order field is missing in Firestore)
+      chapterData.sort((a, b) => {
+        const orderA = typeof a.order === 'number' ? a.order : parseInt(String(a.order || 0), 10) || 0;
+        const orderB = typeof b.order === 'number' ? b.order : parseInt(String(b.order || 0), 10) || 0;
+        return orderA - orderB;
+      });
       setChapters(chapterData);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, `novels/${selectedNovel.id}/chapters`));
+    }, (error) => handleFirestoreError(error, OperationType.LIST, `novels/${activeId}/chapters`));
 
     return () => unsubscribe();
-  }, [selectedNovel]);
+  }, [selectedNovel?.id]);
 
   // Global Chapters Listener for Home View
   useEffect(() => {
@@ -933,6 +940,14 @@ export default function App() {
   // Live active novel reference synced with Firestore state
   const currentNovel = selectedNovel ? (novels.find(n => n.id === selectedNovel.id) || selectedNovel) : null;
 
+  // Auto-expand all volumes and uncategorized when opening a novel or when volumes load
+  useEffect(() => {
+    if (currentNovel) {
+      const volIds = (currentNovel.volumes || []).map(v => v.id);
+      setExpandedVolumes(prev => Array.from(new Set([...volIds, 'uncategorized', ...prev])));
+    }
+  }, [currentNovel?.id, currentNovel?.volumes?.length]);
+
   const saveNovel = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingNovel?.name || !editingNovel?.author) return;
@@ -1027,15 +1042,16 @@ export default function App() {
 
   const saveChapter = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedNovel || !editingChapter?.title || !editingChapter?.content) return;
+    const activeNovel = currentNovel || selectedNovel;
+    if (!activeNovel || !editingChapter?.title || !editingChapter?.content) return;
 
     setLoading(true);
+    const path = `novels/${activeNovel.id}/chapters`;
     try {
-      const path = `novels/${selectedNovel.id}/chapters`;
       const { id, ...dataToSave } = editingChapter;
       const data = {
         ...dataToSave,
-        novelId: selectedNovel.id,
+        novelId: activeNovel.id,
         date: editingChapter.date || new Date().toLocaleDateString('ar-EG'),
         updatedAt: serverTimestamp(),
       };
@@ -1074,7 +1090,8 @@ export default function App() {
   };
 
   const deleteChapter = async (id: string) => {
-    if (!selectedNovel) return;
+    const activeNovel = currentNovel || selectedNovel;
+    if (!activeNovel) return;
     
     const result = await Swal.fire({
       title: 'هل أنت متأكد؟',
@@ -1092,7 +1109,7 @@ export default function App() {
     if (!result.isConfirmed) return;
 
     try {
-      await deleteDoc(doc(db, `novels/${selectedNovel.id}/chapters`, id));
+      await deleteDoc(doc(db, `novels/${activeNovel.id}/chapters`, id));
       Swal.fire({
         title: 'تم الحذف!',
         text: 'تم حذف الفصل بنجاح',
@@ -1102,7 +1119,7 @@ export default function App() {
         confirmButtonColor: '#F87171'
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `novels/${selectedNovel.id}/chapters/${id}`);
+      handleFirestoreError(error, OperationType.DELETE, `novels/${activeNovel.id}/chapters/${id}`);
       Swal.fire({
         title: 'خطأ',
         text: 'فشل حذف الفصل',
@@ -1115,17 +1132,18 @@ export default function App() {
   };
 
   const addVolume = async () => {
-    if (!selectedNovel || !newVolumeName.trim()) return;
+    const activeNovel = currentNovel || selectedNovel;
+    if (!activeNovel || !newVolumeName.trim()) return;
 
     try {
       const newVolume: Volume = {
         id: Math.random().toString(36).substr(2, 9),
         name: newVolumeName.trim(),
-        order: (selectedNovel.volumes?.length || 0) + 1
+        order: (activeNovel.volumes?.length || 0) + 1
       };
 
-      const updatedVolumes = [...(selectedNovel.volumes || []), newVolume];
-      await updateDoc(doc(db, 'novels', selectedNovel.id), {
+      const updatedVolumes = [...(activeNovel.volumes || []), newVolume];
+      await updateDoc(doc(db, 'novels', activeNovel.id), {
         volumes: updatedVolumes,
         updatedAt: serverTimestamp()
       });
@@ -1141,12 +1159,13 @@ export default function App() {
         confirmButtonColor: '#F87171'
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, `novels/${selectedNovel.id}`);
+      handleFirestoreError(error, OperationType.UPDATE, `novels/${activeNovel.id}`);
     }
   };
 
   const editVolume = async (volumeId: string, currentName: string) => {
-    if (!selectedNovel) return;
+    const activeNovel = currentNovel || selectedNovel;
+    if (!activeNovel) return;
 
     const { value: newName } = await Swal.fire({
       title: 'تعديل اسم المجلد',
@@ -1170,10 +1189,10 @@ export default function App() {
 
     if (newName) {
       try {
-        const updatedVolumes = selectedNovel.volumes?.map(v => 
+        const updatedVolumes = activeNovel.volumes?.map(v => 
           v.id === volumeId ? { ...v, name: newName } : v
         );
-        await updateDoc(doc(db, 'novels', selectedNovel.id), {
+        await updateDoc(doc(db, 'novels', activeNovel.id), {
           volumes: updatedVolumes,
           updatedAt: serverTimestamp()
         });
@@ -1186,13 +1205,14 @@ export default function App() {
           confirmButtonColor: '#F87171'
         });
       } catch (error) {
-        handleFirestoreError(error, OperationType.UPDATE, `novels/${selectedNovel.id}`);
+        handleFirestoreError(error, OperationType.UPDATE, `novels/${activeNovel.id}`);
       }
     }
   };
 
   const deleteVolume = async (volumeId: string) => {
-    if (!selectedNovel) return;
+    const activeNovel = currentNovel || selectedNovel;
+    if (!activeNovel) return;
 
     const result = await Swal.fire({
       title: 'هل أنت متأكد؟',
@@ -1210,8 +1230,8 @@ export default function App() {
     if (result.isConfirmed) {
       try {
         // 1. Update novel volumes
-        const updatedVolumes = selectedNovel.volumes?.filter(v => v.id !== volumeId);
-        await updateDoc(doc(db, 'novels', selectedNovel.id), {
+        const updatedVolumes = activeNovel.volumes?.filter(v => v.id !== volumeId);
+        await updateDoc(doc(db, 'novels', activeNovel.id), {
           volumes: updatedVolumes,
           updatedAt: serverTimestamp()
         });
@@ -1219,7 +1239,7 @@ export default function App() {
         // 2. Update chapters to remove volumeId
         const volumeChapters = chapters.filter(c => c.volumeId === volumeId);
         for (const chapter of volumeChapters) {
-          await updateDoc(doc(db, `novels/${selectedNovel.id}/chapters`, chapter.id), {
+          await updateDoc(doc(db, `novels/${activeNovel.id}/chapters`, chapter.id), {
             volumeId: null
           });
         }
@@ -1904,7 +1924,7 @@ export default function App() {
                   </div>
                   
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                    {selectedNovel.coverImages.filter(img => img && img.trim() !== '').map((img, idx) => (
+                    {currentNovel.coverImages.filter(img => img && img.trim() !== '').map((img, idx) => (
                       <motion.div 
                         key={`gallery-img-${idx}`}
                         whileHover={{ y: -10 }}
@@ -1946,7 +1966,7 @@ export default function App() {
                     {/* Explicit Volumes */}
                     {(currentNovel.volumes || []).sort((a, b) => a.order - b.order).map(volume => {
                       const volumeChapters = chapters
-                        .filter(c => c.volumeId === volume.id)
+                        .filter(c => c.volumeId === volume.id || c.volumeId === volume.name)
                         .filter(c => isAdmin || !c.isDraft)
                         .slice(0, visibleChaptersCount);
                       const isExpanded = expandedVolumes.includes(volume.id);
@@ -2050,7 +2070,7 @@ export default function App() {
                     {/* Uncategorized Chapters Header */}
                     {(() => {
                       const uncategorized = chapters
-                        .filter(c => !c.volumeId)
+                        .filter(c => !c.volumeId || !(currentNovel.volumes || []).some(v => v.id === c.volumeId || v.name === c.volumeId))
                         .filter(c => isAdmin || !c.isDraft)
                         .slice(0, visibleChaptersCount);
                       if (uncategorized.length === 0) return null;
@@ -2468,7 +2488,7 @@ export default function App() {
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-6">
                   <button 
-                    onClick={() => setView(editingNovel.id ? 'chapters' : 'novels')}
+                    onClick={() => setView(editingNovel.id ? 'chapters' : 'home')}
                     className="w-12 h-12 flex items-center justify-center bg-[#1e1e1e] border border-white/5 rounded-2xl hover:bg-white/5 transition-all shadow-sm group"
                   >
                     <ArrowLeft className="w-6 h-6 text-white/40 group-hover:text-white transition-colors" />
@@ -2969,7 +2989,7 @@ export default function App() {
                         placeholder="فصل عام (بدون مجلد)"
                         options={[
                           { value: '', label: 'فصل عام (بدون مجلد)' },
-                          ...(selectedNovel?.volumes?.map(vol => ({ value: vol.id, label: vol.name })) || [])
+                          ...(currentNovel?.volumes?.map(vol => ({ value: vol.id, label: vol.name })) || [])
                         ]}
                       />
                     </div>
