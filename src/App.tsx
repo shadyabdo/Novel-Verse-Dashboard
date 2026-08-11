@@ -891,7 +891,13 @@ export default function App() {
       });
     } catch (error: any) {
       console.error("Login failed", error);
-      const currentDomain = window.location.hostname;
+      if (
+        error?.code === 'auth/popup-closed-by-user' || 
+        error?.code === 'auth/cancelled-popup-request'
+      ) {
+        // User closed or cancelled popup window, silent handle
+        return;
+      }
       if (error?.code === 'auth/unauthorized-domain' || error?.message?.includes('unauthorized-domain')) {
         Swal.fire({
           title: 'نطاق غير مصرح به',
@@ -905,7 +911,7 @@ export default function App() {
         Swal.fire({
           title: 'فشل الدخول',
           text: error?.code === 'auth/popup-blocked' 
-            ? 'تم حظر النافذة المنبثقة. يرجى فتح التطبيق في تبويب جديد.'
+            ? 'تم حظر النافذة المنبثقة. يرجى السماح بالفوافذ المنبثقة أو فتح التطبيق في نافذة جديدة.'
             : (error?.message || 'حدث خطأ أثناء تسجيل الدخول'),
           icon: 'error',
           background: '#1e1e1e',
