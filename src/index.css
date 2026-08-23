@@ -4,7 +4,7 @@
 @theme {
   --font-sans: "Almarai", ui-sans-serif, system-ui, sans-serif;
   
-  --color-primary: #F87171;
+  --color-primary: #c8a460;
   --color-dark: #121212;
   --color-surface: #1e1e1e;
   --color-accent: #3db5ad;
@@ -41,14 +41,14 @@
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: #F87171;
+    background: #c8a460;
   }
 }
 
 @keyframes border-glow {
-  0% { border-color: rgba(248, 113, 113, 0.1); box-shadow: 0 0 5px rgba(248, 113, 113, 0.05); }
-  50% { border-color: rgba(248, 113, 113, 0.6); box-shadow: 0 0 15px rgba(248, 113, 113, 0.3); }
-  100% { border-color: rgba(248, 113, 113, 0.1); box-shadow: 0 0 5px rgba(248, 113, 113, 0.05); }
+  0% { border-color: rgba(200, 164, 96, 0.1); box-shadow: 0 0 5px rgba(200, 164, 96, 0.05); }
+  50% { border-color: rgba(200, 164, 96, 0.6); box-shadow: 0 0 15px rgba(200, 164, 96, 0.3); }
+  100% { border-color: rgba(200, 164, 96, 0.1); box-shadow: 0 0 5px rgba(200, 164, 96, 0.05); }
 }
 
 .animate-border-glow {
@@ -68,9 +68,9 @@
 }
 
 .novel-reader-content a {
-  @apply text-[#F87171] underline decoration-white/10 underline-offset-4 hover:decoration-[#F87171] transition-all;
+  @apply text-[#c8a460] underline decoration-white/10 underline-offset-4 hover:decoration-[#c8a460] transition-all;
 }
 
 .novel-reader-content code {
-  @apply bg-white/5 px-1.5 py-0.5 rounded text-sm font-mono text-[#F87171];
+  @apply bg-white/5 px-1.5 py-0.5 rounded text-sm font-mono text-[#c8a460];
 }
