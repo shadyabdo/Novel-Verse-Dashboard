@@ -330,20 +330,20 @@ const CustomSelect = ({
   const selectedOption = options.find(opt => opt.value === value);
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${isOpen ? 'z-[100]' : 'z-20'} ${className}`}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white flex items-center justify-between focus:ring-2 focus:ring-[#eac072]/50 outline-none transition-all"
+        className="w-full px-5 py-4 rounded-2xl border border-white/5 bg-[#121212] text-white flex items-center justify-between focus:ring-2 focus:ring-[#eac072]/50 outline-none transition-all cursor-pointer"
       >
-        <span className={selectedOption ? "text-white" : "text-white/40"}>
+        <span className={`truncate text-sm font-bold ${selectedOption ? "text-white" : "text-white/40"}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown className="w-4 h-4 text-white/40" />
+          <ChevronDown className="w-4 h-4 text-white/40 shrink-0 mr-2" />
         </motion.div>
       </button>
 
@@ -355,13 +355,13 @@ const CustomSelect = ({
               onClick={() => setIsOpen(false)} 
             />
             <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              initial={{ opacity: 0, y: 8, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute top-full left-0 right-0 mt-2 z-[130] bg-[#1e1e1e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
+              exit={{ opacity: 0, y: 8, scale: 0.96 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="absolute top-full left-0 right-0 mt-2 z-[130] bg-[#1e1e1e] border border-white/10 rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] overflow-hidden backdrop-blur-2xl"
             >
-              <div className="max-h-60 overflow-y-auto scrollbar-hide p-2 space-y-1">
+              <div className="max-h-72 overflow-y-auto p-2 space-y-1">
                 {options.map((opt) => (
                   <button
                     key={opt.value}
@@ -370,14 +370,14 @@ const CustomSelect = ({
                       onChange(opt.value);
                       setIsOpen(false);
                     }}
-                    className={`w-full px-4 py-3 rounded-xl text-right text-sm font-bold transition-all flex items-center justify-between group ${
+                    className={`w-full px-4 py-3.5 rounded-xl text-right text-sm font-bold transition-all flex items-center justify-between group cursor-pointer ${
                       value === opt.value 
                         ? 'bg-[#eac072] text-[#121212]' 
-                        : 'text-white/60 hover:bg-white/5 hover:text-white'
+                        : 'text-white/70 hover:bg-white/5 hover:text-white'
                     }`}
                   >
-                    {opt.label}
-                    {value === opt.value && <Check className="w-4 h-4" />}
+                    <span className="truncate">{opt.label}</span>
+                    {value === opt.value && <Check className="w-4 h-4 shrink-0 mr-2" />}
                   </button>
                 ))}
               </div>
@@ -3285,7 +3285,7 @@ export default function App() {
 
               <form onSubmit={saveChapter} className="space-y-10 pb-20">
                 {/* Chapter Settings Card */}
-                <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl relative">
+                <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl relative z-30">
                   <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[100px] -ml-32 -mt-32 pointer-events-none" />
                   
                   <div className="flex items-center gap-3 mb-10 relative z-10">
@@ -3295,7 +3295,7 @@ export default function App() {
                     <h3 className="text-lg font-black text-white">إعدادات الفصل</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-10">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 relative z-20">
                     <div className="md:col-span-5">
                       <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">عنوان الفصل</label>
                       <div className="relative group">
@@ -3339,7 +3339,7 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="md:col-span-3">
+                    <div className="md:col-span-3 relative z-30">
                       <label className="block text-xs font-black text-white/40 uppercase tracking-widest mb-3">المجلد</label>
                       <CustomSelect 
                         value={editingChapter.volumeId || ''}
@@ -3352,7 +3352,7 @@ export default function App() {
                       />
                     </div>
 
-                    <div className="md:col-span-12 flex flex-wrap gap-4 pt-4">
+                    <div className="md:col-span-12 flex flex-wrap gap-4 pt-4 relative z-10">
                       <button
                         type="button"
                         onClick={() => setEditingChapter({...editingChapter, isEndOfVolume: !editingChapter.isEndOfVolume})}
@@ -3387,7 +3387,7 @@ export default function App() {
                 </div>
 
                 {/* Content Area Section */}
-                <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl relative overflow-hidden">
+                <div className="bg-[#1e1e1e] p-10 rounded-[2.5rem] border border-white/5 shadow-xl relative overflow-hidden z-10">
                   <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#eac072]/5 rounded-full blur-[100px] -mr-32 -mb-32 pointer-events-none" />
                   
                   <div className="flex items-center justify-between mb-8 relative z-10">
