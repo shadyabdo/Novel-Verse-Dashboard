@@ -20,7 +20,8 @@ import {
   orderBy, 
   serverTimestamp,
   Timestamp,
-  getDocFromServer
+  getDocFromServer,
+  writeBatch
 } from 'firebase/firestore';
 import { 
   signInWithPopup, 
@@ -238,35 +239,79 @@ const ChapterRow = ({
   index, 
   onEdit, 
   onDelete,
-  onRead
+  onRead,
+  isSelectionMode = false,
+  isSelected = false,
+  onToggleSelect,
+  isAdmin = false
 }: { 
   chapter: Chapter, 
   index: number, 
   onEdit: (c: Chapter) => void, 
   onDelete: (id: string) => void,
-  onRead: (c: Chapter) => void
+  onRead: (c: Chapter) => void,
+  isSelectionMode?: boolean,
+  isSelected?: boolean,
+  onToggleSelect?: (id: string) => void,
+  isAdmin?: boolean
 }) => {
   return (
     <motion.div 
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
-      onClick={() => onRead(chapter)}
-      className="bg-[#232323] p-6 rounded-[1.2rem] border border-white/5 flex items-center justify-between hover:bg-[#2d2e2e] transition-all group shadow-sm hover:shadow-xl hover:shadow-black/20 cursor-pointer"
+      onClick={() => {
+        if (isSelectionMode && onToggleSelect) {
+          onToggleSelect(chapter.id);
+        } else {
+          onRead(chapter);
+        }
+      }}
+      className={`p-6 rounded-[1.2rem] border flex items-center justify-between transition-all group shadow-sm cursor-pointer select-none ${
+        isSelected
+          ? 'bg-red-500/10 border-red-500/50 shadow-lg shadow-red-500/10 hover:bg-red-500/15'
+          : 'bg-[#232323] border-white/5 hover:bg-[#2d2e2e] hover:shadow-xl hover:shadow-black/20'
+      }`}
     >
-      <div className="flex items-center gap-6 flex-1">
-        <div className="w-14 h-14 bg-[#222222] rounded-2xl flex items-center justify-center text-white/20 font-black text-lg group-hover:bg-[#eac072] group-hover:text-[#121212] transition-all duration-300 border border-white/5 shadow-inner">
+      <div className="flex items-center gap-5 flex-1 min-w-0">
+        {/* Selection Checkbox */}
+        {isSelectionMode && (
+          <div 
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect?.(chapter.id);
+            }}
+            className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all shrink-0 border cursor-pointer ${
+              isSelected 
+                ? 'bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/40 scale-105' 
+                : 'bg-[#121212] border-white/20 text-transparent hover:border-white/50 hover:bg-white/5'
+            }`}
+            title={isSelected ? 'إلغاء تحديد الفصل' : 'تحديد هذا الفصل للحذف'}
+          >
+            <Check className="w-4 h-4 stroke-[3]" />
+          </div>
+        )}
+
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-lg transition-all duration-300 border shadow-inner shrink-0 ${
+          isSelected 
+            ? 'bg-red-500/20 text-red-400 border-red-500/30' 
+            : 'bg-[#222222] text-white/20 group-hover:bg-[#eac072] group-hover:text-[#121212] border-white/5'
+        }`}>
           {chapter.order}
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-3 mb-2">
-            <h4 className="font-extrabold text-white text-lg group-hover:text-[#eac072] transition-colors">{chapter.title}</h4>
+            <h4 className={`font-extrabold text-lg transition-colors truncate ${
+              isSelected ? 'text-red-300' : 'text-white group-hover:text-[#eac072]'
+            }`}>
+              {chapter.title}
+            </h4>
             {chapter.isDraft ? (
-              <span className="px-3 py-1 rounded-lg bg-yellow-500/10 text-yellow-500 text-[8px] font-black uppercase tracking-[0.2em] border border-yellow-500/20">
+              <span className="px-3 py-1 rounded-lg bg-yellow-500/10 text-yellow-500 text-[8px] font-black uppercase tracking-[0.2em] border border-yellow-500/20 shrink-0">
                 مسودة
               </span>
             ) : (
-               <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase tracking-[0.2em] border border-blue-500/20">
+               <span className="px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase tracking-[0.2em] border border-blue-500/20 shrink-0">
                 منشور
               </span>
             )}
@@ -293,21 +338,25 @@ const ChapterRow = ({
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-        <button 
-          onClick={() => onEdit(chapter)}
-          className="w-12 h-12 flex items-center justify-center text-white/30 bg-white/5 hover:bg-[#eac072] hover:text-[#121212] rounded-2xl border border-white/5 transition-all active:scale-90 group/btn"
-          title="تعديل الفصل"
-        >
-          <Edit className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
-        </button>
-        <button 
-          onClick={() => onDelete(chapter.id)}
-          className="w-12 h-12 flex items-center justify-center text-white/30 bg-white/5 hover:bg-red-500 hover:text-white rounded-2xl border border-white/5 transition-all active:scale-90 group/btn"
-          title="حذف الفصل"
-        >
-          <Trash2 className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
-        </button>
+      <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+        {isAdmin && (
+          <>
+            <button 
+              onClick={() => onEdit(chapter)}
+              className="w-12 h-12 flex items-center justify-center text-white/30 bg-white/5 hover:bg-[#eac072] hover:text-[#121212] rounded-2xl border border-white/5 transition-all active:scale-90 group/btn"
+              title="تعديل الفصل"
+            >
+              <Edit className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+            </button>
+            <button 
+              onClick={() => onDelete(chapter.id)}
+              className="w-12 h-12 flex items-center justify-center text-white/30 bg-white/5 hover:bg-red-500 hover:text-white rounded-2xl border border-white/5 transition-all active:scale-90 group/btn"
+              title="حذف الفصل"
+            >
+              <Trash2 className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+            </button>
+          </>
+        )}
       </div>
     </motion.div>
   );
@@ -429,6 +478,10 @@ export default function App() {
   const [selectedChapterIdsForVolume, setSelectedChapterIdsForVolume] = useState<string[]>([]);
   const [volumeChapterSearch, setVolumeChapterSearch] = useState('');
   const [savingVolumeChapters, setSavingVolumeChapters] = useState(false);
+
+  // Batch Delete Chapters State
+  const [isBatchDeleteMode, setIsBatchDeleteMode] = useState(false);
+  const [selectedChapterIdsForDelete, setSelectedChapterIdsForDelete] = useState<string[]>([]);
 
   // Image Insertion State
   const [showImagePopup, setShowImagePopup] = useState(false);
@@ -804,6 +857,11 @@ export default function App() {
 
     return () => unsubscribe();
   }, [selectedNovel?.id]);
+
+  useEffect(() => {
+    setIsBatchDeleteMode(false);
+    setSelectedChapterIdsForDelete([]);
+  }, [selectedNovel?.id, view]);
 
   // Global Chapters Listener for Home View
   useEffect(() => {
@@ -1297,6 +1355,119 @@ export default function App() {
         color: '#fff',
         confirmButtonColor: '#eac072'
       });
+    }
+  };
+
+  const toggleChapterSelectionForDelete = (id: string) => {
+    setSelectedChapterIdsForDelete(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAllChaptersForDelete = () => {
+    if (selectedChapterIdsForDelete.length === chapters.length) {
+      setSelectedChapterIdsForDelete([]);
+    } else {
+      setSelectedChapterIdsForDelete(chapters.map(c => c.id));
+    }
+  };
+
+  const toggleSelectVolumeChaptersForDelete = (volumeChapterIds: string[]) => {
+    const allVolumeSelected = volumeChapterIds.length > 0 && volumeChapterIds.every(id => selectedChapterIdsForDelete.includes(id));
+    if (allVolumeSelected) {
+      setSelectedChapterIdsForDelete(prev => prev.filter(id => !volumeChapterIds.includes(id)));
+    } else {
+      setSelectedChapterIdsForDelete(prev => Array.from(new Set([...prev, ...volumeChapterIds])));
+    }
+  };
+
+  const expandAllVolumesForBatch = () => {
+    const allVolIds = [
+      ...(currentNovel?.volumes || []).map(v => v.id),
+      'uncategorized'
+    ];
+    setExpandedVolumes(allVolIds);
+  };
+
+  const deleteBatchChapters = async (targetIds?: string[]) => {
+    const activeNovel = currentNovel || selectedNovel;
+    if (!activeNovel) return;
+    
+    const idsToDelete = targetIds || selectedChapterIdsForDelete;
+    if (idsToDelete.length === 0) {
+      Swal.fire({
+        title: 'لم يتم تحديد فصول',
+        text: 'يرجى تحديد فصل واحد على الأقل لحذفه.',
+        icon: 'info',
+        background: '#1e1e1e',
+        color: '#fff',
+        confirmButtonColor: '#eac072'
+      });
+      return;
+    }
+
+    const count = idsToDelete.length;
+    const isAll = count === chapters.length;
+
+    const result = await Swal.fire({
+      title: isAll ? 'حذف كافة الفصول؟' : `حذف (${count}) ${count === 1 ? 'فصل' : count === 2 ? 'فصلين' : 'فصول'}؟`,
+      html: isAll 
+        ? `<div class="text-right text-sm leading-relaxed text-white/80">
+            هل أنت متأكد من رغبتك في حذف <b class="text-red-400 font-bold">جميع فصول الرواية (${count} فصل)</b> بالكامل؟
+            <br/><span class="text-xs text-red-500/80 mt-2 block">تحذير: لا يمكن التراجع عن هذه العملية وسيتم مسح كل المحتوى نهائياً!</span>
+          </div>`
+        : `<div class="text-right text-sm leading-relaxed text-white/80">
+            هل أنت متأكد من حذف <b class="text-red-400 font-bold">${count} ${count === 1 ? 'فصل' : 'فصول'}</b> محددة من هذه الرواية؟
+            <br/><span class="text-xs text-white/40 mt-2 block">لا يمكن التراجع عن هذا الإجراء بعد تنفيذه.</span>
+          </div>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#675b5b',
+      confirmButtonText: isAll ? 'نعم، احذف كل الفصول' : `نعم، احذف (${count})`,
+      cancelButtonText: 'إلغاء',
+      background: '#1e1e1e',
+      color: '#fff'
+    });
+
+    if (!result.isConfirmed) return;
+
+    setLoading(true);
+    try {
+      const BATCH_SIZE = 400;
+      for (let i = 0; i < idsToDelete.length; i += BATCH_SIZE) {
+        const chunk = idsToDelete.slice(i, i + BATCH_SIZE);
+        const batch = writeBatch(db);
+        for (const id of chunk) {
+          batch.delete(doc(db, `novels/${activeNovel.id}/chapters`, id));
+        }
+        await batch.commit();
+      }
+
+      setSelectedChapterIdsForDelete([]);
+      setIsBatchDeleteMode(false);
+
+      Swal.fire({
+        title: 'تم الحذف بنجاح!',
+        text: `تم حذف ${count} ${count === 1 ? 'فصل' : 'فصول'} بنجاح`,
+        icon: 'success',
+        background: '#1e1e1e',
+        color: '#fff',
+        confirmButtonColor: '#eac072'
+      });
+    } catch (error) {
+      console.error("Batch delete chapters failed", error);
+      handleFirestoreError(error, OperationType.DELETE, `novels/${activeNovel.id}/chapters`);
+      Swal.fire({
+        title: 'خطأ',
+        text: 'حدث خطأ أثناء محاولة حذف الفصول',
+        icon: 'error',
+        background: '#1e1e1e',
+        color: '#fff',
+        confirmButtonColor: '#eac072'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -2271,13 +2442,143 @@ export default function App() {
               )}
 
               {/* Section 2: Volumes & Chapters Accordion */}
-              <div className="space-y-6">
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-2xl font-black text-white flex items-center gap-3">
+              <div id="chapters-list-section" className="space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                  <div className="flex items-center gap-3">
                     <Book className="w-6 h-6 text-[#eac072]" />
-                    قائمة الفصول والمجلدات
-                  </h3>
+                    <h3 className="text-2xl font-black text-white">قائمة الفصول والمجلدات</h3>
+                    <span className="text-xs font-bold text-white/40 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+                      {chapters.length} فصل
+                    </span>
+                  </div>
+
+                  {isAdmin && chapters.length > 0 && (
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextMode = !isBatchDeleteMode;
+                          setIsBatchDeleteMode(nextMode);
+                          if (nextMode) {
+                            expandAllVolumesForBatch();
+                          } else {
+                            setSelectedChapterIdsForDelete([]);
+                          }
+                        }}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-black transition-all border shadow-lg active:scale-95 cursor-pointer ${
+                          isBatchDeleteMode
+                            ? 'bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30'
+                            : 'bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border-white/10'
+                        }`}
+                        title="تفعيل خيار تحديد وحذف فصول متعددة"
+                      >
+                        {isBatchDeleteMode ? (
+                          <>
+                            <X className="w-4 h-4 text-red-400" />
+                            <span>إلغاء وضع التحديد</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckSquare className="w-4 h-4 text-[#eac072]" />
+                            <span>حذف متعدد / تحديد فصول</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
+
+                {/* Batch Delete Controls Bar */}
+                <AnimatePresence>
+                  {isAdmin && isBatchDeleteMode && chapters.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -12, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -12, scale: 0.98 }}
+                      className="sticky top-20 z-40 p-4 md:p-6 bg-[#1a1414] border-2 border-red-500/30 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl flex flex-wrap items-center justify-between gap-4 mb-6"
+                    >
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Select All Checkbox Button */}
+                        <button
+                          type="button"
+                          onClick={toggleSelectAllChaptersForDelete}
+                          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-black transition-all border cursor-pointer ${
+                            selectedChapterIdsForDelete.length === chapters.length && chapters.length > 0
+                              ? 'bg-[#eac072] text-[#121212] border-[#eac072] shadow-md shadow-[#eac072]/20'
+                              : 'bg-[#121212] text-white/80 border-white/10 hover:border-white/30'
+                          }`}
+                        >
+                          <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
+                            selectedChapterIdsForDelete.length === chapters.length && chapters.length > 0
+                              ? 'bg-[#121212] border-[#121212] text-[#eac072]'
+                              : 'border-white/40'
+                          }`}>
+                            {selectedChapterIdsForDelete.length === chapters.length && chapters.length > 0 && (
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            )}
+                          </div>
+                          <span>
+                            {selectedChapterIdsForDelete.length === chapters.length
+                              ? 'إلغاء تحديد الكل'
+                              : `تحديد كل الفصول (${chapters.length})`}
+                          </span>
+                        </button>
+
+                        <div className="flex items-center gap-2 text-right">
+                          <span className="text-sm font-black text-white flex items-center gap-2">
+                            <span>تم تحديد</span>
+                            <span className="px-2.5 py-0.5 rounded-lg bg-red-500/20 text-red-400 font-mono text-xs font-bold border border-red-500/30">
+                              {selectedChapterIdsForDelete.length}
+                            </span>
+                            <span className="text-white/40 text-xs">من أصل {chapters.length} فصل</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 mr-auto">
+                        {selectedChapterIdsForDelete.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setSelectedChapterIdsForDelete([])}
+                            className="px-3 py-2 rounded-xl text-xs font-bold text-white/50 hover:text-white bg-white/5 hover:bg-white/10 transition-all cursor-pointer"
+                          >
+                            مسح التحديد
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          disabled={selectedChapterIdsForDelete.length === 0}
+                          onClick={() => deleteBatchChapters()}
+                          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black transition-all border shadow-lg ${
+                            selectedChapterIdsForDelete.length > 0
+                              ? 'bg-red-500 hover:bg-red-600 text-white border-red-500 shadow-red-500/30 active:scale-95 cursor-pointer'
+                              : 'bg-white/5 text-white/20 border-white/5 cursor-not-allowed opacity-50'
+                          }`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>
+                            {selectedChapterIdsForDelete.length === chapters.length
+                              ? `حذف كل الفصول (${chapters.length})`
+                              : `حذف الفصول المحددة (${selectedChapterIdsForDelete.length})`}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsBatchDeleteMode(false);
+                            setSelectedChapterIdsForDelete([]);
+                          }}
+                          className="p-2.5 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                          title="إغلاق وضع التحديد"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {chapters.length === 0 ? (
                   <div className="bg-[#1e1e1e] rounded-[3rem] border-2 border-dashed border-white/5 p-24 text-center">
@@ -2292,7 +2593,7 @@ export default function App() {
                       const volumeChapters = chapters
                         .filter(c => c.volumeId === volume.id || c.volumeId === volume.name)
                         .filter(c => isAdmin || !c.isDraft)
-                        .slice(0, visibleChaptersCount);
+                        .slice(0, isBatchDeleteMode ? Math.max(chapters.length, visibleChaptersCount) : visibleChaptersCount);
                       const isExpanded = expandedVolumes.includes(volume.id);
                       
                       return (
@@ -2317,6 +2618,24 @@ export default function App() {
                                   <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{volumeChapters.length} فصلاً متاحاً</span>
                                   {isAdmin && (
                                     <div className="flex items-center gap-1.5 mr-3">
+                                      {isBatchDeleteMode && volumeChapters.length > 0 && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleSelectVolumeChaptersForDelete(volumeChapters.map(c => c.id));
+                                          }}
+                                          className="flex items-center gap-1.5 px-3 py-1 bg-white/5 hover:bg-white/10 rounded-xl text-[11px] font-bold text-white/70 border border-white/10 transition-all mr-2 cursor-pointer"
+                                          title="تحديد أو إلغاء تحديد فصول هذا المجلد"
+                                        >
+                                          <CheckSquare className="w-3.5 h-3.5 text-[#eac072]" />
+                                          <span>
+                                            {volumeChapters.every(c => selectedChapterIdsForDelete.includes(c.id))
+                                              ? 'إلغاء تحديد المجلد'
+                                              : 'تحديد فصول المجلد'}
+                                          </span>
+                                        </button>
+                                      )}
                                       <button 
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -2405,6 +2724,10 @@ export default function App() {
                                         key={chapter.id} 
                                         chapter={chapter} 
                                         index={idx} 
+                                        isAdmin={isAdmin}
+                                        isSelectionMode={isBatchDeleteMode}
+                                        isSelected={selectedChapterIdsForDelete.includes(chapter.id)}
+                                        onToggleSelect={toggleChapterSelectionForDelete}
                                         onEdit={(c) => {
                                           setEditingChapter(c);
                                           setView('edit-chapter');
@@ -2430,7 +2753,7 @@ export default function App() {
                       const uncategorized = chapters
                         .filter(c => !c.volumeId || !(currentNovel.volumes || []).some(v => v.id === c.volumeId || v.name === c.volumeId))
                         .filter(c => isAdmin || !c.isDraft)
-                        .slice(0, visibleChaptersCount);
+                        .slice(0, isBatchDeleteMode ? Math.max(chapters.length, visibleChaptersCount) : visibleChaptersCount);
                       if (uncategorized.length === 0) return null;
 
                       const isExpanded = expandedVolumes.includes('uncategorized');
@@ -2452,7 +2775,27 @@ export default function App() {
                               </div>
                               <div className="text-right">
                                 <h4 className="font-black text-xl text-white group-hover:text-[#eac072] transition-colors mb-1">الفصول العامة</h4>
-                                <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{uncategorized.length} فصلاً مستقلاً</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{uncategorized.length} فصلاً مستقلاً</p>
+                                  {isAdmin && isBatchDeleteMode && uncategorized.length > 0 && (
+                                    <button 
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleSelectVolumeChaptersForDelete(uncategorized.map(c => c.id));
+                                      }}
+                                      className="flex items-center gap-1.5 px-3 py-1 bg-white/5 hover:bg-white/10 rounded-xl text-[11px] font-bold text-white/70 border border-white/10 transition-all mr-2 cursor-pointer"
+                                      title="تحديد أو إلغاء تحديد الفصول العامة"
+                                    >
+                                      <CheckSquare className="w-3.5 h-3.5 text-[#eac072]" />
+                                      <span>
+                                        {uncategorized.every(c => selectedChapterIdsForDelete.includes(c.id))
+                                          ? 'إلغاء تحديد الفصول العامة'
+                                          : 'تحديد الفصول العامة'}
+                                      </span>
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <motion.div
@@ -2480,6 +2823,10 @@ export default function App() {
                                       key={chapter.id} 
                                       chapter={chapter} 
                                       index={idx} 
+                                      isAdmin={isAdmin}
+                                      isSelectionMode={isBatchDeleteMode}
+                                      isSelected={selectedChapterIdsForDelete.includes(chapter.id)}
+                                      onToggleSelect={toggleChapterSelectionForDelete}
                                       onEdit={(c) => {
                                         setEditingChapter(c);
                                         setView('edit-chapter');
@@ -2499,7 +2846,7 @@ export default function App() {
                       );
                     })()}
                     
-                    {chapters.length > visibleChaptersCount && (
+                    {!isBatchDeleteMode && chapters.length > visibleChaptersCount && (
                       <div ref={chaptersEndRef} className="mt-8 flex justify-center py-6">
                         <div className="flex items-center gap-3 text-white/20">
                           <Loader2 className="w-5 h-5 animate-spin" />
@@ -2521,7 +2868,7 @@ export default function App() {
                     <h3 className="text-xl font-black text-white">إدارة الرواية</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-20">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pb-20">
                     <button 
                       onClick={() => {
                         setEditingChapter({ novelId: currentNovel.id, title: '', content: '', order: chapters.length + 1, date: new Date().toLocaleDateString('ar-EG') });
@@ -2539,6 +2886,23 @@ export default function App() {
                     >
                       <Layers className="w-5 h-5 text-white/40 group-hover:text-white transition-colors" />
                       إضافة مجلد
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        setIsBatchDeleteMode(true);
+                        expandAllVolumesForBatch();
+                        const el = document.getElementById('chapters-list-section');
+                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className={`flex items-center justify-center gap-3 px-8 py-5 rounded-[1.8rem] font-black border transition-all active:scale-95 group cursor-pointer ${
+                        isBatchDeleteMode 
+                          ? 'bg-red-500/20 text-red-400 border-red-500/30 shadow-lg shadow-red-500/10' 
+                          : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                      }`}
+                    >
+                      <CheckSquare className="w-5 h-5 text-white/40 group-hover:text-red-400 transition-colors" />
+                      حذف فصول متعددة
                     </button>
 
                     <button 
